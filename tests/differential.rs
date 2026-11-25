@@ -8,7 +8,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use message_parser::parse_at;
 use proptest::prelude::*;
-use proptest::test_runner::FileFailurePersistence;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use support::{clock_at, js_equal, pretty, Fixture, JsKatexOptions, JsOptions};
@@ -25,16 +24,10 @@ struct Oracle {
 }
 
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct OracleResponse {
-    nodes: Option<Value>,
-    error: Option<String>,
-}
-
-enum Upstream {
+#[serde(rename_all = "lowercase")]
+enum OracleResponse {
     Nodes(Value),
-    Threw(String),
-    Exited(String),
+    Error(String),
 }
 
 impl Oracle {
@@ -59,21 +52,24 @@ impl Oracle {
         }
     }
 
-    fn parse(&mut self, input: &str, options: &JsOptions, now_milliseconds: u64) -> Upstream {
+    fn parse(
+        &mut self,
+        input: &str,
+        options: &JsOptions,
+        now_milliseconds: u64,
+    ) -> Result<Value, String> {
         let request = json!({ "input": input, "options": options, "now": now_milliseconds });
         let mut line = String::new();
         let exchanged =
             writeln!(self.requests, "{request}").and_then(|()| self.responses.read_line(&mut line));
         if !matches!(exchanged, Ok(length) if length > 0) {
             let status = self.process.wait().expect("oracle process can be awaited");
-            return Upstream::Exited(format!("{status}"));
+            *self = Oracle::start();
+            return Err(format!("upstream oracle exited ({status}) on {input:?}"));
         }
-        let response: OracleResponse =
-            serde_json::from_str(&line).expect("oracle responds with one JSON object per line");
-        match (response.nodes, response.error) {
-            (Some(nodes), None) => Upstream::Nodes(nodes),
-            (None, Some(error)) => Upstream::Threw(error),
-            _ => panic!("oracle response holds neither nodes nor an error: {line}"),
+        match serde_json::from_str(&line).expect("oracle responds with one JSON object per line") {
+            OracleResponse::Nodes(nodes) => Ok(nodes),
+            OracleResponse::Error(error) => Err(format!("upstream threw on {input:?}: {error}")),
         }
     }
 }
@@ -91,24 +87,8 @@ fn rust_nodes(input: &str, options: &JsOptions, now_milliseconds: u64) -> Value 
     serde_json::to_value(parse_at(input, &options.to_options(), now)).expect("AST serializes")
 }
 
-fn upstream_nodes(
-    input: &str,
-    options: &JsOptions,
-    now_milliseconds: u64,
-) -> Result<Value, String> {
-    let mut oracle = oracle();
-    match oracle.parse(input, options, now_milliseconds) {
-        Upstream::Nodes(nodes) => Ok(nodes),
-        Upstream::Threw(error) => Err(format!("upstream threw on {input:?}: {error}")),
-        Upstream::Exited(status) => {
-            *oracle = Oracle::start();
-            Err(format!("upstream oracle exited ({status}) on {input:?}"))
-        }
-    }
-}
-
 fn compare(input: &str, options: &JsOptions, now_milliseconds: u64) -> Result<(), String> {
-    let upstream = upstream_nodes(input, options, now_milliseconds)?;
+    let upstream = oracle().parse(input, options, now_milliseconds)?;
     let rust = rust_nodes(input, options, now_milliseconds);
     if js_equal(&rust, &upstream) {
         return Ok(());
@@ -168,16 +148,26 @@ fn upstream_test_suite_inputs_produce_the_same_ast() {
     assert_no_mismatches(mismatches, checked);
 }
 
-const REGRESSIONS: &[&str] = &["\u{2028}", "a\u{2029}b"];
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Regression {
+    input: String,
+    options: JsOptions,
+    now: u64,
+}
 
 #[test]
 fn regression_inputs_produce_the_same_ast() {
-    let options = JsOptions::default();
-    let mismatches: Vec<String> = REGRESSIONS
+    let regressions: Vec<Regression> =
+        serde_json::from_str(include_str!("fixtures/differential/regressions.json"))
+            .expect("regressions.json lists input, options and now for each case");
+    let mismatches: Vec<String> = regressions
         .iter()
-        .filter_map(|input| compare(input, &options, FIXTURE_CLOCK_MILLISECONDS).err())
+        .filter_map(|regression| {
+            compare(&regression.input, &regression.options, regression.now).err()
+        })
         .collect();
-    assert_no_mismatches(mismatches, REGRESSIONS.len());
+    assert_no_mismatches(mismatches, regressions.len());
 }
 
 #[derive(Deserialize)]
@@ -405,13 +395,7 @@ fn generated_cases() -> u32 {
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig {
-        cases: generated_cases(),
-        failure_persistence: Some(Box::new(FileFailurePersistence::Direct(
-            "tests/differential.proptest-regressions",
-        ))),
-        ..ProptestConfig::default()
-    })]
+    #![proptest_config(ProptestConfig::with_cases(generated_cases()))]
 
     #[test]
     fn generated_messages_produce_the_same_ast(
@@ -419,8 +403,6 @@ proptest! {
         options in options(),
         now_milliseconds in 0u64..4_102_444_800_000,
     ) {
-        if let Err(reason) = compare(&input, &options, now_milliseconds) {
-            prop_assert!(false, "{}", reason);
-        }
+        compare(&input, &options, now_milliseconds).map_err(TestCaseError::fail)?;
     }
 }

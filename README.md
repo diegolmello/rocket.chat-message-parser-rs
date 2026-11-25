@@ -46,7 +46,7 @@ The `differential` test starts `upstream/oracle.mjs` on Node and parses the same
 TZ=America/New_York cargo test --release --features upstream-oracle --test differential
 ```
 
-`PROPTEST_CASES` changes the number of generated messages. A failing message is shrunk to a minimal input. Add that input to `REGRESSIONS` in `tests/differential.rs` with the fix, so every later run checks it whatever the generator produces. CI runs the test on every push.
+`PROPTEST_CASES` changes the number of generated messages. A failing message is shrunk to a minimal input, and the failure prints its input, options and clock. Add them to `tests/fixtures/differential/regressions.json` with the fix, so every later run checks that case whatever the generator produces. CI runs the test on every pull request and every push to `main`.
 
 ### Speed
 
