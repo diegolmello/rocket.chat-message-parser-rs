@@ -36,6 +36,37 @@ fn long_emoticon_chains_parse_within_a_main_thread_stack() {
 }
 
 #[test]
+fn spoilers_ending_in_emoticons_parse_within_a_spawned_thread_stack() {
+    const SPAWNED_THREAD_STACK_BYTES: usize = 2 * 1024 * 1024;
+    let options = Options {
+        emoticons: true,
+        ..Options::default()
+    };
+    let inputs = [
+        "||:)".repeat(25_000),
+        "||x<3".repeat(20_000),
+        format!("*{}", "||:)".repeat(25_000)),
+        format!("_{}", "||:)".repeat(25_000)),
+        format!("![{}", "||:)".repeat(25_000)),
+    ];
+    let parser_thread = std::thread::Builder::new()
+        .stack_size(SPAWNED_THREAD_STACK_BYTES)
+        .spawn(move || {
+            inputs
+                .iter()
+                .map(|input| parse_at(input, &options, fixed_clock()).len())
+                .sum::<usize>()
+        })
+        .expect("parser thread starts");
+    assert!(
+        parser_thread
+            .join()
+            .expect("parser thread finishes without overflowing")
+            > 0
+    );
+}
+
+#[test]
 fn deeply_nested_lists_stop_nesting_at_the_depth_limit_and_keep_every_item() {
     const SPAWNED_THREAD_STACK_BYTES: usize = 2 * 1024 * 1024;
     const INDENTED_LINES: usize = 2_000;

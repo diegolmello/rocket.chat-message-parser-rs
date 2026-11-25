@@ -280,6 +280,7 @@ impl Parser<'_> {
     }
 
     pub(super) fn spoiler(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
+        self.evaluate_later_spoilers_backwards(position, flags);
         memoized!(self, spoiler, position, flags, {
             let mut cursor = self.literal(position, "||")?;
             let mut items = Vec::new();
@@ -303,6 +304,25 @@ impl Parser<'_> {
             let end = self.literal(cursor, "||")?;
             Some((end, spoiler(reduce_plain_texts(items))))
         })
+    }
+
+    fn evaluate_later_spoilers_backwards(&mut self, position: usize, flags: Flags) {
+        let evaluated_from = self
+            .memo
+            .spoilers_evaluated_from
+            .get(&flags.bits())
+            .map_or(self.len() + 1, |&start| start as usize);
+        if position >= evaluated_from {
+            return;
+        }
+        self.memo
+            .spoilers_evaluated_from
+            .insert(flags.bits(), position as u32);
+        for start in (position + 1..evaluated_from).rev() {
+            if self.literal(start, "||").is_some() {
+                self.spoiler(start, flags);
+            }
+        }
     }
 
     fn names(&mut self, position: usize) -> Option<usize> {
