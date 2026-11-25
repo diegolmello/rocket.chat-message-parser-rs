@@ -237,18 +237,18 @@ impl Parser<'_> {
     pub(super) fn inline_items(&mut self, position: usize, flags: Flags) -> Parsed<Vec<Item>> {
         let mut items = Vec::new();
         let mut cursor = position;
-        loop {
-            if let Some((end, item)) = self.inline_item_pattern(cursor, flags) {
-                items.push(item);
-                cursor = end;
-            } else if let Some(end) = self.any(cursor) {
-                items.push(Item::One(plain(self.text(cursor, end))));
-                cursor = end;
-            } else {
-                break;
-            }
+        while let Some((end, item)) = self.inline_item_or_any(cursor, flags) {
+            items.push(item);
+            cursor = end;
         }
         (!items.is_empty()).then_some((cursor, items))
+    }
+
+    pub(super) fn inline_item_or_any(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
+        self.inline_item_pattern(position, flags).or_else(|| {
+            let end = self.any(position)?;
+            Some((end, Item::One(plain(self.text(position, end)))))
+        })
     }
 
     fn blockquote(&mut self, position: usize) -> Parsed<Node> {
@@ -461,15 +461,11 @@ impl Parser<'_> {
             if self.char(cursor, b'|').is_some() || self.end_of_line(cursor).is_some() {
                 break;
             }
-            if let Some((end, item)) = self.inline_item_pattern(cursor, Flags::NONE) {
-                items.push(item);
-                cursor = end;
-            } else if let Some(end) = self.any(cursor) {
-                items.push(Item::One(plain(self.text(cursor, end))));
-                cursor = end;
-            } else {
+            let Some((end, item)) = self.inline_item_or_any(cursor, Flags::NONE) else {
                 break;
-            }
+            };
+            items.push(item);
+            cursor = end;
         }
         (cursor, reduce_plain_texts(items))
     }

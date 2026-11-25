@@ -1,9 +1,14 @@
+use super::Parsed;
 use crate::ast::{plain, Node};
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
     One(Node),
     Many(Vec<Node>),
+}
+
+pub(crate) fn one(parsed: Parsed<Node>) -> Parsed<Item> {
+    parsed.map(|(end, node)| (end, Item::One(node)))
 }
 
 pub(crate) fn is_js_whitespace(character: char) -> bool {
@@ -41,9 +46,6 @@ fn join_emoji(current: &Node, previous: Option<&Node>, next: Option<&Node>) -> N
     else {
         return current.clone();
     };
-    if previous.is_none() && next.is_none() {
-        return current.clone();
-    }
     let has_emoji_neighbor = is_emoji(previous) || is_emoji(next);
     let has_plain_neighbor = is_non_blank_plain(previous) || is_non_blank_plain(next);
     if !(has_emoji_neighbor || has_plain_neighbor) {

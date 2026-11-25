@@ -3,7 +3,7 @@ use super::chars::{
     is_names_char, is_one_of, is_space,
 };
 use super::memo::{memoized, Key, Memo};
-use super::reduce::{reduce_plain_texts, Item};
+use super::reduce::{one, reduce_plain_texts, Item};
 use super::repetition::{Piece, Repetition, Run};
 use super::{Flags, Parsed, Parser};
 use crate::ast::{
@@ -77,7 +77,6 @@ impl Parser<'_> {
     }
 
     fn dispatched_inline_item(&mut self, position: usize, unit: u16, flags: Flags) -> Parsed<Item> {
-        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
         match char::from_u32(u32::from(unit)) {
             Some(' ' | '\t') => one(self.whitespace(position)),
             Some('\\') => one(self
@@ -98,14 +97,10 @@ impl Parser<'_> {
             Some(':') => one(self
                 .emoji(position)
                 .or_else(|| self.inline_emoticon(position, flags))),
-            Some('*') => self
-                .emphasis_with_whitespace(position)
-                .map(|(end, node)| (end, Item::One(node)))
+            Some('*') => one(self.emphasis_with_whitespace(position))
                 .or_else(|| self.emphasis(position, flags))
                 .or_else(|| one(self.inline_emoticon(position, flags))),
-            Some('~') => self
-                .emphasis_with_whitespace(position)
-                .map(|(end, node)| (end, Item::One(node)))
+            Some('~') => one(self.emphasis_with_whitespace(position))
                 .or_else(|| self.emphasis(position, flags)),
             Some('-') => one(self
                 .plain_run_before_emoticon(position)
@@ -115,7 +110,6 @@ impl Parser<'_> {
     }
 
     fn inline_item_slow_path(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
-        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
         one(self.autolinked_email(position))
             .or_else(|| one(self.plain_underscore_then_domain(position)))
             .or_else(|| one(self.autolinked_url(position)))
@@ -288,15 +282,11 @@ impl Parser<'_> {
                 if self.literal(cursor, "||").is_some() {
                     break;
                 }
-                if let Some((end, item)) = self.inline_item_pattern(cursor, flags) {
-                    items.push(item);
-                    cursor = end;
-                } else if let Some(end) = self.any(cursor) {
-                    items.push(Item::One(plain(self.text(cursor, end))));
-                    cursor = end;
-                } else {
+                let Some((end, item)) = self.inline_item_or_any(cursor, flags) else {
                     break;
-                }
+                };
+                items.push(item);
+                cursor = end;
             }
             if items.is_empty() {
                 return None;
@@ -402,13 +392,9 @@ impl Parser<'_> {
         }
         let inner = flags.with(flag);
         match kind {
-            Emphasis::Bold => self
-                .bold(position, inner)
-                .map(|(end, node)| (end, Item::One(node))),
+            Emphasis::Bold => one(self.bold(position, inner)),
             Emphasis::Italic => self.italic(position, inner),
-            Emphasis::Strike => self
-                .strikethrough(position, inner)
-                .map(|(end, node)| (end, Item::One(node))),
+            Emphasis::Strike => one(self.strikethrough(position, inner)),
         }
     }
 
@@ -508,7 +494,6 @@ impl Parser<'_> {
         flags: Flags,
         content: EmphasisContent,
     ) -> Parsed<Item> {
-        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
         one(self.whitespace(position))
             .or_else(|| one(self.inline_code(position)))
             .or_else(|| one(self.timestamp_rules(position)))
@@ -578,8 +563,7 @@ impl Parser<'_> {
             ]);
             return Some((suffix_end, Item::Many(reduced)));
         }
-        self.delimited(position, flags, "__", italic_content, italic)
-            .map(|(end, node)| (end, Item::One(node)))
+        one(self.delimited(position, flags, "__", italic_content, italic))
     }
 
     fn strikethrough(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
