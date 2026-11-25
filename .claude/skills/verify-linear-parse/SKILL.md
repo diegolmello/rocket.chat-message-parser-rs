@@ -42,18 +42,18 @@ Each violation names the option set, the seed, the work at both lengths and the 
 | Check | Code it covers |
 | --- | --- |
 | Memo discipline | `src/parser/memo.rs` (`memo_tables!`, `memoized!`), every `memoized!` call site in `src/parser/*.rs` |
-| Loop ends | `src/parser/repetition.rs` (`steps_end`, `repetition_end`, `run_end`, `repetition_items`, `Repetition`, `Run`, `Piece`) |
-| Deferred copies | `Parser::text` (counted reads) in `src/parser/mod.rs`; `Href`, `resolve_href`, `link_ref`, `markdown_link_ref` in `src/parser/links.rs` |
+| Loop ends | `src/parser/repetition.rs` (`steps_end`, `repetition_end`, `run_end`, `repetition_items`, `Loop`, `Repetition`, `Run`, `Piece`) |
+| Deferred copies | `Parser::text` (counted reads) in `src/parser/mod.rs`; `Href`, `resolve_href`, `link_ref`, `markdown_link_ref`, and `phone`, `phone_number`, `phone_prefix` (which return only an end) in `src/parser/links.rs` |
 | Precomputed scans | `Scans` and `email_guard`, `url_guard`, `block_katex_end`, `inline_katex_end`, `extra_run_end` in `src/parser/mod.rs` |
 | Rule bodies reached by the seeds | `src/parser/{blocks,inline,links,emoji,timestamp}.rs` |
-| Stack depth | `evaluate_emoticon_chain_backwards`, `inline_emoticon`, `bold_preferential_item`, `italic_preferential_item` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
+| Stack depth | `evaluate_emoticon_chain_backwards`, `inline_emoticon`, `EmphasisContent`, `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
 | Nested list lines | `nested_list_lines` (memoizes flat `NestedLine`s, never the grouped tree) and its callers `task`, `ordered_list_item`, `unordered_list_item` in `src/parser/blocks.rs` |
 
 Skip flags are passed by value as `Flags`, never stored on `Parser`, so they are restored after every rule by construction; no test covers this.
 
-**Sync commit:** `cec0670`
+**Sync commit:** `0c629ff`
 
-When covered code changes, compare it against the sync commit (`git diff cec0670 -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 0c629ff -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
