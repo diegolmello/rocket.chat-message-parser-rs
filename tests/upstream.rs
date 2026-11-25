@@ -133,10 +133,9 @@ fn pretty(value: &Value) -> String {
 
 fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
     let options = case.options.to_options();
-    let nodes: Vec<Node> = panic::catch_unwind(AssertUnwindSafe(|| {
-        parse_at(&case.input, &options, now).nodes
-    }))
-    .map_err(|payload| format!("parse panicked: {}", panic_message(payload.as_ref())))?;
+    let nodes: Vec<Node> =
+        panic::catch_unwind(AssertUnwindSafe(|| parse_at(&case.input, &options, now)))
+            .map_err(|payload| format!("parse panicked: {}", panic_message(payload.as_ref())))?;
     let expected = match (case.matcher, &case.expected) {
         (Matcher::NotToThrow, _) => return Ok(()),
         (_, Some(expected)) => expected,

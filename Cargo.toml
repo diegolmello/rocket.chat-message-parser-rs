@@ -16,5 +16,16 @@ url = "2"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 rustc-hash = "2"
 
+[features]
+work-report = []
+
 [dev-dependencies]
 proptest = "1.12.0"
+
+[[test]]
+name = "linear_work"
+required-features = ["work-report"]
+
+[[example]]
+name = "benchmark"
+required-features = ["work-report"]

@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant, SystemTime};
 
-use message_parser::{parse_at, KatexOptions, Options};
+use message_parser::{parse_with_report, KatexOptions, Options};
 
 const PATTERN: &str = "*_~[$:";
 const SAMPLES: u32 = 20;
@@ -69,7 +69,7 @@ fn main() {
         let mut work = 0;
         for _ in 0..SAMPLES {
             let started = Instant::now();
-            let outcome = parse_at(&input, &scenario.options, now);
+            let outcome = parse_with_report(&input, &scenario.options, now);
             durations.push(started.elapsed());
             work = outcome.report.work();
         }

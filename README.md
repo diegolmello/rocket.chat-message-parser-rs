@@ -1,3 +1,27 @@
 # rocket.chat-message-parser-rs
 
 Rust implementation of the Rocket.Chat message-parser grammar.
+
+It produces the same AST as `@rocket.chat/message-parser` 0.33.0, and parsing time grows linearly with message length.
+
+```rust
+use message_parser::{parse, Options};
+
+let nodes = parse("**hello** :smile:", &Options::default());
+```
+
+`parse_at` takes the current time explicitly. Relative timestamps such as `<t:10:00+01:00>` resolve against it.
+
+## Differences from upstream
+
+- Empty input returns an empty list. Upstream throws.
+- Lists nest at most 64 levels deep. Deeper lines become items of the 64th level, so no text is lost. Upstream nests without limit, and a tree that deep can overflow the stack when it is serialized or dropped.
+
+## Work report
+
+The `work-report` feature adds `parse_with_report`, which returns the AST with a `ParseReport` that counts input reads and rule calls. The linear-time test and the benchmark use it:
+
+```sh
+cargo test --release --features work-report --test linear_work
+cargo run --release --features work-report --example benchmark
+```

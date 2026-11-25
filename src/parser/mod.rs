@@ -50,6 +50,7 @@ pub struct ParseReport {
     pub repeated_evaluations: u64,
 }
 
+#[cfg(feature = "work-report")]
 impl ParseReport {
     pub fn work(&self) -> u64 {
         self.input_reads + self.rule_calls

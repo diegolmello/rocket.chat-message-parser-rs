@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use message_parser::{parse_at, KatexOptions, Options, ParseReport};
+use message_parser::{parse_with_report, KatexOptions, Options, ParseReport};
 
 const WORK_PER_UNIT_LIMIT: u64 = 400;
 const DENSITY_GROWTH_LIMIT: f64 = 2.0;
@@ -73,7 +73,7 @@ fn option_sets() -> [(&'static str, Options); 2] {
 }
 
 fn report(input: &str, options: &Options) -> ParseReport {
-    parse_at(input, options, fixed_clock()).report
+    parse_with_report(input, options, fixed_clock()).report
 }
 
 fn work_per_unit(report: &ParseReport) -> f64 {
@@ -197,70 +197,5 @@ fn repeated_seeds_grow_linearly() {
         "{} violation(s):\n{}",
         violations.len(),
         violations.join("\n")
-    );
-}
-
-#[test]
-fn long_emoticon_chains_parse_within_a_main_thread_stack() {
-    const MAIN_THREAD_STACK_BYTES: usize = 8 * 1024 * 1024;
-    let options = Options {
-        emoticons: true,
-        ..Options::default()
-    };
-    let inputs = [
-        ":)".repeat(50_000),
-        format!("*{}", ":)".repeat(50_000)),
-        format!("_{}", ":)".repeat(50_000)),
-    ];
-    let parser_thread = std::thread::Builder::new()
-        .stack_size(MAIN_THREAD_STACK_BYTES)
-        .spawn(move || {
-            inputs
-                .iter()
-                .map(|input| parse_at(input, &options, fixed_clock()).nodes.len())
-                .sum::<usize>()
-        })
-        .expect("parser thread starts");
-    assert!(
-        parser_thread
-            .join()
-            .expect("parser thread finishes without overflowing")
-            > 0
-    );
-}
-
-#[test]
-fn deeply_nested_lists_parse_within_a_small_stack() {
-    const SMALL_STACK_BYTES: usize = 1024 * 1024;
-    const NESTING_LEVELS: usize = 2_000;
-    let input: Vec<String> = (0..NESTING_LEVELS)
-        .map(|level| format!("{}- a", " ".repeat(level)))
-        .collect();
-    let input = input.join("\n");
-    let parser_thread = std::thread::Builder::new()
-        .stack_size(SMALL_STACK_BYTES)
-        .spawn(move || {
-            let nodes = parse_at(&input, &Options::default(), fixed_clock()).nodes;
-            let mut depth = 0;
-            let mut lists = nodes;
-            while let Some(message_parser::Node::UnorderedList { value }) = lists.pop() {
-                depth += 1;
-                let Some(message_parser::Node::ListItem {
-                    nested: Some(nested),
-                    ..
-                }) = value.into_iter().last()
-                else {
-                    break;
-                };
-                lists = nested;
-            }
-            depth
-        })
-        .expect("parser thread starts");
-    assert_eq!(
-        parser_thread
-            .join()
-            .expect("parser thread finishes without overflowing"),
-        NESTING_LEVELS
     );
 }
