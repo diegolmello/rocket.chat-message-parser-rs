@@ -5,9 +5,9 @@ description: Check that the message parser does linear work and bounded recursio
 
 # Verify linear parse work
 
-**Property.** For every input, each memoized rule is evaluated at most once per (position, skip flags), and total work (`ParseReport::work()`: input reads, including every unit `Parser::text` copies, plus rule calls) stays within a constant times input length. Emoticon lookahead chains of any length parse on an 8 MiB stack, and list nesting depth adds no parser stack frames.
+**Property.** For every input, each memoized rule is evaluated at most once per (position, skip flags), and total work (`ParseReport::work()`: input reads, including every unit `Parser::text` copies, plus rule calls) stays within a constant times input length. Emoticon lookahead chains of any length parse on an 8 MiB stack, spoilers that end in an emoticon chain on a 2 MiB stack, and list nesting depth adds no parser stack frames.
 
-**Harm if broken.** A user sends a message of repeated markup (`*_~[$:`, `[[[[`, `:):):)`), and every client that renders it freezes for seconds, or the process aborts on a stack overflow (50,000 chained emoticons, or thousands of indented list lines).
+**Harm if broken.** A user sends a message of repeated markup (`*_~[$:`, `[[[[`, `:):):)`), and every client that renders it freezes for seconds, or the process aborts on a stack overflow (50,000 chained emoticons, `||:)` repeated past about 1,000 times, or thousands of indented list lines).
 
 ## Run
 
@@ -26,6 +26,7 @@ The tests in `tests/linear_work.rs`:
 The tests in `tests/stack_depth.rs`, which need no feature:
 
 - `long_emoticon_chains_parse_within_a_main_thread_stack`: 50,000 chained `:)` emoticons, bare and inside bold and italic, on an 8 MiB thread.
+- `spoilers_ending_in_emoticons_parse_within_a_spawned_thread_stack`: `||:)` repeated 25,000 times, bare and after `*`, `_` and `![`, and `||x<3` repeated 20,000 times, with emoticons on, on a 2 MiB thread. Each emoticon looks ahead into the next spoiler, so without `evaluate_later_spoilers_backwards` the recursion grows by one spoiler per repetition.
 - `deeply_nested_lists_stop_nesting_at_the_depth_limit_and_keep_every_item`: 2,000 lines, each indented one space more than the last, on a 2 MiB thread (Rust's default for spawned threads). It parses, serializes, clones and drops the result. It checks the tree stops at 64 levels (`MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs` plus the top list), the deepest list holds the remaining 1,937 items, and all 2,000 items are kept.
 
 ## Reading a failure
@@ -38,6 +39,7 @@ Each violation names the option set, the seed, the work at both lengths and the 
   - A string built from the source before the enclosing rule has matched, on a path tried from many starts. Return `Piece::Text` or `Href::Source` (a range) and copy with `self.text` only once the match is certain, as `repetition_items` and `resolve_href` do.
   - A loop over lines that rescans earlier lines. `PREFIXED_SEEDS` catch this in `nested_list_lines`.
   - An unmemoized recursive lookahead. Memoize it, and evaluate the chain backwards like `evaluate_emoticon_chain_backwards` in `src/parser/inline.rs`.
+  - A lookahead into a sibling container whose content holds the same lookahead. Evaluate later containers first, as `evaluate_later_spoilers_backwards` does for `||`, once per skip-flag set.
 - **Measurement artefact.** Some seeds switch between two linear regimes depending on the repetition count; `"* _"` costs 164 or 102 per repetition. Confirm by printing work per repetition across several counts: a flat series is linear. Never raise a limit without that series in hand.
 - **Repeated evaluations.** A memo key misses part of the rule's real input. For example, a rule reads options or flags that are not in its `(position, flags)` key, or a body was called outside `memoized!`.
 
@@ -50,14 +52,14 @@ Each violation names the option set, the seed, the work at both lengths and the 
 | Deferred copies | `Parser::text` (counted reads) and `Parser::character` (keeps a surrogate pair whole; `KNOWN_SEEDS` `"~🀄"`, `"~x🇧~"` reach it) in `src/parser/mod.rs`; `Href`, `resolve_href`, `link_ref`, `markdown_link_ref`, and `phone`, `phone_number`, `phone_prefix` (which return only an end) in `src/parser/links.rs` |
 | Precomputed scans | `Scans` and `email_guard`, `url_guard`, `block_katex_end`, `inline_katex_end`, `extra_run_end` in `src/parser/mod.rs` |
 | Rule bodies reached by the seeds | `src/parser/{blocks,inline,links,emoji,timestamp}.rs` |
-| Stack depth | `MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs`; `evaluate_emoticon_chain_backwards`, `inline_emoticon`, `EmphasisContent`, `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
-| Nested list lines | `nested_list_lines` (memoizes flat `NestedLine`s, never the grouped tree) and its callers `task`, `ordered_list_item`, `unordered_list_item` in `src/parser/blocks.rs` |
+| Stack depth | `MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs`; `spoiler`, `evaluate_later_spoilers_backwards` (and `spoilers_evaluated_from` in `src/parser/memo.rs`), `evaluate_emoticon_chain_backwards`, `inline_emoticon`, `EmphasisContent`, `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
+| Nested list lines | `nested_list_lines` (memoizes flat `NestedLine`s, never the grouped tree), `nested_list_line_item`, `list_line_item`, and the top-level loop `list_of_marker` that calls `nested_lists` in `src/parser/blocks.rs` |
 
 Skip flags are passed by value as `Flags`, never stored on `Parser`, so they are restored after every rule by construction; no test covers this.
 
-**Sync commit:** `d1eada4`
+**Sync commit:** `6d5260b`
 
-When covered code changes, compare it against the sync commit (`git diff d1eada4 -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 6d5260b -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 

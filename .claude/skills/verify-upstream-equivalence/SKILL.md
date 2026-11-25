@@ -46,19 +46,19 @@ Do not weaken the comparison, drop an option set, or shrink an alphabet to make 
 | AST shape and serialization | `Node` and its serde attributes in `src/ast.rs` |
 | Every rule reachable from the alphabets and tokens | `src/parser/{mod,blocks,inline,links,emoji,timestamp,reduce,repetition,memo,chars,char_tables}.rs` |
 | Option handling | `Options`, `KatexOptions` in `src/lib.rs`; every `self.options` read in `src/parser/` |
-| Autolinks and TLDs | `auto_link`, `resolve_href` in `src/parser/links.rs`; `src/tld.rs` for the hosts in `TOKENS` (`b.com`, `a.b`, `rocket.chat`, `b.co`) and `customDomains` |
+| Autolinks and TLDs | `auto_link`, `resolve_href` in `src/parser/links.rs`; `is_linkable` in `src/tld.rs` for the hosts in `TOKENS` (`b.com`, `a.b`, `rocket.chat`, `b.co`) and `customDomains` |
 | Emoticons and shortcodes | `src/parser/emoji.rs`, `join_emoji` in `src/parser/reduce.rs` |
 | Relative and absolute timestamps | `src/parser/timestamp.rs`, at one clock and the zone in `TZ` |
 
 `.claude/skills/verify-linear-parse` covers work and stack depth; this skill covers only output.
 
-**Sync commit:** `8dbd3dc`
+**Sync commit:** `6d5260b`
 
-When covered code changes, compare it against the sync commit (`git diff 8dbd3dc -- src`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 6d5260b -- src`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
 - It is bounded, not total. Exhaustive coverage ends at 3 characters over `WIDE_ALPHABET`, 4 over `CORE_ALPHABET`, and 3 pieces over `TOKENS`. Longer inputs are sampled at random.
-- Characters outside the alphabets and tokens are not exercised: other Unicode emoji and their modifiers, most of the TLD list, `\r\n` line endings, tabs, and non-ASCII letters in links and mentions. `tests/emoji.rs` and `tests/tld.rs` cover the emoji and TLD tables against upstream data.
+- Characters outside the alphabets and tokens are not exercised: other Unicode emoji and their modifiers, most of the TLD list, `\r\n` line endings, tabs, and non-ASCII letters in links and mentions. `tests/emoji.rs` covers the emoji table and `src/tld/tests.rs` covers host linkability against upstream data.
 - One clock and one zone per run. Daylight saving edges depend on `TZ`; `tests/local_time.rs` covers them.
 - Lists nested past 64 levels and inputs over a few hundred characters are never generated.
