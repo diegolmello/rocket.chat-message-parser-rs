@@ -13,9 +13,92 @@ struct Fixture {
     #[serde(rename = "upstreamVersion")]
     _upstream_version: String,
     groups: Vec<Group>,
-    #[serde(rename = "uncaptured", default)]
-    _uncaptured: Vec<Value>,
+    #[serde(default)]
+    uncaptured: Vec<Uncaptured>,
 }
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Uncaptured {
+    name: String,
+    #[serde(rename = "reason")]
+    _reason: String,
+}
+
+const NOT_OBSERVABLE_THROUGH_PARSE: &str = "calls src/utils.autoLink directly";
+
+const UNCAPTURED_UPSTREAM_TESTS: &[(&str, &str, &str)] = &[
+    (
+        "emoji.test.ts",
+        "every emoji parses as one token, except documented components (emojibase@17.0.0)",
+        "tests/emoji.rs",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"***\" as a horizontal rule",
+        "tests/horizontal_rule.rs",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"___\" as a horizontal rule",
+        "tests/horizontal_rule.rs",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"*******\" as a horizontal rule",
+        "tests/horizontal_rule.rs",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"_______\" as a horizontal rule",
+        "tests/horizontal_rule.rs",
+    ),
+    (
+        "table.test.ts",
+        "normalizes ragged body rows to the header column count",
+        "tests/table.rs",
+    ),
+    (
+        "table.test.ts",
+        "exposes the source offsets as fallback for renderers without table support",
+        "tests/table.rs",
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should preserve the original protocol if the protocol is http or https",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should preserve the original protocol for invalid absolute URLs",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should preserve the original protocol even if for custom protocols",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return // as the protocol if // is the protocol specified",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return an url concatenated '//' if the url has no protocol",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return an url concatenated '//' if the url has no protocol and has sub-domain",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return an plain text url due to invalid TLD that's validate with the external library TLDTS",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+];
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -248,16 +331,60 @@ upstream_fixtures! {
     url => "url",
 }
 
-#[test]
-fn every_fixture_file_has_a_test() {
-    let directory = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/upstream");
-    let mut on_disk: Vec<String> = std::fs::read_dir(directory)
+const FIXTURE_DIRECTORY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/upstream");
+
+fn fixture_paths() -> Vec<std::path::PathBuf> {
+    let mut paths: Vec<std::path::PathBuf> = std::fs::read_dir(FIXTURE_DIRECTORY)
         .expect("fixture directory exists")
         .map(|entry| entry.expect("fixture directory entry is readable").path())
         .filter(|path| {
             path.extension()
                 .is_some_and(|extension| extension == "json")
         })
+        .collect();
+    paths.sort();
+    paths
+}
+
+#[test]
+fn every_uncaptured_upstream_test_has_a_hand_port_or_a_reason() {
+    let mut uncaptured: Vec<(String, String)> = fixture_paths()
+        .iter()
+        .flat_map(|path| {
+            let source = std::fs::read_to_string(path).expect("fixture is readable");
+            let fixture: Fixture = serde_json::from_str(&source).expect("fixture parses");
+            let file = fixture.file;
+            fixture
+                .uncaptured
+                .into_iter()
+                .map(move |test| (file.clone(), test.name))
+        })
+        .collect();
+    uncaptured.sort();
+    let mut accounted: Vec<(String, String)> = UNCAPTURED_UPSTREAM_TESTS
+        .iter()
+        .map(|(file, name, _)| ((*file).to_owned(), (*name).to_owned()))
+        .collect();
+    accounted.sort();
+    assert_eq!(
+        uncaptured, accounted,
+        "an upstream test the fixtures cannot capture needs a hand port or a reason in UNCAPTURED_UPSTREAM_TESTS"
+    );
+    for (_, name, covered_by) in UNCAPTURED_UPSTREAM_TESTS {
+        if *covered_by != NOT_OBSERVABLE_THROUGH_PARSE {
+            let hand_port = concat!(env!("CARGO_MANIFEST_DIR"), "/").to_owned() + covered_by;
+            assert!(
+                std::path::Path::new(&hand_port).exists(),
+                "{name}: hand port {covered_by} is missing"
+            );
+        }
+    }
+}
+
+#[test]
+fn every_fixture_file_has_a_test() {
+    let mut on_disk: Vec<String> = fixture_paths()
+        .iter()
         .map(|path| {
             path.file_stem()
                 .expect("fixture has a name")
@@ -273,6 +400,6 @@ fn every_fixture_file_has_a_test() {
     covered.sort();
     assert_eq!(
         on_disk, covered,
-        "tests/upstream.rs must list every fixture in {directory}"
+        "tests/upstream.rs must list every fixture in {FIXTURE_DIRECTORY}"
     );
 }
