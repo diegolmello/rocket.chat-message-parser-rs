@@ -1,0 +1,122 @@
+{
+	"file": "tasks.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"- [ ] this is an incomplete item\n- [x] this is a complete item\n- [x] @mentions, #refs, [links](http://localhost), **formatting**\n- [x] list syntax required (any unordered or ordered list supported)\n- [ ] :smile:\"",
+					"input": "- [ ] this is an incomplete item\n- [x] this is a complete item\n- [x] @mentions, #refs, [links](http://localhost), **formatting**\n- [x] list syntax required (any unordered or ordered list supported)\n- [ ] :smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TASKS",
+							"value": [
+								{
+									"type": "TASK",
+									"status": false,
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "this is an incomplete item"
+										}
+									]
+								},
+								{
+									"type": "TASK",
+									"status": true,
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "this is a complete item"
+										}
+									]
+								},
+								{
+									"type": "TASK",
+									"status": true,
+									"value": [
+										{
+											"type": "MENTION_USER",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "mentions"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": ", "
+										},
+										{
+											"type": "MENTION_CHANNEL",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "refs"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": ", "
+										},
+										{
+											"type": "LINK",
+											"value": {
+												"src": {
+													"type": "PLAIN_TEXT",
+													"value": "http://localhost"
+												},
+												"label": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "links"
+													}
+												]
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": ", "
+										},
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "formatting"
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "TASK",
+									"status": true,
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "list syntax required (any unordered or ordered list supported)"
+										}
+									]
+								},
+								{
+									"type": "TASK",
+									"status": false,
+									"value": [
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "smile"
+											},
+											"shortCode": "smile"
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

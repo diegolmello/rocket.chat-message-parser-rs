@@ -1,0 +1,230 @@
+{
+	"file": "longCodeFence.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"````\nExample message with code block.\n\n```python\nprint(\\\"hello\\\")\n```\n````\"",
+					"input": "````\nExample message with code block.\n\n```python\nprint(\"hello\")\n```\n````",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "Example message with code block."
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ""
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "```python"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "print(\"hello\")"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "```"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"````js\nconst a = 1;\n````\"",
+					"input": "````js\nconst a = 1;\n````",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "js",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "const a = 1;"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"`````\n````\ninner\n````\n`````\"",
+					"input": "`````\n````\ninner\n````\n`````",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "````"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "inner"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "````"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"````\n`````\nx\n````\"",
+					"input": "````\n`````\nx\n````",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "`````"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "x"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"````\nx\n````\nafter\"",
+					"input": "````\nx\n````\nafter",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "x"
+									}
+								}
+							]
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "after"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"````\n````\"",
+					"input": "````\n````",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "````"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "````"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"````\nunclosed\n```\"",
+					"input": "````\nunclosed\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "````"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "unclosed"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "```"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

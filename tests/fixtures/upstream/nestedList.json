@@ -1,0 +1,410 @@
+{
+	"file": "nestedList.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"* Item 1\n    * Nested Item 1\n    * Nested Item 2\n    * Nested Item 3\"",
+					"input": "* Item 1\n    * Nested Item 1\n    * Nested Item 2\n    * Nested Item 3",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Item 1"
+										}
+									],
+									"nested": [
+										{
+											"type": "UNORDERED_LIST",
+											"value": [
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "Nested Item 1"
+														}
+													]
+												},
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "Nested Item 2"
+														}
+													]
+												},
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "Nested Item 3"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"- First\n  - Second\n    - Third\n  - Back to second\n- Back to first\"",
+					"input": "- First\n  - Second\n    - Third\n  - Back to second\n- Back to first",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "First"
+										}
+									],
+									"nested": [
+										{
+											"type": "UNORDERED_LIST",
+											"value": [
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "Second"
+														}
+													],
+													"nested": [
+														{
+															"type": "UNORDERED_LIST",
+															"value": [
+																{
+																	"type": "LIST_ITEM",
+																	"value": [
+																		{
+																			"type": "PLAIN_TEXT",
+																			"value": "Third"
+																		}
+																	]
+																}
+															]
+														}
+													]
+												},
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "Back to second"
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Back to first"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"1. Step one\n   - detail *a*\n   - detail b\n2. Step two\n\t1. tab indented\"",
+					"input": "1. Step one\n   - detail *a*\n   - detail b\n2. Step two\n\t1. tab indented",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "ORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Step one"
+										}
+									],
+									"number": 1,
+									"nested": [
+										{
+											"type": "UNORDERED_LIST",
+											"value": [
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "detail "
+														},
+														{
+															"type": "BOLD",
+															"value": [
+																{
+																	"type": "PLAIN_TEXT",
+																	"value": "a"
+																}
+															]
+														}
+													]
+												},
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "detail b"
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Step two"
+										}
+									],
+									"number": 2,
+									"nested": [
+										{
+											"type": "ORDERED_LIST",
+											"value": [
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "tab indented"
+														}
+													],
+													"number": 1
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"- [ ] parent task\n  - [x] child task\n  - child item\"",
+					"input": "- [ ] parent task\n  - [x] child task\n  - child item",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TASKS",
+							"value": [
+								{
+									"type": "TASK",
+									"status": false,
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "parent task"
+										}
+									],
+									"nested": [
+										{
+											"type": "TASKS",
+											"value": [
+												{
+													"type": "TASK",
+													"status": true,
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "child task"
+														}
+													]
+												}
+											]
+										},
+										{
+											"type": "UNORDERED_LIST",
+											"value": [
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "child item"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"- a\n    - b\n  - c\n   - d\"",
+					"input": "- a\n    - b\n  - c\n   - d",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "a"
+										}
+									],
+									"nested": [
+										{
+											"type": "UNORDERED_LIST",
+											"value": [
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "b"
+														}
+													]
+												},
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "c"
+														}
+													],
+													"nested": [
+														{
+															"type": "UNORDERED_LIST",
+															"value": [
+																{
+																	"type": "LIST_ITEM",
+																	"value": [
+																		{
+																			"type": "PLAIN_TEXT",
+																			"value": "d"
+																		}
+																	]
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"- a\n    - b\n \t- c\"",
+					"input": "- a\n    - b\n \t- c",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "a"
+										}
+									],
+									"nested": [
+										{
+											"type": "UNORDERED_LIST",
+											"value": [
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "b"
+														}
+													]
+												},
+												{
+													"type": "LIST_ITEM",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "c"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"- Item\n  not a list line\"",
+					"input": "- Item\n  not a list line",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Item"
+										}
+									]
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "  not a list line"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

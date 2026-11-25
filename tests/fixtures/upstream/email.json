@@ -1,0 +1,508 @@
+{
+	"file": "email.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"joe@joe.com\"",
+					"input": "joe@joe.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe@joe.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"joe@joe.com is Joe's email\"",
+					"input": "joe@joe.com is Joe's email",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe@joe.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " is Joe's email"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is joe@joe.com because it is\"",
+					"input": "Joe's email is joe@joe.com because it is",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe@joe.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " because it is"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is joe@joe.com\"",
+					"input": "Joe's email is joe@joe.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe@joe.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is joe@joe.com. Try emailing him\"",
+					"input": "Joe's email is joe@joe.com. Try emailing him",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe@joe.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ". Try emailing him"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is joe.smith@joe.com\"",
+					"input": "Joe's email is joe.smith@joe.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe.smith@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe.smith@joe.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is JOE@JOE.COM\"",
+					"input": "Joe's email is JOE@JOE.COM",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:JOE@JOE.COM"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "JOE@JOE.COM"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is (joe@joe.com)\"",
+					"input": "Joe's email is (joe@joe.com)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is ("
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe@joe.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ")"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is (joe_roe@joe.com)\"",
+					"input": "Joe's email is (joe_roe@joe.com)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is ("
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe_roe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe_roe@joe.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ")"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is (joe'roe@joe.com)\"",
+					"input": "Joe's email is (joe'roe@joe.com)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is ("
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:joe'roe@joe.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "joe'roe@joe.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ")"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is mañana@mañana.com\"",
+					"input": "Joe's email is mañana@mañana.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:mañana@mañana.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "mañana@mañana.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Joe's email is Кириллица@Кириллица.com\"",
+					"input": "Joe's email is Кириллица@Кириллица.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Joe's email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:Кириллица@Кириллица.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Кириллица@Кириллица.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi there@stuff\"",
+					"input": "Hi there@stuff",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi there@stuff"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"My email is busueng.kim@aaa.com\"",
+					"input": "My email is busueng.kim@aaa.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "My email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:busueng.kim@aaa.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "busueng.kim@aaa.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"My email is mailto:asdf@asdf.com\"",
+					"input": "My email is mailto:asdf@asdf.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "My email is "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "mailto:asdf@asdf.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "asdf@asdf.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"My email is fake@gmail.c\"",
+					"input": "My email is fake@gmail.c",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "My email is fake@gmail.c"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"My email is fake@gmail.comf\"",
+					"input": "My email is fake@gmail.comf",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "My email is fake@gmail.comf"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

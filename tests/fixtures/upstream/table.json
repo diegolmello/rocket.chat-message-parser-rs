@@ -1,0 +1,439 @@
+{
+	"file": "table.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"| Header 1 | Header 2 |\n| -------- | -------- |\n| Cell 1   | Cell 2   |\"",
+					"input": "| Header 1 | Header 2 |\n| -------- | -------- |\n| Cell 1   | Cell 2   |",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TABLE",
+							"value": {
+								"header": [
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Header 1"
+											}
+										]
+									},
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Header 2"
+											}
+										]
+									}
+								],
+								"rows": [
+									{
+										"type": "TABLE_ROW",
+										"value": [
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "Cell 1"
+													}
+												]
+											},
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "Cell 2"
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							"fallback": [
+								0,
+								71
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"| Left | Center | Right |\n| :--- | :----: | ----: |\n| a    | b      | c     |\"",
+					"input": "| Left | Center | Right |\n| :--- | :----: | ----: |\n| a    | b      | c     |",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TABLE",
+							"value": {
+								"header": [
+									{
+										"type": "TABLE_CELL",
+										"align": "left",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Left"
+											}
+										]
+									},
+									{
+										"type": "TABLE_CELL",
+										"align": "center",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Center"
+											}
+										]
+									},
+									{
+										"type": "TABLE_CELL",
+										"align": "right",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Right"
+											}
+										]
+									}
+								],
+								"rows": [
+									{
+										"type": "TABLE_ROW",
+										"value": [
+											{
+												"type": "TABLE_CELL",
+												"align": "left",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "a"
+													}
+												]
+											},
+											{
+												"type": "TABLE_CELL",
+												"align": "center",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "b"
+													}
+												]
+											},
+											{
+												"type": "TABLE_CELL",
+												"align": "right",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "c"
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							"fallback": [
+								0,
+								77
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"| h |\n| - |\n| 1 |\n| 2 |\"",
+					"input": "| h |\n| - |\n| 1 |\n| 2 |",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TABLE",
+							"value": {
+								"header": [
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "h"
+											}
+										]
+									}
+								],
+								"rows": [
+									{
+										"type": "TABLE_ROW",
+										"value": [
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "1"
+													}
+												]
+											}
+										]
+									},
+									{
+										"type": "TABLE_ROW",
+										"value": [
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "2"
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							"fallback": [
+								0,
+								23
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"| a | b |\n| - | - |\"",
+					"input": "| a | b |\n| - | - |",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TABLE",
+							"value": {
+								"header": [
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "a"
+											}
+										]
+									},
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "b"
+											}
+										]
+									}
+								],
+								"rows": []
+							},
+							"fallback": [
+								0,
+								19
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"| Name | Link |\n| ---- | ---- |\n| **bold** | [rc](https://rocket.chat) |\"",
+					"input": "| Name | Link |\n| ---- | ---- |\n| **bold** | [rc](https://rocket.chat) |",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TABLE",
+							"value": {
+								"header": [
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Name"
+											}
+										]
+									},
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Link"
+											}
+										]
+									}
+								],
+								"rows": [
+									{
+										"type": "TABLE_ROW",
+										"value": [
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "BOLD",
+														"value": [
+															{
+																"type": "PLAIN_TEXT",
+																"value": "bold"
+															}
+														]
+													}
+												]
+											},
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "LINK",
+														"value": {
+															"src": {
+																"type": "PLAIN_TEXT",
+																"value": "https://rocket.chat"
+															},
+															"label": [
+																{
+																	"type": "PLAIN_TEXT",
+																	"value": "rc"
+																}
+															]
+														}
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							"fallback": [
+								0,
+								72
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"| a | b |\n| - | - |\n| x \\\\| y | z |\"",
+					"input": "| a | b |\n| - | - |\n| x \\| y | z |",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "TABLE",
+							"value": {
+								"header": [
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "a"
+											}
+										]
+									},
+									{
+										"type": "TABLE_CELL",
+										"value": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "b"
+											}
+										]
+									}
+								],
+								"rows": [
+									{
+										"type": "TABLE_ROW",
+										"value": [
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "x | y"
+													}
+												]
+											},
+											{
+												"type": "TABLE_CELL",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "z"
+													}
+												]
+											}
+										]
+									}
+								]
+							},
+							"fallback": [
+								0,
+								34
+							]
+						}
+					]
+				},
+				{
+					"name": "does not parse \"| just | text |\" as table",
+					"input": "| just | text |",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "| just | text |"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "does not parse \"| a | b\n| - | -\" as table",
+					"input": "| a | b\n| - | -",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "| a | b"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "| - | -"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"uncaptured": [
+		{
+			"name": "normalizes ragged body rows to the header column count",
+			"reason": "TypeError: undefined is not a function (near '...[node]...')"
+		},
+		{
+			"name": "exposes the source offsets as fallback for renderers without table support",
+			"reason": "TypeError: undefined is not a function (near '...[node]...')"
+		}
+	]
+}

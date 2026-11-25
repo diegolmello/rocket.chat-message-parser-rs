@@ -1,0 +1,100 @@
+{
+	"file": "lineBreak.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"test\n\ntest2\"",
+					"input": "test\n\ntest2",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test"
+								}
+							]
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test2"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"test\n\ntest2\n\"",
+					"input": "test\n\ntest2\n",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test"
+								}
+							]
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test2"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"test\n\n\n\ntest2\n\"",
+					"input": "test\n\n\n\ntest2\n",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test"
+								}
+							]
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test2"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

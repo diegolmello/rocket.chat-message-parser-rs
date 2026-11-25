@@ -1,0 +1,902 @@
+{
+	"file": "emoticons.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"test\n     :) test\"",
+					"input": "test\n     :) test",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "     "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " test"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":) asd\"",
+					"input": ":) asd",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " asd"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" :) asd\"",
+					"input": " :) asd",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " asd"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :)\"",
+					"input": "Hi :)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"asdas :) asd\"",
+					"input": "asdas :) asd",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "asdas "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " asd"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":) :) :) :)\"",
+					"input": ":) :) :) :)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":)\n  :)\n  \"",
+					"input": ":)\n  :)\n  ",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":):):)\"",
+					"input": ":):):)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" :):):) \"",
+					"input": " :):):) ",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\n :):):) \n\"",
+					"input": "\n :):):) \n",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":)  :)  :)\"",
+					"input": ":)  :)  :)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":) :)\"",
+					"input": ":) :)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":)\"",
+					"input": ":)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" :)\"",
+					"input": " :)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":) \"",
+					"input": ":) ",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" :) \"",
+					"input": " :) ",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":)"
+									},
+									"shortCode": "slight_smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"D:\"",
+					"input": "D:",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "D:"
+									},
+									"shortCode": "fearful"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"D: D:\"",
+					"input": "D: D:",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "D:"
+									},
+									"shortCode": "fearful"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "D:"
+									},
+									"shortCode": "fearful"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" D: D: D: \"",
+					"input": " D: D: D: ",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "D:"
+									},
+									"shortCode": "fearful"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "D:"
+									},
+									"shortCode": "fearful"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "D:"
+									},
+									"shortCode": "fearful"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi D:\"",
+					"input": "Hi D:",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "D:"
+									},
+									"shortCode": "fearful"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"normal emojis :):):)\"",
+					"input": "normal emojis :):):)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "normal emojis :):):)"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":)10:30\"",
+					"input": ":)10:30",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":)10:30"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile::)text\"",
+					"input": ":smile::)text",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":smile::)text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"text:):smile:\"",
+					"input": "text:):smile:",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text:):smile:"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"text:):)\"",
+					"input": "text:):)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text:):)"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":):):) normal emojis\"",
+					"input": ":):):) normal emojis",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":):):) normal emojis"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":):):):)\"",
+					"input": ":):):):)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":):):):)"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"10:30\"",
+					"input": "10:30",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "10:30"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"he:)llo\"",
+					"input": "he:)llo",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "he:)llo"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":)Hi\"",
+					"input": ":)Hi",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":)Hi"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi:) Hi\"",
+					"input": "Hi:) Hi",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi:) Hi"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi:)\"",
+					"input": "Hi:)",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi:)"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@#@#! :)@!@\"",
+					"input": "@#@#! :)@!@",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "@#@#! :)@!@"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

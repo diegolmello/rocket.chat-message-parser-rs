@@ -1,0 +1,296 @@
+{
+	"file": "color.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"color:#ccc\"",
+					"input": "color:#ccc",
+					"options": {
+						"colors": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "COLOR",
+									"value": {
+										"r": 204,
+										"g": 204,
+										"b": 204,
+										"a": 255
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#ccc\"",
+					"input": "color:#ccc",
+					"options": {
+						"colors": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#ccc"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#cccc\"",
+					"input": "color:#cccc",
+					"options": {
+						"colors": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "COLOR",
+									"value": {
+										"r": 204,
+										"g": 204,
+										"b": 204,
+										"a": 204
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#cccc\"",
+					"input": "color:#cccc",
+					"options": {
+						"colors": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#cccc"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7c7c7\"",
+					"input": "color:#c7c7c7",
+					"options": {
+						"colors": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "COLOR",
+									"value": {
+										"r": 199,
+										"g": 199,
+										"b": 199,
+										"a": 255
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7c7c7\"",
+					"input": "color:#c7c7c7",
+					"options": {
+						"colors": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#c7c7c7"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7c7c7c7\"",
+					"input": "color:#c7c7c7c7",
+					"options": {
+						"colors": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "COLOR",
+									"value": {
+										"r": 199,
+										"g": 199,
+										"b": 199,
+										"a": 199
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7c7c7c7\"",
+					"input": "color:#c7c7c7c7",
+					"options": {
+						"colors": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#c7c7c7c7"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7c7c7c7c7\"",
+					"input": "color:#c7c7c7c7c7",
+					"options": {
+						"colors": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#c7c7c7c7c7"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7c7c7c7c7\"",
+					"input": "color:#c7c7c7c7c7",
+					"options": {
+						"colors": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#c7c7c7c7c7"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7\"",
+					"input": "color:#c7",
+					"options": {
+						"colors": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#c7"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#c7\"",
+					"input": "color:#c7",
+					"options": {
+						"colors": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#c7"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#zzz\"",
+					"input": "color:#zzz",
+					"options": {
+						"colors": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#zzz"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"color:#zzz\"",
+					"input": "color:#zzz",
+					"options": {
+						"colors": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "color:#zzz"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

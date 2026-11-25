@@ -1,0 +1,259 @@
+{
+	"file": "katex.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"\\\\[\n      \\\\f\\\\relax{x} = \\\\int_{-\\\\infty}^\\\\infty\n      \\\\f\\\\hat\\\\xi\\\\,e^{2 \\\\pi i \\\\xi x}\n      \\\\,d\\\\xi\n    \\\\]\"",
+					"input": "\\[\n      \\f\\relax{x} = \\int_{-\\infty}^\\infty\n      \\f\\hat\\xi\\,e^{2 \\pi i \\xi x}\n      \\,d\\xi\n    \\]",
+					"options": {
+						"katex": {
+							"parenthesisSyntax": true
+						}
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "KATEX",
+							"value": "\n      \\f\\relax{x} = \\int_{-\\infty}^\\infty\n      \\f\\hat\\xi\\,e^{2 \\pi i \\xi x}\n      \\,d\\xi\n    "
+						}
+					]
+				},
+				{
+					"name": "parses \"Easy as \\\\(E = mc^2\\\\), right?\"",
+					"input": "Easy as \\(E = mc^2\\), right?",
+					"options": {
+						"katex": {
+							"parenthesisSyntax": true
+						}
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Easy as "
+								},
+								{
+									"type": "INLINE_KATEX",
+									"value": "E = mc^2"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ", right?"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"$$E = mc^2$$\"",
+					"input": "$$E = mc^2$$",
+					"options": {
+						"katex": {
+							"dollarSyntax": true
+						}
+					},
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "KATEX",
+							"value": "E = mc^2"
+						}
+					]
+				},
+				{
+					"name": "parses \"$E = mc^2$\"",
+					"input": "$E = mc^2$",
+					"options": {
+						"katex": {
+							"dollarSyntax": true
+						}
+					},
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "INLINE_KATEX",
+									"value": "E = mc^2"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Easy as $E = mc^2$, right?\"",
+					"input": "Easy as $E = mc^2$, right?",
+					"options": {
+						"katex": {
+							"dollarSyntax": true
+						}
+					},
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Easy as "
+								},
+								{
+									"type": "INLINE_KATEX",
+									"value": "E = mc^2"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ", right?"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"$$\n\\\\sum_{i=1}^{n} x_i\n$$\"",
+					"input": "$$\n\\sum_{i=1}^{n} x_i\n$$",
+					"options": {
+						"katex": {
+							"dollarSyntax": true
+						}
+					},
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "KATEX",
+							"value": "\n\\sum_{i=1}^{n} x_i\n"
+						}
+					]
+				},
+				{
+					"name": "parses \"$$\\\\frac{a}{b} + \\\\sqrt{c}$$\"",
+					"input": "$$\\frac{a}{b} + \\sqrt{c}$$",
+					"options": {
+						"katex": {
+							"dollarSyntax": true
+						}
+					},
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "KATEX",
+							"value": "\\frac{a}{b} + \\sqrt{c}"
+						}
+					]
+				},
+				{
+					"name": "parses \"$a$ text $b$\"",
+					"input": "$a$ text $b$",
+					"options": {
+						"katex": {
+							"dollarSyntax": true
+						}
+					},
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "INLINE_KATEX",
+									"value": "a"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " text "
+								},
+								{
+									"type": "INLINE_KATEX",
+									"value": "b"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"$x$ and $y$\"",
+					"input": "$x$ and $y$",
+					"options": {
+						"katex": {
+							"dollarSyntax": true
+						}
+					},
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "INLINE_KATEX",
+									"value": "x"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " and "
+								},
+								{
+									"type": "INLINE_KATEX",
+									"value": "y"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses KaTeX as plain text when syntax options are disabled: \"$$E = mc^2$$\"",
+					"input": "$$E = mc^2$$",
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "$$E = mc^2$$"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses KaTeX as plain text when syntax options are disabled: \"$E = mc^2$\"",
+					"input": "$E = mc^2$",
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "$E = mc^2$"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses KaTeX as plain text when syntax options are disabled: \"\\\\(E = mc^2\\\\)\"",
+					"input": "\\(E = mc^2\\)",
+					"matcher": "toMatchObject",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\\(E = mc^2\\)"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

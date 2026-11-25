@@ -1,0 +1,1713 @@
+{
+	"file": "emphasis.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"_:smile:_\"",
+					"input": "_:smile:_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "smile"
+											},
+											"shortCode": "smile"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_:slight_smile:_\"",
+					"input": "_:slight_smile:_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "slight_smile"
+											},
+											"shortCode": "slight_smile"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_test :smile: test_\"",
+					"input": "_test :smile: test_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "smile"
+											},
+											"shortCode": "smile"
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " test"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_test :slight_smile: test_\"",
+					"input": "_test :slight_smile: test_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "slight_smile"
+											},
+											"shortCode": "slight_smile"
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " test"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_😀_\"",
+					"input": "_😀_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "EMOJI",
+											"unicode": "😀"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_test 😀_\"",
+					"input": "_test 😀_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "EMOJI",
+											"unicode": "😀"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_test @guilherme.gazzo test_\"",
+					"input": "_test @guilherme.gazzo test_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "MENTION_USER",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "guilherme.gazzo"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " test"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_test #GENERAL test_\"",
+					"input": "_test #GENERAL test_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "MENTION_CHANNEL",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "GENERAL"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " test"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_[A brand new Gist](https://gist.github.com/24dddfa97bef58f46ac2ce0f80c58ba4)_\"",
+					"input": "_[A brand new Gist](https://gist.github.com/24dddfa97bef58f46ac2ce0f80c58ba4)_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "LINK",
+											"value": {
+												"src": {
+													"type": "PLAIN_TEXT",
+													"value": "https://gist.github.com/24dddfa97bef58f46ac2ce0f80c58ba4"
+												},
+												"label": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "A brand new Gist"
+													}
+												]
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__italic__\"",
+					"input": "__italic__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__italic__non\"",
+					"input": "__italic__non",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "__italic__non"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__test__test__\"",
+					"input": "__test__test__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "__test__test__"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"pre__italic__post\"",
+					"input": "pre__italic__post",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "pre__italic__post"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" pre__italic__post\"",
+					"input": " pre__italic__post",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": " pre__italic__post"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" pre__**~~boldstrikeitalic~~**__post \"",
+					"input": " pre__**~~boldstrikeitalic~~**__post ",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": " pre__"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "STRIKE",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "boldstrikeitalic"
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "__post "
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__\"",
+					"input": "__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "__"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_ _\"",
+					"input": "_ _",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_ _"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__ _\"",
+					"input": "__ _",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "__ _"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__ __\"",
+					"input": "__ __",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "__ __"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_ Hello_\"",
+					"input": "_ Hello_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": " Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_Hello _\"",
+					"input": "_Hello _",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":custom_emoji_case:\"",
+					"input": ":custom_emoji_case:",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "custom_emoji_case"
+									},
+									"shortCode": "custom_emoji_case"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_Hel lo_\"",
+					"input": "_Hel lo_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hel lo"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_Hello_\"",
+					"input": "_Hello_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__Hello__\"",
+					"input": "__Hello__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__Hello_\"",
+					"input": "__Hello_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_"
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_Hello__\"",
+					"input": "_Hello__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_Hello\"",
+					"input": "_Hello",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hello_\"",
+					"input": "Hello_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello_"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He_llo\"",
+					"input": "He_llo",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He_llo"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"___Hello___\"",
+					"input": "___Hello___",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_"
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"___Hello__\"",
+					"input": "___Hello__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_"
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_Hello_ this is dog\"",
+					"input": "_Hello_ this is dog",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Rocket cat says _Hello_\"",
+					"input": "Rocket cat says _Hello_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He said _Hello_ to her\"",
+					"input": "He said _Hello_ to her",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"__Hello__ this is dog\"",
+					"input": "__Hello__ this is dog",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Rocket cat says __Hello__\"",
+					"input": "Rocket cat says __Hello__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He said __Hello__ to her\"",
+					"input": "He said __Hello__ to her",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"text_hello_text\"",
+					"input": "text_hello_text",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text_hello_text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_hello_text\"",
+					"input": "_hello_text",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_hello_text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"text_hello_\"",
+					"input": "text_hello_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text_hello_"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_italic@test_\"",
+					"input": "_italic@test_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic@test"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_italic#test_\"",
+					"input": "_italic#test_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic#test"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"paragraph@test__\"",
+					"input": "paragraph@test__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "paragraph@test__"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_ @guilherme_gazzo_ _\"",
+					"input": "_ @guilherme_gazzo_ _",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": " "
+										},
+										{
+											"type": "MENTION_USER",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "guilherme_gazzo_"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_ @guilherme.gazzo _\"",
+					"input": "_ @guilherme.gazzo _",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": " "
+										},
+										{
+											"type": "MENTION_USER",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "guilherme.gazzo"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_9797.76_\"",
+					"input": "_9797.76_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "9797.76"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_3.14_\"",
+					"input": "_3.14_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "3.14"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_example.com_\"",
+					"input": "_example.com_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "example.com"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_rocket.chat_\"",
+					"input": "_rocket.chat_",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "rocket.chat"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_example.com\"",
+					"input": "_example.com",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_example.com"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**reference link inside [emphasis with more [references](https://rocket.chat)](https://rocket.chat)**\"",
+					"input": "**reference link inside [emphasis with more [references](https://rocket.chat)](https://rocket.chat)**",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "reference link inside "
+										},
+										{
+											"type": "LINK",
+											"value": {
+												"src": {
+													"type": "PLAIN_TEXT",
+													"value": "https://rocket.chat"
+												},
+												"label": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "emphasis with more [references"
+													}
+												]
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": "](https://rocket.chat)"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_ouch_ouch\"",
+					"input": "_ouch_ouch",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_ouch_ouch"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_@mention _gone\"",
+					"input": "_@mention _gone",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_"
+								},
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "mention"
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " _gone"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"_nothing `should` be _gone\"",
+					"input": "_nothing `should` be _gone",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "_nothing "
+								},
+								{
+									"type": "INLINE_CODE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "should"
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " be _gone"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**bold ~~and strike~~** **not bold ~~but strike** ~~ not strike~~\"",
+					"input": "**bold ~~and strike~~** **not bold ~~but strike** ~~ not strike~~",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold "
+										},
+										{
+											"type": "STRIKE",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "and strike"
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " **not bold "
+								},
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "but strike** "
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " not strike~~"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**bold** **another bold** ~~strike~~ ~~another strike~~ **bold ~~and strike~~** **not bold ~~but strike** ~~ not strike~~\"",
+					"input": "**bold** **another bold** ~~strike~~ ~~another strike~~ **bold ~~and strike~~** **not bold ~~but strike** ~~ not strike~~",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "another bold"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "strike"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "another strike"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold "
+										},
+										{
+											"type": "STRIKE",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "and strike"
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " **not bold "
+								},
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "but strike** "
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " not strike~~"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"some_snake_case_text and even_more\"",
+					"input": "some_snake_case_text and even_more",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "some_snake_case_text and even_more"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"some_snake_case_text and some __italic__ text\"",
+					"input": "some_snake_case_text and some __italic__ text",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "some_snake_case_text and some "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"some__double__snake__case__text and even_more\"",
+					"input": "some__double__snake__case__text and even_more",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "some__double__snake__case__text and even_more"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"some__double__snake__case__text and some __italic__ text\"",
+					"input": "some__double__snake__case__text and some __italic__ text",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "some__double__snake__case__text and some "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"something__ __and italic__\"",
+					"input": "something__ __and italic__",
+					"options": {
+						"emoticons": false
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "something__ "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "and italic"
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

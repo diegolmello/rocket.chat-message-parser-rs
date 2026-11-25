@@ -1,0 +1,60 @@
+{
+	"file": "image.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"![image](https://rocket.chat/assets/img/header/logo.svg)\"",
+					"input": "![image](https://rocket.chat/assets/img/header/logo.svg)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "IMAGE",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat/assets/img/header/logo.svg"
+										},
+										"label": {
+											"type": "PLAIN_TEXT",
+											"value": "image"
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"![](https://rocket.chat/assets/img/header/logo.svg)\"",
+					"input": "![](https://rocket.chat/assets/img/header/logo.svg)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "IMAGE",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat/assets/img/header/logo.svg"
+										},
+										"label": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat/assets/img/header/logo.svg"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

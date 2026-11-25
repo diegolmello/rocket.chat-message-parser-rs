@@ -1,0 +1,456 @@
+{
+	"file": "spoiler.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "spoiler parsing > parses basic spoilers: \"||spoiler||\"",
+					"input": "||spoiler||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "spoiler"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses basic spoilers: \"||spoiler **bold**||\"",
+					"input": "||spoiler **bold**||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "spoiler "
+										},
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "bold"
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses basic spoilers: \"||__i__ ~~s~~||\"",
+					"input": "||__i__ ~~s~~||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "ITALIC",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "i"
+												}
+											]
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " "
+										},
+										{
+											"type": "STRIKE",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "s"
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses basic spoilers: \"||unclosed\"",
+					"input": "||unclosed",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "||unclosed"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||**bold __italic__**||\"",
+					"input": "||**bold __italic__**||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "bold "
+												},
+												{
+													"type": "ITALIC",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "italic"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||~~**strike bold**~~||\"",
+					"input": "||~~**strike bold**~~||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "STRIKE",
+											"value": [
+												{
+													"type": "BOLD",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "strike bold"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||@user mention||\"",
+					"input": "||@user mention||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "MENTION_USER",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "user"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " mention"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||#channel mention||\"",
+					"input": "||#channel mention||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "MENTION_CHANNEL",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "channel"
+											}
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " mention"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||[link text](https://example.com)||\"",
+					"input": "||[link text](https://example.com)||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "LINK",
+											"value": {
+												"src": {
+													"type": "PLAIN_TEXT",
+													"value": "https://example.com"
+												},
+												"label": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "link text"
+													}
+												]
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||text :emoji: text||\"",
+					"input": "||text :emoji: text||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "text "
+										},
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "emoji"
+											},
+											"shortCode": "emoji"
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " text"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||||\"",
+					"input": "||||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "||||"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||first|| and ||second||\"",
+					"input": "||first|| and ||second||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "first"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " and "
+								},
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "second"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||special: !@#$%^&*()||\"",
+					"input": "||special: !@#$%^&*()||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "special: !@#$%^&*()"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||unclosed spoiler\"",
+					"input": "||unclosed spoiler",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "||unclosed spoiler"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"text ||unclosed\"",
+					"input": "text ||unclosed",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text ||unclosed"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"|single pipe|\"",
+					"input": "|single pipe|",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "|single pipe|"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "spoiler parsing > parses edge cases: \"||start|| middle ||end||\"",
+					"input": "||start|| middle ||end||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "start"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " middle "
+								},
+								{
+									"type": "SPOILER",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "end"
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

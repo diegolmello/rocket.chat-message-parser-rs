@@ -1,0 +1,307 @@
+{
+	"file": "mention.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"@guilherme.gazzo\"",
+					"input": "@guilherme.gazzo",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "guilherme.gazzo"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@guilherme.gazzo. \"",
+					"input": "@guilherme.gazzo. ",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "guilherme.gazzo."
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#GENERAL\"",
+					"input": "#GENERAL",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_CHANNEL",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "GENERAL"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@user:server.com\"",
+					"input": "@user:server.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "user:server.com"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@marcos.defendi:matrix.org\"",
+					"input": "@marcos.defendi:matrix.org",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "marcos.defendi:matrix.org"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@username@example.com\"",
+					"input": "@username@example.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "username@example.com"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@099fnd2ee@example.com\"",
+					"input": "@099fnd2ee@example.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "099fnd2ee@example.com"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@téstãçâò\"",
+					"input": "@téstãçâò",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "téstãçâò"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@สมชาย\"",
+					"input": "@สมชาย",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "สมชาย"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@李祖阳\"",
+					"input": "@李祖阳",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "李祖阳"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@あおい\"",
+					"input": "@あおい",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "あおい"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@アオイ\"",
+					"input": "@アオイ",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "アオイ"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@Владимир\"",
+					"input": "@Владимир",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "Владимир"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"@Кириллица\"",
+					"input": "@Кириллица",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "Кириллица"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"test @Кириллица test\"",
+					"input": "test @Кириллица test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test "
+								},
+								{
+									"type": "MENTION_USER",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "Кириллица"
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " test"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,1432 @@
+{
+	"file": "strongEmphasis.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"*:smile:*\"",
+					"input": "*:smile:*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "smile"
+											},
+											"shortCode": "smile"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*test :smile: test*\"",
+					"input": "*test :smile: test*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "smile"
+											},
+											"shortCode": "smile"
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " test"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*😀*\"",
+					"input": "*😀*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "EMOJI",
+											"unicode": "😀"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*test 😀*\"",
+					"input": "*test 😀*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "EMOJI",
+											"unicode": "😀"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*@guilherme.gazzo*\"",
+					"input": "*@guilherme.gazzo*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "MENTION_USER",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "guilherme.gazzo"
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*#GENERAL*\"",
+					"input": "*#GENERAL*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "MENTION_CHANNEL",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "GENERAL"
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*test @guilherme.gazzo*\"",
+					"input": "*test @guilherme.gazzo*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "MENTION_USER",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "guilherme.gazzo"
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*test #GENERAL*\"",
+					"input": "*test #GENERAL*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "MENTION_CHANNEL",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "GENERAL"
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*[A brand new Gist](https://gist.github.com/24dddfa97bef58f46ac2ce0f80c58ba4)*\"",
+					"input": "*[A brand new Gist](https://gist.github.com/24dddfa97bef58f46ac2ce0f80c58ba4)*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "LINK",
+											"value": {
+												"src": {
+													"type": "PLAIN_TEXT",
+													"value": "https://gist.github.com/24dddfa97bef58f46ac2ce0f80c58ba4"
+												},
+												"label": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "A brand new Gist"
+													}
+												]
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**bold**\"",
+					"input": "**bold**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"** bold**\"",
+					"input": "** bold**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": " bold"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"** bold **\"",
+					"input": "** bold **",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": " bold "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"** bo ld **\"",
+					"input": "** bo ld **",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": " bo ld "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"pre**bold**\"",
+					"input": "pre**bold**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "pre"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**bold**pos\"",
+					"input": "**bold**pos",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "pos"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**bold****bold**\"",
+					"input": "**bold****bold**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**bold** **bold**\"",
+					"input": "**bold** **bold**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**bold** __italic__\"",
+					"input": "**bold** __italic__",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**__italicbold__**\"",
+					"input": "**__italicbold__**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "ITALIC",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "italicbold"
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"plain **__italicbold__**\"",
+					"input": "plain **__italicbold__**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "plain "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "ITALIC",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "italicbold"
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"plain **__~~strikeitalicbold~~__**\"",
+					"input": "plain **__~~strikeitalicbold~~__**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "plain "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "ITALIC",
+											"value": [
+												{
+													"type": "STRIKE",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "strikeitalicbold"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**\"",
+					"input": "**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "**"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"* *\"",
+					"input": "* *",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "* *"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"** *\"",
+					"input": "** *",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "** *"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"** **\"",
+					"input": "** **",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "** **"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**  **\"",
+					"input": "**  **",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "**  **"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"* Hello*\"",
+					"input": "* Hello*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": " Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*Hello *\"",
+					"input": "*Hello *",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":custom*emoji*case:\"",
+					"input": ":custom*emoji*case:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":custom"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "emoji"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "case:"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"text*hello*text\"",
+					"input": "text*hello*text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*hello*text\"",
+					"input": "*hello*text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"text*hello*\"",
+					"input": "text*hello*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*Hel lo*\"",
+					"input": "*Hel lo*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hel lo"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*Hello*\"",
+					"input": "*Hello*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**Hello*\"",
+					"input": "**Hello*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*Hello**\"",
+					"input": "*Hello**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*Hello\"",
+					"input": "*Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hello*\"",
+					"input": "Hello*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He*llo\"",
+					"input": "He*llo",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He*llo"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"***Hello***\"",
+					"input": "***Hello***",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"***Hello**\"",
+					"input": "***Hello**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*Hello* this is dog\"",
+					"input": "*Hello* this is dog",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Rocket cat says *Hello*\"",
+					"input": "Rocket cat says *Hello*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He said *Hello* to her\"",
+					"input": "He said *Hello* to her",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"**Hello** this is dog\"",
+					"input": "**Hello** this is dog",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Rocket cat says **Hello**\"",
+					"input": "Rocket cat says **Hello**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He said **Hello** to her\"",
+					"input": "He said **Hello** to her",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said "
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Hello"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He was a**nn**oyed\"",
+					"input": "He was a**nn**oyed",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He was a"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "nn"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "oyed"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"There are two o in f*oo*tball\"",
+					"input": "There are two o in f*oo*tball",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "There are two o in f"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "oo"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "tball"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*(teste*\"",
+					"input": "*(teste*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "(teste"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*(teste)*\"",
+					"input": "*(teste)*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "(teste)"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*__~bolditalicstrike~_*\"",
+					"input": "*__~bolditalicstrike~_*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "_"
+										},
+										{
+											"type": "ITALIC",
+											"value": [
+												{
+													"type": "STRIKE",
+													"value": [
+														{
+															"type": "PLAIN_TEXT",
+															"value": "bolditalicstrike"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*test:*\"",
+					"input": "*test:*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test:"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*bold ending with colon:*\"",
+					"input": "*bold ending with colon:*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold ending with colon:"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*bold ending with colon:* and some more text\"",
+					"input": "*bold ending with colon:* and some more text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold ending with colon:"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " and some more text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*bold ending with colon :*and some more text\"",
+					"input": "*bold ending with colon :*and some more text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold ending with colon :"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "and some more text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*bold with a kissing emoji :* *\"",
+					"input": "*bold with a kissing emoji :* *",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold with a kissing emoji :"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " *"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*bold with a kissing emoji :* \"",
+					"input": "*bold with a kissing emoji :* ",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold with a kissing emoji :"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
