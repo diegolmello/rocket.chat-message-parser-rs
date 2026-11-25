@@ -51,15 +51,15 @@ Each violation names the option set, the seed, the work at both lengths and the 
 
 Skip flags are passed by value as `Flags`, never stored on `Parser`, so they are restored after every rule by construction; no test covers this.
 
-**Sync commit:** `7f1c3ae`
+**Sync commit:** `f9e8278`
 
-When covered code changes, compare it against the sync commit (`git diff 7f1c3ae -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff f9e8278 -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
 - Work is checked on generated inputs, not proven for all inputs. A superlinear path reachable only through strings longer than the seeds, or through characters outside the alphabets, can pass.
 - The density check catches a superlinear term once it is about half the work at 8x length. A small quadratic term can pass.
 - Clones of memoized results on a memo hit are not counted as work, and neither is `group_nested_lines`, which reruns on every `nested_lists` call, memo hits included. Both cost the size of the memoized value.
-- `Node`'s derived `Clone` and `Drop` recurse once per nesting level. Dropping a 2,000-level list tree fits a 1 MiB stack; 10,000 levels (about 50 million characters of indentation) overflows it. The depth test moves levels out to avoid this, so it does not cover dropping or cloning the result.
+- `Node`'s derived `Clone`, `Drop` and `Serialize` recurse once per nesting level. Dropping a 2,000-level list tree fits a 1 MiB stack; 10,000 levels (about 50 million characters of indentation) overflows it. Serializing to JSON on a 2 MiB stack overflows at about 6,500 levels. The depth test moves levels out to avoid this, so it does not cover dropping or cloning the result.
 - Wall-clock time grows a little faster than work: about 1.1–1.2x per doubling of length, measured between 4k and 64k characters, because the memo tables outgrow the CPU caches. `cargo run --release --example benchmark` shows the timings.
-- Output correctness is `tests/upstream.rs`'s job, not this check's. Local-time resolution in `src/parser/timestamp.rs` does constant work per timestamp, and no seed reaches its daylight saving branches; `tests/local_time.rs` covers its output.
+- Output correctness is `tests/upstream.rs`'s job, not this check's. Local-time resolution in `src/parser/timestamp.rs` does constant work per timestamp; the ISO date seeds in `KNOWN_SEEDS` reach it in the clock's zone, but its daylight saving branches depend on `TZ`, and `tests/local_time.rs` covers their output.
