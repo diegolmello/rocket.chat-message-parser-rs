@@ -43,6 +43,8 @@ const KNOWN_SEEDS: &[&str] = &[
     "#ff",
     "+1",
     "__a",
+    "~🀄",
+    "~x🇧~",
 ];
 
 const PREFIXED_SEEDS: &[(&str, &str)] = &[
