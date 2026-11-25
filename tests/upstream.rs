@@ -2,7 +2,7 @@ use std::panic::{self, AssertUnwindSafe};
 
 use std::time::SystemTime;
 
-use message_parser::{parse_at, KatexOptions, Node, Options};
+use message_parser::{parse_at, Node, Options};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -113,7 +113,7 @@ struct Case {
     name: String,
     input: String,
     #[serde(default)]
-    options: JsOptions,
+    options: Options,
     matcher: Matcher,
     expected: Option<Value>,
 }
@@ -125,39 +125,6 @@ enum Matcher {
     ToStrictEqual,
     ToMatchObject,
     NotToThrow,
-}
-
-#[derive(Deserialize, Default, Debug)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct JsOptions {
-    colors: Option<bool>,
-    emoticons: Option<bool>,
-    katex: Option<JsKatexOptions>,
-    custom_domains: Option<Vec<String>>,
-}
-
-#[derive(Deserialize, Default, Debug)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct JsKatexOptions {
-    dollar_syntax: Option<bool>,
-    parenthesis_syntax: Option<bool>,
-}
-
-impl JsOptions {
-    fn to_options(&self) -> Options {
-        let katex = self.katex.as_ref();
-        Options {
-            colors: self.colors.unwrap_or(false),
-            emoticons: self.emoticons.unwrap_or(false),
-            katex: KatexOptions {
-                dollar_syntax: katex.and_then(|katex| katex.dollar_syntax).unwrap_or(false),
-                parenthesis_syntax: katex
-                    .and_then(|katex| katex.parenthesis_syntax)
-                    .unwrap_or(false),
-            },
-            custom_domains: self.custom_domains.clone(),
-        }
-    }
 }
 
 fn js_equal(actual: &Value, expected: &Value) -> bool {
@@ -215,9 +182,9 @@ fn pretty(value: &Value) -> String {
 }
 
 fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
-    let options = case.options.to_options();
+    let options = &case.options;
     let nodes: Vec<Node> =
-        panic::catch_unwind(AssertUnwindSafe(|| parse_at(&case.input, &options, now)))
+        panic::catch_unwind(AssertUnwindSafe(|| parse_at(&case.input, options, now)))
             .map_err(|payload| format!("parse panicked: {}", panic_message(payload.as_ref())))?;
     let expected = match (case.matcher, &case.expected) {
         (Matcher::NotToThrow, _) => return Ok(()),

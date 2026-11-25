@@ -1,10 +1,19 @@
 use std::time::{Duration, Instant, SystemTime};
 
-use message_parser::{parse_with_report, KatexOptions, Options};
+use message_parser::{parse_with_report, Options};
+use serde::Deserialize;
 use serde_json::{json, Value};
 
 const SCENARIOS: &str = include_str!("../benchmarks/scenarios.json");
 
+#[derive(Deserialize)]
+struct Scenarios {
+    pattern: String,
+    samples: usize,
+    scenarios: Vec<Scenario>,
+}
+
+#[derive(Deserialize)]
 struct Scenario {
     length: usize,
     label: String,
@@ -14,57 +23,6 @@ struct Scenario {
 struct Measurement {
     median: Duration,
     work: u64,
-}
-
-fn flag(options: &Value, path: &[&str]) -> bool {
-    path.iter()
-        .try_fold(options, |value, key| value.get(key))
-        .and_then(Value::as_bool)
-        .unwrap_or(false)
-}
-
-fn options_from(options: &Value) -> Options {
-    Options {
-        colors: flag(options, &["colors"]),
-        emoticons: flag(options, &["emoticons"]),
-        katex: KatexOptions {
-            dollar_syntax: flag(options, &["katex", "dollarSyntax"]),
-            parenthesis_syntax: flag(options, &["katex", "parenthesisSyntax"]),
-        },
-        custom_domains: options
-            .get("customDomains")
-            .and_then(Value::as_array)
-            .map(|domains| {
-                domains
-                    .iter()
-                    .filter_map(Value::as_str)
-                    .map(str::to_owned)
-                    .collect()
-            }),
-    }
-}
-
-fn load_scenarios() -> (String, usize, Vec<Scenario>) {
-    let definition: Value = serde_json::from_str(SCENARIOS).expect("scenarios.json is valid JSON");
-    let pattern = definition["pattern"]
-        .as_str()
-        .expect("pattern is a string")
-        .to_owned();
-    let samples = definition["samples"].as_u64().expect("samples is a number") as usize;
-    let scenarios = definition["scenarios"]
-        .as_array()
-        .expect("scenarios is a list")
-        .iter()
-        .map(|scenario| Scenario {
-            length: scenario["length"].as_u64().expect("length is a number") as usize,
-            label: scenario["label"]
-                .as_str()
-                .expect("label is a string")
-                .to_owned(),
-            options: options_from(&scenario["options"]),
-        })
-        .collect();
-    (pattern, samples, scenarios)
 }
 
 fn markup_soup(pattern: &str, length: usize) -> String {
@@ -93,7 +51,11 @@ fn measure(input: &str, options: &Options, samples: usize, now: SystemTime) -> M
 
 fn main() {
     let as_json = std::env::args().any(|argument| argument == "--json");
-    let (pattern, samples, scenarios) = load_scenarios();
+    let Scenarios {
+        pattern,
+        samples,
+        scenarios,
+    } = serde_json::from_str(SCENARIOS).expect("scenarios.json matches the scenario format");
     let now = SystemTime::now();
     let measurements: Vec<Measurement> = scenarios
         .iter()

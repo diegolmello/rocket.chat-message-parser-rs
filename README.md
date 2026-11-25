@@ -10,6 +10,8 @@ use message_parser::{parse, Options};
 let nodes = parse("**hello** :smile:", &Options::default());
 ```
 
+`Options` deserializes from upstream's options object (`colors`, `emoticons`, `katex.dollarSyntax`, `katex.parenthesisSyntax`, `customDomains`), and rejects unknown keys.
+
 `parse_at` takes the current time explicitly. Relative timestamps such as `<t:10:00+01:00>` resolve against it.
 
 ## Differences from upstream

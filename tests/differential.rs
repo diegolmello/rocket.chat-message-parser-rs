@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use message_parser::{parse_at, KatexOptions, Options};
+use message_parser::{parse_at, Options};
 use serde_json::{json, Value};
 
 const CLOCK_SECONDS: u64 = 1_753_142_400;
@@ -84,73 +84,34 @@ struct OptionSet {
 }
 
 fn option_sets() -> Vec<OptionSet> {
-    let katex = |dollar_syntax, parenthesis_syntax| KatexOptions {
-        dollar_syntax,
-        parenthesis_syntax,
-    };
-    let custom_domains = vec!["a".to_owned(), "local".to_owned()];
-    vec![
-        OptionSet {
-            name: "default",
-            upstream: json!({}),
-            rust: Options::default(),
-        },
-        OptionSet {
-            name: "emoticons",
-            upstream: json!({ "emoticons": true }),
-            rust: Options {
-                emoticons: true,
-                ..Options::default()
-            },
-        },
-        OptionSet {
-            name: "colors",
-            upstream: json!({ "colors": true }),
-            rust: Options {
-                colors: true,
-                ..Options::default()
-            },
-        },
-        OptionSet {
-            name: "katex dollar",
-            upstream: json!({ "katex": { "dollarSyntax": true } }),
-            rust: Options {
-                katex: katex(true, false),
-                ..Options::default()
-            },
-        },
-        OptionSet {
-            name: "katex parenthesis",
-            upstream: json!({ "katex": { "parenthesisSyntax": true } }),
-            rust: Options {
-                katex: katex(false, true),
-                ..Options::default()
-            },
-        },
-        OptionSet {
-            name: "customDomains",
-            upstream: json!({ "customDomains": custom_domains }),
-            rust: Options {
-                custom_domains: Some(custom_domains.clone()),
-                ..Options::default()
-            },
-        },
-        OptionSet {
-            name: "all",
-            upstream: json!({
+    let custom_domains = ["a", "local"];
+    [
+        ("default", json!({})),
+        ("emoticons", json!({ "emoticons": true })),
+        ("colors", json!({ "colors": true })),
+        ("katex dollar", json!({ "katex": { "dollarSyntax": true } })),
+        (
+            "katex parenthesis",
+            json!({ "katex": { "parenthesisSyntax": true } }),
+        ),
+        ("customDomains", json!({ "customDomains": custom_domains })),
+        (
+            "all",
+            json!({
                 "emoticons": true,
                 "colors": true,
                 "katex": { "dollarSyntax": true, "parenthesisSyntax": true },
                 "customDomains": custom_domains,
             }),
-            rust: Options {
-                colors: true,
-                emoticons: true,
-                katex: katex(true, true),
-                custom_domains: Some(custom_domains.clone()),
-            },
-        },
+        ),
     ]
+    .into_iter()
+    .map(|(name, upstream)| OptionSet {
+        name,
+        rust: serde_json::from_value(upstream.clone()).expect("upstream options deserialize"),
+        upstream,
+    })
+    .collect()
 }
 
 fn clock() -> SystemTime {
