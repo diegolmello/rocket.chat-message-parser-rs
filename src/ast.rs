@@ -96,8 +96,7 @@ pub enum Node {
     },
     LineBreak,
     HorizontalRule {
-        #[serde(skip_serializing_if = "Option::is_none")]
-        fallback: Option<SourceRange>,
+        fallback: SourceRange,
     },
     Katex {
         value: String,
@@ -107,13 +106,11 @@ pub enum Node {
     },
     Timestamp {
         value: TimestampValue,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        fallback: Option<SourceRange>,
+        fallback: SourceRange,
     },
     Table {
         value: TableValue,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        fallback: Option<SourceRange>,
+        fallback: SourceRange,
     },
     TableRow {
         value: Vec<Node>,
@@ -340,7 +337,7 @@ pub fn line_break() -> Node {
     Node::LineBreak
 }
 
-pub fn horizontal_rule(fallback: Option<SourceRange>) -> Node {
+pub fn horizontal_rule(fallback: SourceRange) -> Node {
     Node::HorizontalRule { fallback }
 }
 
@@ -356,11 +353,7 @@ pub fn inline_katex(value: impl Into<String>) -> Node {
     }
 }
 
-pub fn timestamp(
-    value: impl Into<String>,
-    format: Option<char>,
-    fallback: Option<SourceRange>,
-) -> Node {
+pub fn timestamp(value: impl Into<String>, format: Option<char>, fallback: SourceRange) -> Node {
     Node::Timestamp {
         value: TimestampValue {
             timestamp: value.into(),
@@ -378,7 +371,7 @@ pub fn table_row(value: Vec<Node>) -> Node {
     Node::TableRow { value }
 }
 
-pub fn table(header: Vec<Node>, rows: Vec<Node>, fallback: Option<SourceRange>) -> Node {
+pub fn table(header: Vec<Node>, rows: Vec<Node>, fallback: SourceRange) -> Node {
     Node::Table {
         value: TableValue { header, rows },
         fallback,

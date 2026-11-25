@@ -91,18 +91,8 @@ fn epoch_milliseconds(parts: &DateParts) -> Option<i64> {
     (utc.abs() <= MAXIMUM_TIME_VALUE).then_some(utc)
 }
 
-fn to_int32_seconds(milliseconds: Option<i64>) -> String {
-    let Some(milliseconds) = milliseconds else {
-        return "0".into();
-    };
-    let truncated = (milliseconds as f64 / 1000.0).trunc() as i64;
-    let wrapped = truncated.rem_euclid(1 << 32);
-    let signed = if wrapped >= 1 << 31 {
-        wrapped - (1 << 32)
-    } else {
-        wrapped
-    };
-    signed.to_string()
+fn to_int32_seconds(milliseconds: i64) -> String {
+    ((milliseconds / 1000) as i32).to_string()
 }
 
 fn utc_civil_date(now: SystemTime) -> Option<(i64, i64, i64)> {
@@ -194,7 +184,10 @@ impl Parser<'_> {
             milliseconds,
             timezone,
         };
-        Some((end, to_int32_seconds(epoch_milliseconds(&parts))))
+        Some((
+            end,
+            epoch_milliseconds(&parts).map_or_else(|| "0".into(), to_int32_seconds),
+        ))
     }
 
     fn time_of_day(&mut self, position: usize) -> Parsed<String> {
@@ -217,7 +210,10 @@ impl Parser<'_> {
             milliseconds: 0,
             timezone,
         };
-        Some((end, to_int32_seconds(epoch_milliseconds(&parts))))
+        Some((
+            end,
+            epoch_milliseconds(&parts).map_or_else(|| "0".into(), to_int32_seconds),
+        ))
     }
 
     fn timestamp_date(&mut self, position: usize) -> Parsed<String> {
@@ -247,7 +243,7 @@ impl Parser<'_> {
                 Some((end, format)) => (end, Some(format)),
                 None => (self.char(date_end, b'>')?, None),
             };
-            Some((end, timestamp(date, format, Some([position, end]))))
+            Some((end, timestamp(date, format, [position, end])))
         })
     }
 

@@ -1,7 +1,7 @@
 use message_parser::ast::{plain, TableValue};
 use message_parser::{parse, Node, Options};
 
-fn first_table(input: &str) -> (TableValue, Option<[usize; 2]>) {
+fn first_table(input: &str) -> (TableValue, [usize; 2]) {
     match parse(input, &Options::default()).into_iter().next() {
         Some(Node::Table { value, fallback }) => (value, fallback),
         other => panic!("expected {input:?} to parse to a table first, got {other:?}"),
@@ -40,7 +40,5 @@ fn exposes_the_source_offsets_as_fallback_for_renderers_without_table_support() 
     let input = "| a | b |\n| - | - |\n| 1 | 2 |";
     let (_, fallback) = first_table(input);
 
-    assert_eq!(fallback, Some([0, input.len()]));
-    let [start, end] = fallback.expect("fallback was just checked");
-    assert_eq!(&input[start..end], input);
+    assert_eq!(fallback, [0, input.len()]);
 }

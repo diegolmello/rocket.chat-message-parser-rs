@@ -188,7 +188,7 @@ fn build_table(
             )
         })
         .collect();
-    table(header_cells, body_rows, Some(range))
+    table(header_cells, body_rows, range)
 }
 
 impl Parser<'_> {
@@ -478,7 +478,7 @@ impl Parser<'_> {
             None if self.is_end(trailing_end) => trailing_end,
             None => return None,
         };
-        Some((end, horizontal_rule(Some([markers_start, markers_end]))))
+        Some((end, horizontal_rule([markers_start, markers_end])))
     }
 
     fn table(&mut self, position: usize) -> Parsed<Node> {

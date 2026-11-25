@@ -46,7 +46,7 @@ fn has_absolute_scheme_prefix(source: &str) -> bool {
         .take(31)
         .take_while(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-'))
         .count();
-    (0..=scheme_length).any(|length| bytes[1 + length..].starts_with(b"://"))
+    bytes[1 + scheme_length..].starts_with(b"://")
 }
 
 fn auto_link(source: String, custom_domains: Option<&[String]>) -> Node {
