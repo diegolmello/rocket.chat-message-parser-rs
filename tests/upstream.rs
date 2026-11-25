@@ -1,17 +1,22 @@
 use std::panic::{self, AssertUnwindSafe};
-
 use std::time::SystemTime;
 
 use message_parser::{parse_at, Node, Options};
 use serde::Deserialize;
 use serde_json::Value;
 
+mod common;
+
+use common::{canonical, panic_message};
+
+const UPSTREAM_VERSION: &str = "0.33.0";
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Fixture {
     file: String,
     #[serde(rename = "upstreamVersion")]
-    _upstream_version: String,
+    upstream_version: String,
     groups: Vec<Group>,
     #[serde(default)]
     uncaptured: Vec<Uncaptured>,
@@ -128,25 +133,7 @@ enum Matcher {
 }
 
 fn js_equal(actual: &Value, expected: &Value) -> bool {
-    match (actual, expected) {
-        (Value::Number(actual), Value::Number(expected)) => actual.as_f64() == expected.as_f64(),
-        (Value::Array(actual), Value::Array(expected)) => {
-            actual.len() == expected.len()
-                && actual
-                    .iter()
-                    .zip(expected)
-                    .all(|(actual, expected)| js_equal(actual, expected))
-        }
-        (Value::Object(actual), Value::Object(expected)) => {
-            actual.len() == expected.len()
-                && expected.iter().all(|(key, expected)| {
-                    actual
-                        .get(key)
-                        .is_some_and(|actual| js_equal(actual, expected))
-                })
-        }
-        (actual, expected) => actual == expected,
-    }
+    canonical(actual) == canonical(expected)
 }
 
 fn matches_object(actual: &Value, expected: &Value) -> bool {
@@ -167,14 +154,6 @@ fn matches_object(actual: &Value, expected: &Value) -> bool {
         }
         (actual, expected) => js_equal(actual, expected),
     }
-}
-
-fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
-    payload
-        .downcast_ref::<&str>()
-        .map(|message| (*message).to_owned())
-        .or_else(|| payload.downcast_ref::<String>().cloned())
-        .unwrap_or_else(|| "non-string panic payload".to_owned())
 }
 
 fn pretty(value: &Value) -> String {
@@ -252,13 +231,30 @@ fn fixture_paths() -> Vec<std::path::PathBuf> {
     paths
 }
 
+fn load_fixtures() -> Vec<Fixture> {
+    let fixtures: Vec<Fixture> = fixture_paths()
+        .iter()
+        .map(|path| {
+            let source = std::fs::read_to_string(path).expect("fixture is readable");
+            serde_json::from_str(&source).expect("fixture JSON matches the extractor's schema")
+        })
+        .collect();
+    assert!(!fixtures.is_empty(), "no fixtures in {FIXTURE_DIRECTORY}");
+    for fixture in &fixtures {
+        assert_eq!(
+            fixture.upstream_version, UPSTREAM_VERSION,
+            "{} was extracted from a different upstream version",
+            fixture.file
+        );
+    }
+    fixtures
+}
+
 #[test]
 fn every_uncaptured_upstream_test_has_a_hand_port_or_a_reason() {
-    let mut uncaptured: Vec<(String, String)> = fixture_paths()
-        .iter()
-        .flat_map(|path| {
-            let source = std::fs::read_to_string(path).expect("fixture is readable");
-            let fixture: Fixture = serde_json::from_str(&source).expect("fixture parses");
+    let mut uncaptured: Vec<(String, String)> = load_fixtures()
+        .into_iter()
+        .flat_map(|fixture| {
             let file = fixture.file;
             fixture
                 .uncaptured
@@ -289,14 +285,7 @@ fn every_uncaptured_upstream_test_has_a_hand_port_or_a_reason() {
 
 #[test]
 fn every_upstream_fixture_case_matches() {
-    let fixtures: Vec<Fixture> = fixture_paths()
-        .iter()
-        .map(|path| {
-            let source = std::fs::read_to_string(path).expect("fixture is readable");
-            serde_json::from_str(&source).expect("fixture JSON matches the extractor's schema")
-        })
-        .collect();
-    assert!(!fixtures.is_empty(), "no fixtures in {FIXTURE_DIRECTORY}");
+    let fixtures = load_fixtures();
     let checked: usize = fixtures
         .iter()
         .flat_map(|fixture| &fixture.groups)

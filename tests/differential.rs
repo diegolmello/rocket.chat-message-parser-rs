@@ -3,27 +3,29 @@ use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::panic::{self, AssertUnwindSafe};
 use std::path::PathBuf;
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use message_parser::{parse_at, Options};
 use serde_json::{json, Value};
 
-const CLOCK_SECONDS: u64 = 1_753_142_400;
+mod common;
+
+use common::{canonical, fixed_clock, panic_message, strings_over, CLOCK_SECONDS};
+
 const DEFAULT_RANDOM_CASES: usize = 20_000;
 const DEFAULT_SEED: u64 = 0x5eed_0033;
 const MINIMIZED_FAILURE_LIMIT: usize = 400;
 const PRINTED_FAILURE_LIMIT: usize = 60;
 
-const WIDE_ALPHABET: &[char] = &[
-    '*', '_', '~', '[', ']', '(', ')', '$', ':', '`', '<', '>', '|', '\\', '#', '-', '.', '@', '!',
-    '\n', ' ', 'a', '1',
+const WIDE_ALPHABET: &[&str] = &[
+    "*", "_", "~", "[", "]", "(", ")", "$", ":", "`", "<", ">", "|", "\\", "#", "-", ".", "@", "!",
+    "\n", " ", "a", "1",
 ];
-const WIDE_LENGTH: u32 = 3;
+const WIDE_LENGTH: usize = 3;
 
-const CORE_ALPHABET: &[char] = &[
-    '*', '_', '~', '[', ']', '(', ')', '$', ':', '`', '\n', ' ', 'a',
+const CORE_ALPHABET: &[&str] = &[
+    "*", "_", "~", "[", "]", "(", ")", "$", ":", "`", "\n", " ", "a",
 ];
-const CORE_LENGTH: u32 = 4;
+const CORE_LENGTH: usize = 4;
 
 const TOKENS: &[&str] = &[
     "*",
@@ -74,7 +76,7 @@ const TOKENS: &[&str] = &[
     "__",
     "**",
 ];
-const TOKEN_LENGTH: u32 = 3;
+const TOKEN_LENGTH: usize = 3;
 const RANDOM_TOKEN_MAX: usize = 12;
 
 struct OptionSet {
@@ -123,10 +125,6 @@ fn option_sets() -> Vec<OptionSet> {
     .collect()
 }
 
-fn clock() -> SystemTime {
-    UNIX_EPOCH + Duration::from_secs(CLOCK_SECONDS)
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Outcome {
     Ast(String),
@@ -139,34 +137,10 @@ impl Outcome {
     }
 }
 
-fn canonical(value: &Value) -> Value {
-    match value {
-        Value::Array(items) => Value::Array(items.iter().map(canonical).collect()),
-        Value::Object(fields) => Value::Object(
-            fields
-                .iter()
-                .map(|(key, field)| (key.clone(), canonical(field)))
-                .collect::<serde_json::Map<_, _>>(),
-        ),
-        Value::Number(number) => number
-            .as_f64()
-            .and_then(serde_json::Number::from_f64)
-            .map_or_else(|| value.clone(), Value::Number),
-        _ => value.clone(),
-    }
-}
-
 fn rust_outcome(input: &str, options: &Options) -> Outcome {
-    match panic::catch_unwind(AssertUnwindSafe(|| parse_at(input, options, clock()))) {
+    match panic::catch_unwind(AssertUnwindSafe(|| parse_at(input, options, fixed_clock()))) {
         Ok(nodes) => Outcome::ast(&serde_json::to_value(&nodes).expect("AST serializes")),
-        Err(payload) => Outcome::Failed(format!(
-            "panic: {}",
-            payload
-                .downcast_ref::<&str>()
-                .map(|message| (*message).to_owned())
-                .or_else(|| payload.downcast_ref::<String>().cloned())
-                .unwrap_or_default()
-        )),
+        Err(payload) => Outcome::Failed(format!("panic: {}", panic_message(payload.as_ref()))),
     }
 }
 
@@ -308,38 +282,6 @@ fn minimize(oracle: &mut Oracle, input: &str, option_set: &OptionSet) -> Mismatc
     }
 }
 
-fn strings_up_to(alphabet: &[char], max_length: u32) -> Vec<String> {
-    let mut all = Vec::new();
-    let mut layer = vec![String::new()];
-    for _ in 0..max_length {
-        layer = layer
-            .iter()
-            .flat_map(|prefix| {
-                alphabet.iter().map(move |character| {
-                    let mut next = prefix.clone();
-                    next.push(*character);
-                    next
-                })
-            })
-            .collect();
-        all.extend(layer.iter().cloned());
-    }
-    all
-}
-
-fn token_sequences_up_to(tokens: &[&str], max_length: u32) -> Vec<String> {
-    let mut all = BTreeSet::new();
-    let mut layer = vec![String::new()];
-    for _ in 0..max_length {
-        layer = layer
-            .iter()
-            .flat_map(|prefix| tokens.iter().map(move |token| format!("{prefix}{token}")))
-            .collect();
-        all.extend(layer.iter().cloned());
-    }
-    all.into_iter().collect()
-}
-
 struct SplitMix(u64);
 
 impl SplitMix {
@@ -364,7 +306,7 @@ fn random_inputs(count: usize, seed: u64) -> Vec<String> {
             (0..length)
                 .map(|_| {
                     if random.below(4) == 0 {
-                        WIDE_ALPHABET[random.below(WIDE_ALPHABET.len())].to_string()
+                        WIDE_ALPHABET[random.below(WIDE_ALPHABET.len())].to_owned()
                     } else {
                         TOKENS[random.below(TOKENS.len())].to_owned()
                     }
@@ -449,19 +391,15 @@ fn check_equivalence(inputs: &[String]) {
 #[test]
 #[ignore = "needs node and the pinned upstream parser; see .claude/skills/verify-upstream-equivalence"]
 fn every_short_character_string_matches_upstream() {
-    let mut inputs = strings_up_to(WIDE_ALPHABET, WIDE_LENGTH);
-    inputs.extend(
-        strings_up_to(CORE_ALPHABET, CORE_LENGTH)
-            .into_iter()
-            .filter(|input| input.chars().count() == CORE_LENGTH as usize),
-    );
+    let mut inputs = strings_over(WIDE_ALPHABET, 1..=WIDE_LENGTH);
+    inputs.extend(strings_over(CORE_ALPHABET, CORE_LENGTH..=CORE_LENGTH));
     check_equivalence(&inputs);
 }
 
 #[test]
 #[ignore = "needs node and the pinned upstream parser; see .claude/skills/verify-upstream-equivalence"]
 fn every_short_token_sequence_matches_upstream() {
-    check_equivalence(&token_sequences_up_to(TOKENS, TOKEN_LENGTH));
+    check_equivalence(&strings_over(TOKENS, 1..=TOKEN_LENGTH));
 }
 
 #[test]
