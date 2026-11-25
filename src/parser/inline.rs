@@ -311,7 +311,7 @@ impl Parser<'_> {
             .spoilers_evaluated_from
             .insert(flags.bits(), position as u32);
         for start in (position + 1..evaluated_from).rev() {
-            if self.literal(start, "||").is_some() {
+            if self.literal(start, "||").is_some() && self.is_emoticon_end(start) {
                 self.spoiler(start, flags);
             }
         }
