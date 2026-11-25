@@ -7,7 +7,7 @@ use super::reduce::{reduce_plain_texts, Item};
 use super::repetition::{Piece, Repetition, Run};
 use super::{Flags, Parsed, Parser};
 use crate::ast::{image, link, plain, Node};
-use crate::tld::{self, TldOptions};
+use crate::tld;
 
 fn phone_digits(phone_text: &str) -> String {
     phone_text.chars().filter(char::is_ascii_digit).collect()
@@ -52,21 +52,7 @@ fn has_absolute_scheme_prefix(source: &str) -> bool {
 fn auto_link(source: String, custom_domains: Option<&[String]>) -> Node {
     let mut valid_hosts = vec!["localhost".to_string()];
     valid_hosts.extend(custom_domains.unwrap_or_default().iter().cloned());
-    let options = TldOptions {
-        detect_ip: true,
-        allow_private_domains: true,
-        valid_hosts: Some(valid_hosts.clone()),
-    };
-    let parsed = tld::parse(&source, &options);
-    let is_known_host = parsed
-        .domain
-        .as_ref()
-        .is_some_and(|domain| valid_hosts.contains(domain));
-    let is_linkable = parsed.is_icann == Some(true)
-        || parsed.is_ip == Some(true)
-        || parsed.is_private == Some(true)
-        || is_known_host;
-    if !is_linkable {
+    if !tld::is_linkable(&source, true, &valid_hosts) {
         return plain(source);
     }
     let is_absolute = url::Url::parse(&source).is_ok()
@@ -82,16 +68,7 @@ fn auto_link(source: String, custom_domains: Option<&[String]>) -> Node {
 
 fn auto_email(source: String) -> Node {
     let href = format!("mailto:{source}");
-    let options = TldOptions {
-        detect_ip: false,
-        allow_private_domains: true,
-        valid_hosts: None,
-    };
-    let parsed = tld::parse(&href, &options);
-    let is_linkable = parsed.is_icann == Some(true)
-        || parsed.is_ip == Some(true)
-        || parsed.is_private == Some(true);
-    if !is_linkable {
+    if !tld::is_linkable(&href, false, &[]) {
         return plain(source);
     }
     link(href, Some(vec![plain(source)]))

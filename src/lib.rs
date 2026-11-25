@@ -1,6 +1,6 @@
 pub mod ast;
 mod parser;
-pub mod tld;
+mod tld;
 
 use std::time::SystemTime;
 
