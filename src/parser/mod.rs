@@ -153,6 +153,19 @@ impl<'source> Parser<'source> {
         self.unit_is(position, predicate).then_some(position + 1)
     }
 
+    pub(crate) fn character(
+        &mut self,
+        position: usize,
+        predicate: impl Fn(u16) -> bool,
+    ) -> Option<usize> {
+        let after_unit = self.class(position, predicate)?;
+        let starts_pair = (0xD800..=0xDBFF).contains(&self.source[position]);
+        if starts_pair && self.unit_is(after_unit, |unit| (0xDC00..=0xDFFF).contains(&unit)) {
+            return Some(after_unit + 1);
+        }
+        Some(after_unit)
+    }
+
     pub(crate) fn char(&mut self, position: usize, ascii: u8) -> Option<usize> {
         self.class(position, |unit| is(unit, ascii))
     }

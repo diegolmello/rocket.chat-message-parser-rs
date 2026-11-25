@@ -589,7 +589,7 @@ impl Parser<'_> {
             .or_else(|| one(self.emoji(position)))
             .or_else(|| one(self.emoticon(position)))
             .or_else(|| {
-                let end = self.class(position, |unit| !is_one_of(unit, b"\n~ "))?;
+                let end = self.character(position, |unit| !is_one_of(unit, b"\n~ "))?;
                 Some((end, Piece::Text))
             })
             .or_else(|| one(self.line(position)))
