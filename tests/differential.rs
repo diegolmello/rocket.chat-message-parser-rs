@@ -87,6 +87,15 @@ fn option_sets() -> Vec<OptionSet> {
     let custom_domains = ["a", "local"];
     [
         ("default", json!({})),
+        (
+            "explicit defaults",
+            json!({
+                "emoticons": false,
+                "colors": false,
+                "katex": { "dollarSyntax": false, "parenthesisSyntax": false },
+                "customDomains": [],
+            }),
+        ),
         ("emoticons", json!({ "emoticons": true })),
         ("colors", json!({ "colors": true })),
         ("katex dollar", json!({ "katex": { "dollarSyntax": true } })),

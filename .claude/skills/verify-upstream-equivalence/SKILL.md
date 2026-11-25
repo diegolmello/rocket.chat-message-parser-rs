@@ -5,7 +5,7 @@ description: Check that the Rust message parser produces the same AST as @rocket
 
 # Verify upstream equivalence
 
-**Property.** For every input the check generates and each of seven option sets, `parse_at(input, options, clock)` serialized to JSON equals what `parse(input, options)` from `@rocket.chat/message-parser` 0.33.0 returns on Node at the same clock and timezone. Key order does not matter; numbers compare as JavaScript numbers. If upstream throws, or Rust panics, that counts as a mismatch.
+**Property.** For every input the check generates and each of eight option sets, `parse_at(input, options, clock)` serialized to JSON equals what `parse(input, options)` from `@rocket.chat/message-parser` 0.33.0 returns on Node at the same clock and timezone. Key order does not matter; numbers compare as JavaScript numbers. If upstream throws, or Rust panics, that counts as a mismatch.
 
 **Harm if broken.** A message renders differently in clients that use this crate than in Rocket.Chat: bold becomes literal asterisks, a link is lost or points somewhere else, a mention or emoji is missing.
 
@@ -18,15 +18,15 @@ Install the pinned upstream package once. Its `node_modules` is gitignored:
 TZ=UTC cargo test --release --test differential -- --ignored --nocapture
 ```
 
-This takes about 35 seconds and needs `node` on `PATH`. To keep `node_modules` out of the checkout, copy `benchmarks/upstream/package.json` and `bun.lock` into a `mktemp -d` directory, run `bun install --frozen-lockfile` there, and set `UPSTREAM_PARSER_DIR` to that directory. The oracle refuses to run on any version other than 0.33.0.
+This takes about 40 seconds and needs `node` on `PATH`. To keep `node_modules` out of the checkout, copy `benchmarks/upstream/package.json` and `bun.lock` into a `mktemp -d` directory, run `bun install --frozen-lockfile` there, and set `UPSTREAM_PARSER_DIR` to that directory. The oracle refuses to run on any version other than 0.33.0.
 
-The three tests in `tests/differential.rs` are `#[ignore]`d, so plain `cargo test` skips them. Each one prints `N inputs x 7 option sets: every AST matches upstream` when it passes:
+The three tests in `tests/differential.rs` are `#[ignore]`d, so plain `cargo test` skips them. Each one prints `N inputs x 8 option sets: every AST matches upstream` when it passes:
 
 - `every_short_character_string_matches_upstream`: every string of 1 to 3 characters over `WIDE_ALPHABET` (23 markup characters, a letter, a digit, space and newline), plus every 4-character string over `CORE_ALPHABET` (13). 41,280 inputs.
 - `every_short_token_sequence_matches_upstream`: every sequence of 1 to 3 entries of `TOKENS` (47 multi-character markup pieces: `<t:…:R>`, `- [ ] `, `http://a.b`, `a@b.co`, `color:#f00`, `:smile:`, `\(`, `😀` and so on). 104,758 distinct inputs.
 - `random_token_sequences_match_upstream`: `DIFFERENTIAL_CASES` (default 20,000) sequences of 1 to 12 pieces, each a `TOKENS` entry or a `WIDE_ALPHABET` character, from the seed `DIFFERENTIAL_SEED` (default `0x5eed0033`). Raise the count and change the seed for a deeper run.
 
-The option sets are in `option_sets()`: default, `emoticons`, `colors`, `katex.dollarSyntax`, `katex.parenthesisSyntax`, `customDomains: ["a", "local"]`, and all of them together. The clock is `CLOCK_SECONDS` (2025-07-22T00:00:00Z) on both sides: Rust gets it through `parse_at`, and `tests/differential/oracle.mjs` replaces Node's `Date` so `new Date()` and `Date.now()` return it. Both processes share the `TZ` you set. Run once more with `TZ=America/New_York` when a change touches `src/parser/timestamp.rs`, because times without an offset resolve in the local zone.
+The option sets are in `option_sets()`: default (`{}`), explicit defaults (every key present and off: `false`, `katex` with both flags `false`, `customDomains: []`), `emoticons`, `colors`, `katex.dollarSyntax`, `katex.parenthesisSyntax`, `customDomains: ["a", "local"]`, and all of them together. Each set is written once, as upstream's options object: the oracle passes it to upstream as is, and Rust gets `Options` by deserializing the same JSON, so the check also covers the `Deserialize` mapping from upstream's names. The clock is `CLOCK_SECONDS` (2025-07-22T00:00:00Z) on both sides: Rust gets it through `parse_at`, and `tests/differential/oracle.mjs` replaces Node's `Date` so `new Date()` and `Date.now()` return it. Both processes share the `TZ` you set. Run once more with `TZ=America/New_York` when a change touches `src/parser/timestamp.rs`, because times without an offset resolve in the local zone.
 
 ## Reading a failure
 
@@ -45,16 +45,16 @@ Do not weaken the comparison, drop an option set, or shrink an alphabet to make 
 | --- | --- |
 | AST shape and serialization | `Node` and its serde attributes in `src/ast.rs` |
 | Every rule reachable from the alphabets and tokens | `src/parser/{mod,blocks,inline,links,emoji,timestamp,reduce,repetition,memo,chars,char_tables}.rs` |
-| Option handling | `Options`, `KatexOptions` in `src/lib.rs`; every `self.options` read in `src/parser/` |
+| Option handling | `Options`, `KatexOptions` and their `Deserialize` attributes (camelCase names, `default`) in `src/lib.rs`; every `self.options` read in `src/parser/` |
 | Autolinks and TLDs | `auto_link`, `resolve_href` in `src/parser/links.rs`; `is_linkable` in `src/tld.rs` for the hosts in `TOKENS` (`b.com`, `a.b`, `rocket.chat`, `b.co`) and `customDomains` |
 | Emoticons and shortcodes | `src/parser/emoji.rs`, `join_emoji` in `src/parser/reduce.rs` |
 | Relative and absolute timestamps | `src/parser/timestamp.rs`, at one clock and the zone in `TZ` |
 
 `.claude/skills/verify-linear-parse` covers work and stack depth; this skill covers only output.
 
-**Sync commit:** `6d5260b`
+**Sync commit:** `8a7b56e`
 
-When covered code changes, compare it against the sync commit (`git diff 6d5260b -- src`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 8a7b56e -- src`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
@@ -62,3 +62,4 @@ When covered code changes, compare it against the sync commit (`git diff 6d5260b
 - Characters outside the alphabets and tokens are not exercised: other Unicode emoji and their modifiers, most of the TLD list, `\r\n` line endings, tabs, and non-ASCII letters in links and mentions. `tests/emoji.rs` covers the emoji table and `src/tld/tests.rs` covers host linkability against upstream data.
 - One clock and one zone per run. Daylight saving edges depend on `TZ`; `tests/local_time.rs` covers them.
 - Lists nested past 64 levels and inputs over a few hundred characters are never generated.
+- Options objects outside upstream's TypeScript type are never sent: `null` values, unknown keys (Rust rejects them, as the README says; upstream ignores them), and non-boolean flags. `localhost`, which both sides always accept as a host, is not in `TOKENS`.
