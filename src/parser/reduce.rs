@@ -6,12 +6,6 @@ pub(crate) enum Item {
     Many(Vec<Node>),
 }
 
-impl From<Node> for Item {
-    fn from(node: Node) -> Self {
-        Item::One(node)
-    }
-}
-
 pub(crate) fn is_js_whitespace(character: char) -> bool {
     matches!(
         character,

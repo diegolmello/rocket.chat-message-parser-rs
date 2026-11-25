@@ -21,12 +21,8 @@ fn is_plain_run_char(unit: u16) -> bool {
     !is_one_of(unit, b"*_~`:\n<[]! \t()\\|")
 }
 
-fn is_bold_plain_run_char(unit: u16) -> bool {
+fn is_emphasis_plain_run_char(unit: u16) -> bool {
     !is_one_of(unit, b"\n* _~")
-}
-
-fn is_italic_plain_run_char(unit: u16) -> bool {
-    !is_one_of(unit, b"\n_ *~")
 }
 
 fn is_strike_plain_run_char(unit: u16) -> bool {
@@ -40,6 +36,35 @@ enum Emphasis {
     Bold,
     Italic,
     Strike,
+}
+
+#[derive(Clone, Copy)]
+pub(super) enum EmphasisContent {
+    Bold,
+    Italic,
+}
+
+impl EmphasisContent {
+    fn marker(self) -> u8 {
+        match self {
+            EmphasisContent::Bold => b'*',
+            EmphasisContent::Italic => b'_',
+        }
+    }
+
+    fn other_emphasis(self) -> Emphasis {
+        match self {
+            EmphasisContent::Bold => Emphasis::Italic,
+            EmphasisContent::Italic => Emphasis::Bold,
+        }
+    }
+
+    fn is_preferential_memoized(self, memo: &Memo, key: Key) -> bool {
+        match self {
+            EmphasisContent::Bold => memo.bold_preferential_item.contains_key(&key),
+            EmphasisContent::Italic => memo.italic_preferential_item.contains_key(&key),
+        }
+    }
 }
 
 impl Parser<'_> {
@@ -122,8 +147,8 @@ impl Parser<'_> {
         &mut self,
         start: usize,
         flags: Flags,
-        is_memoized: fn(&Memo, Key) -> bool,
-        evaluate: fn(&mut Self, usize, Flags),
+        is_memoized: impl Fn(&Memo, Key) -> bool,
+        evaluate: impl Fn(&mut Self, usize, Flags),
     ) {
         let mut chain = Vec::new();
         let mut cursor = start;
@@ -404,47 +429,81 @@ impl Parser<'_> {
         )
     }
 
-    pub(super) fn bold_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
-        if let Some(parsed) = self.bold_preferential_item(position, flags) {
-            return Some((parsed.0, Piece::Item(parsed.1)));
+    pub(super) fn emphasis_content_item(
+        &mut self,
+        position: usize,
+        flags: Flags,
+        content: EmphasisContent,
+    ) -> Parsed<Piece> {
+        if let Some((end, item)) = self.preferential_item(position, flags, content) {
+            return Some((end, Piece::Item(item)));
         }
-        if let Some(end) = self.run1(position, is_bold_plain_run_char) {
+        if let Some(end) = self.run1(position, is_emphasis_plain_run_char) {
             return Some((end, Piece::Text));
         }
-        if let Some(end) = self.class(position, |unit| !is_one_of(unit, b"\n* ")) {
+        let marker = content.marker();
+        if let Some(end) = self.class(position, |unit| !is_one_of(unit, &[b'\n', marker, b' '])) {
             return Some((end, Piece::Text));
         }
         self.line(position)
             .map(|(end, node)| (end, Piece::Item(Item::One(node))))
     }
 
-    fn bold_preferential_item(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
-        memoized!(self, bold_preferential_item, position, flags, {
-            let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
-            one(self.whitespace(position))
-                .or_else(|| one(self.inline_code(position)))
-                .or_else(|| one(self.timestamp_rules(position)))
-                .or_else(|| one(self.maybe_references(position, flags)))
-                .or_else(|| one(self.user_mention(position)))
-                .or_else(|| one(self.channel_mention(position)))
-                .or_else(|| self.maybe_emphasis(position, flags, Emphasis::Italic))
-                .or_else(|| self.maybe_emphasis(position, flags, Emphasis::Strike))
-                .or_else(|| one(self.emoji(position)))
-                .or_else(|| {
-                    let (end, node) = self.emoticon(position)?;
-                    self.evaluate_emoticon_chain_backwards(
-                        end,
-                        flags,
-                        |memo, key| memo.bold_preferential_item.contains_key(&key),
-                        |parser, cursor, flags| {
-                            parser.bold_preferential_item(cursor, flags);
-                        },
-                    );
-                    let followed = self.emoticon_neighbor(end)
-                        || self.bold_preferential_item(end, flags).is_some();
-                    followed.then_some((end, Item::One(node)))
-                })
-        })
+    fn preferential_item(
+        &mut self,
+        position: usize,
+        flags: Flags,
+        content: EmphasisContent,
+    ) -> Parsed<Item> {
+        match content {
+            EmphasisContent::Bold => memoized!(
+                self,
+                bold_preferential_item,
+                position,
+                flags,
+                self.preferential_item_uncached(position, flags, content)
+            ),
+            EmphasisContent::Italic => memoized!(
+                self,
+                italic_preferential_item,
+                position,
+                flags,
+                self.preferential_item_uncached(position, flags, content)
+            ),
+        }
+    }
+
+    fn preferential_item_uncached(
+        &mut self,
+        position: usize,
+        flags: Flags,
+        content: EmphasisContent,
+    ) -> Parsed<Item> {
+        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
+        one(self.whitespace(position))
+            .or_else(|| one(self.inline_code(position)))
+            .or_else(|| one(self.timestamp_rules(position)))
+            .or_else(|| one(self.maybe_references(position, flags)))
+            .or_else(|| one(self.user_mention(position)))
+            .or_else(|| one(self.channel_mention(position)))
+            .or_else(|| self.maybe_emphasis(position, flags, content.other_emphasis()))
+            .or_else(|| self.maybe_emphasis(position, flags, Emphasis::Strike))
+            .or_else(|| one(self.emoji(position)))
+            .or_else(|| {
+                let (end, node) = self.emoticon(position)?;
+                self.evaluate_emoticon_chain_backwards(
+                    end,
+                    flags,
+                    |memo, key| content.is_preferential_memoized(memo, key),
+                    |parser, cursor, flags| {
+                        parser.preferential_item(cursor, flags, content);
+                    },
+                );
+                let followed = self.emoticon_neighbor(end)
+                    || self.preferential_item(end, flags, content).is_some()
+                    || matches!(content, EmphasisContent::Italic) && self.char(end, b'_').is_some();
+                followed.then_some((end, Item::One(node)))
+            })
     }
 
     fn italic(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
@@ -514,50 +573,6 @@ impl Parser<'_> {
     fn italic_content_items(&mut self, position: usize, end: usize, flags: Flags) -> Vec<Node> {
         let items = self.repetition_items(Repetition::Italic, position, end, flags);
         reduce_plain_texts(items)
-    }
-
-    pub(super) fn italic_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
-        if let Some(parsed) = self.italic_preferential_item(position, flags) {
-            return Some((parsed.0, Piece::Item(parsed.1)));
-        }
-        if let Some(end) = self.run1(position, is_italic_plain_run_char) {
-            return Some((end, Piece::Text));
-        }
-        if let Some(end) = self.class(position, |unit| !is_one_of(unit, b"\n_ ")) {
-            return Some((end, Piece::Text));
-        }
-        self.line(position)
-            .map(|(end, node)| (end, Piece::Item(Item::One(node))))
-    }
-
-    fn italic_preferential_item(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
-        memoized!(self, italic_preferential_item, position, flags, {
-            let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
-            one(self.whitespace(position))
-                .or_else(|| one(self.inline_code(position)))
-                .or_else(|| one(self.timestamp_rules(position)))
-                .or_else(|| one(self.maybe_references(position, flags)))
-                .or_else(|| one(self.user_mention(position)))
-                .or_else(|| one(self.channel_mention(position)))
-                .or_else(|| self.maybe_emphasis(position, flags, Emphasis::Bold))
-                .or_else(|| self.maybe_emphasis(position, flags, Emphasis::Strike))
-                .or_else(|| one(self.emoji(position)))
-                .or_else(|| {
-                    let (end, node) = self.emoticon(position)?;
-                    self.evaluate_emoticon_chain_backwards(
-                        end,
-                        flags,
-                        |memo, key| memo.italic_preferential_item.contains_key(&key),
-                        |parser, cursor, flags| {
-                            parser.italic_preferential_item(cursor, flags);
-                        },
-                    );
-                    let followed = self.emoticon_neighbor(end)
-                        || self.italic_preferential_item(end, flags).is_some()
-                        || self.char(end, b'_').is_some();
-                    followed.then_some((end, Item::One(node)))
-                })
-        })
     }
 
     fn strikethrough(&mut self, position: usize, flags: Flags) -> Parsed<Node> {

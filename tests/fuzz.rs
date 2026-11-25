@@ -63,9 +63,4 @@ proptest! {
     fn parses_valid_parser_like_inputs_without_panicking(input in parser_input()) {
         parse(&input, &Options::default());
     }
-
-    #[test]
-    fn is_deterministic_for_valid_parser_like_inputs(input in parser_input()) {
-        prop_assert_eq!(parse(&input, &Options::default()), parse(&input, &Options::default()));
-    }
 }

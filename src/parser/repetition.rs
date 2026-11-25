@@ -1,10 +1,11 @@
 use super::chars::{is, is_markdown_link_extra, is_space};
+use super::inline::EmphasisContent;
 use super::links::is_link_title_bulk_char;
 use super::reduce::Item;
 use super::{Flags, Parsed, Parser};
 use crate::ast::plain;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) enum Repetition {
     Bold,
     Italic,
@@ -17,7 +18,7 @@ pub(super) enum Piece {
     Item(Item),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) enum Run {
     Marker(u8),
     Spaces,
@@ -30,20 +31,21 @@ pub(super) enum Run {
     MarkdownLinkParenthesized,
 }
 
-impl Repetition {
-    fn kind(self) -> u16 {
-        match self {
-            Repetition::Bold => 0,
-            Repetition::Italic => 1,
-            Repetition::Strike => 2,
-            Repetition::LinkTitle => 3,
-        }
-    }
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub(super) enum Loop {
+    Repetition(Repetition),
+    Run(Run),
+}
 
+impl Repetition {
     fn piece(self, parser: &mut Parser, position: usize, flags: Flags) -> Parsed<Piece> {
         match self {
-            Repetition::Bold => parser.bold_content_item(position, flags),
-            Repetition::Italic => parser.italic_content_item(position, flags),
+            Repetition::Bold => {
+                parser.emphasis_content_item(position, flags, EmphasisContent::Bold)
+            }
+            Repetition::Italic => {
+                parser.emphasis_content_item(position, flags, EmphasisContent::Italic)
+            }
             Repetition::Strike => parser.strike_content_item(position, flags),
             Repetition::LinkTitle => parser.link_title(position, flags),
         }
@@ -51,20 +53,6 @@ impl Repetition {
 }
 
 impl Run {
-    fn kind(self) -> u16 {
-        match self {
-            Run::Spaces => 16,
-            Run::LinkTitleText => 17,
-            Run::DomainChars => 18,
-            Run::DomainGroups => 19,
-            Run::UrlBody => 20,
-            Run::MarkdownLinkUrlBody => 21,
-            Run::MarkdownLinkExtras => 22,
-            Run::MarkdownLinkParenthesized => 23,
-            Run::Marker(marker) => 256 + u16::from(marker),
-        }
-    }
-
     fn step(self, parser: &mut Parser, position: usize) -> Option<usize> {
         match self {
             Run::Marker(marker) => parser.class(position, |unit| is(unit, marker)),
@@ -83,7 +71,7 @@ impl Run {
 impl Parser<'_> {
     fn steps_end(
         &mut self,
-        kind: u16,
+        kind: Loop,
         position: usize,
         flags: Flags,
         step: impl Fn(&mut Self, usize) -> Option<usize>,
@@ -115,15 +103,20 @@ impl Parser<'_> {
         position: usize,
         flags: Flags,
     ) -> Option<usize> {
-        self.steps_end(repetition.kind(), position, flags, |parser, cursor| {
-            repetition
-                .piece(parser, cursor, flags)
-                .map(|(next, _)| next)
-        })
+        self.steps_end(
+            Loop::Repetition(repetition),
+            position,
+            flags,
+            |parser, cursor| {
+                repetition
+                    .piece(parser, cursor, flags)
+                    .map(|(next, _)| next)
+            },
+        )
     }
 
     pub(super) fn run_end(&mut self, run: Run, position: usize) -> Option<usize> {
-        self.steps_end(run.kind(), position, Flags::NONE, |parser, cursor| {
+        self.steps_end(Loop::Run(run), position, Flags::NONE, |parser, cursor| {
             run.step(parser, cursor)
         })
     }

@@ -228,37 +228,32 @@ impl Parser<'_> {
         Some((position + 1, format))
     }
 
-    fn timestamp_body(&mut self, position: usize) -> Option<(usize, usize, String, Option<char>)> {
+    fn timestamp_body(&mut self, position: usize) -> Option<(usize, String, Option<char>)> {
         let date_start = self.literal(position, "<t:")?;
         let (date_end, date) = self.timestamp_date(date_start)?;
         if let Some(after_colon) = self.char(date_end, b':') {
             if let Some((format_end, format)) = self.timestamp_format(after_colon) {
                 if let Some(end) = self.char(format_end, b'>') {
-                    return Some((end, date_end, date, Some(format)));
+                    return Some((end, date, Some(format)));
                 }
             }
         }
         let end = self.char(date_end, b'>')?;
-        Some((end, date_end, date, None))
+        Some((end, date, None))
     }
 
     pub(super) fn timestamp_rules(&mut self, position: usize) -> Parsed<Node> {
         memoized!(self, timestamp_rules, position, Flags::NONE, {
-            let (end, _, date, format) = self.timestamp_body(position)?;
+            let (end, date, format) = self.timestamp_body(position)?;
             Some((end, timestamp(date, format, Some([position, end]))))
         })
     }
 
     pub(super) fn escaped_timestamp_rules(&mut self, position: usize) -> Parsed<Node> {
         memoized!(self, escaped_timestamp_rules, position, Flags::NONE, {
-            let raw_start = self.char(position, b'\\')? + 3;
-            let (end, date_end, _, format) = self.timestamp_body(position + 1)?;
-            let raw_date = self.text(raw_start, date_end);
-            let text = match format {
-                Some(format) => format!("<t:{raw_date}:{format}>"),
-                None => format!("<t:{raw_date}>"),
-            };
-            Some((end, plain(text)))
+            let after_backslash = self.char(position, b'\\')?;
+            let (end, _, _) = self.timestamp_body(after_backslash)?;
+            Some((end, plain(self.text(after_backslash, end))))
         })
     }
 }

@@ -9,9 +9,8 @@ use super::{Flags, Parsed, Parser};
 use crate::ast::{image, link, plain, Node};
 use crate::tld::{self, TldOptions};
 
-struct Phone {
-    text: String,
-    number: String,
+fn phone_digits(phone_text: &str) -> String {
+    phone_text.chars().filter(char::is_ascii_digit).collect()
 }
 
 pub(super) fn is_link_title_bulk_char(unit: u16) -> bool {
@@ -98,10 +97,10 @@ fn auto_email(source: String) -> Node {
     link(href, Some(vec![plain(source)]))
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub(crate) enum Href {
     Source,
-    Telephone(String),
+    Telephone,
 }
 
 impl Parser<'_> {
@@ -194,14 +193,14 @@ impl Parser<'_> {
     }
 
     fn phone_href(&mut self, position: usize) -> Parsed<Href> {
-        let (end, phone) = self.phone(position)?;
-        Some((end, Href::Telephone(phone.number)))
+        let end = self.phone(position)?;
+        Some((end, Href::Telephone))
     }
 
     fn resolve_href(&mut self, start: usize, end: usize, href: Href) -> String {
         match href {
             Href::Source => self.text(start, end),
-            Href::Telephone(number) => format!("tel:{number}"),
+            Href::Telephone => format!("tel:{}", phone_digits(&self.text(start, end))),
         }
     }
 
@@ -413,101 +412,47 @@ impl Parser<'_> {
         Some(consumed_start + 1)
     }
 
-    fn phone(&mut self, position: usize) -> Parsed<Phone> {
+    fn phone(&mut self, position: usize) -> Option<usize> {
         let number_start = self.char(position, b'+')?;
-        let (end, phone) = self.phone_number(number_start)?;
-        Some((
-            end,
-            Phone {
-                text: format!("+{}", phone.text),
-                number: phone.number,
-            },
-        ))
+        self.phone_number(number_start)
     }
 
-    fn phone_number(&mut self, position: usize) -> Parsed<Phone> {
-        if let Some((prefix_end, prefix)) = self.phone_prefix(position) {
+    fn phone_number(&mut self, position: usize) -> Option<usize> {
+        if let Some(prefix_end) = self.phone_prefix(position) {
             if let Some(after_dash) = self.char(prefix_end, b'-') {
                 if let Some(digits_end) = self.digits(after_dash) {
-                    let digits = self.text(after_dash, digits_end);
-                    return Some((
-                        digits_end,
-                        Phone {
-                            text: format!("{}-{digits}", prefix.text),
-                            number: prefix.number + &digits,
-                        },
-                    ));
+                    return Some(digits_end);
                 }
             }
             if let Some(first_end) = self.digits(prefix_end) {
-                let first = self.text(prefix_end, first_end);
-                if let Some(after_dash) = self.char(first_end, b'-') {
-                    if let Some(second_end) = self.digits(after_dash) {
-                        let second = self.text(after_dash, second_end);
-                        return Some((
-                            second_end,
-                            Phone {
-                                text: format!("{}{first}-{second}", prefix.text),
-                                number: format!("{}{first}{second}", prefix.number),
-                            },
-                        ));
-                    }
-                }
-                return Some((
-                    first_end,
-                    Phone {
-                        text: format!("{}{first}", prefix.text),
-                        number: prefix.number + &first,
-                    },
-                ));
+                let second_end = self
+                    .char(first_end, b'-')
+                    .and_then(|after_dash| self.digits(after_dash));
+                return Some(second_end.unwrap_or(first_end));
             }
         }
-        let end = self.digits(position)?;
-        let digits = self.text(position, end);
-        Some((
-            end,
-            Phone {
-                text: digits.clone(),
-                number: digits,
-            },
-        ))
+        self.digits(position)
     }
 
-    fn phone_prefix(&mut self, position: usize) -> Parsed<Phone> {
+    fn phone_prefix(&mut self, position: usize) -> Option<usize> {
         if let Some(end) = self.digits(position) {
-            let digits = self.text(position, end);
-            return Some((
-                end,
-                Phone {
-                    text: digits.clone(),
-                    number: digits,
-                },
-            ));
+            return Some(end);
         }
         let digits_start = self.char(position, b'(')?;
         let digits_end = self.digits(digits_start)?;
-        let end = self.char(digits_end, b')')?;
-        let digits = self.text(digits_start, digits_end);
-        Some((
-            end,
-            Phone {
-                text: format!("({digits})"),
-                number: digits,
-            },
-        ))
+        self.char(digits_end, b')')
     }
 
     pub(super) fn autolinked_phone(&mut self, position: usize) -> Parsed<Node> {
-        let (end, phone) = self.phone(position)?;
-        if phone.number.encode_utf16().count() < 5 {
-            return Some((end, plain(phone.text)));
+        let end = self.phone(position)?;
+        let phone_text = self.text(position, end);
+        let number = phone_digits(&phone_text);
+        if number.len() < 5 {
+            return Some((end, plain(phone_text)));
         }
         Some((
             end,
-            link(
-                format!("tel:{}", phone.number),
-                Some(vec![plain(phone.text)]),
-            ),
+            link(format!("tel:{number}"), Some(vec![plain(phone_text)])),
         ))
     }
 

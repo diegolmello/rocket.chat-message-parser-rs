@@ -1,4 +1,4 @@
-use super::chars::{is, is_ascii_digit, is_emoji_short_code_char, is_variation_selector};
+use super::chars::{in_table, is, is_ascii_digit, is_emoji_short_code_char, is_variation_selector};
 use super::memo::memoized;
 use super::{Flags, Parsed, Parser};
 use crate::ast::{big_emoji, emoji, emoji_unicode, emoticon, Node};
@@ -165,12 +165,6 @@ const ENCLOSED_BADGES: &[(u16, u16)] = &[
 const VARIATION_SELECTOR_16: u16 = 0xFE0F;
 const ZERO_WIDTH_JOINER: u16 = 0x200D;
 const COMBINING_KEYCAP: u16 = 0x20E3;
-
-fn in_ranges(ranges: &[(u16, u16)], unit: u16) -> bool {
-    ranges
-        .iter()
-        .any(|&(low, high)| (low..=high).contains(&unit))
-}
 
 fn between(low: u16, high: u16) -> impl Fn(u16) -> bool {
     move |unit| (low..=high).contains(&unit)
@@ -357,19 +351,19 @@ impl Parser<'_> {
     }
 
     fn emoji_enclosed_badges(&mut self, position: usize) -> Option<usize> {
-        let end = self.surrogate_pair(position, 0xD83C, |unit| in_ranges(ENCLOSED_BADGES, unit));
+        let end = self.surrogate_pair(position, 0xD83C, |unit| in_table(ENCLOSED_BADGES, unit));
         self.with_variation_selector(end)
     }
 
     fn emoji_text_presentation(&mut self, position: usize) -> Option<usize> {
         let base = self
-            .class(position, |unit| in_ranges(TEXT_PRESENTATION, unit))
+            .class(position, |unit| in_table(TEXT_PRESENTATION, unit))
             .and_then(|end| self.class(end, |unit| unit == VARIATION_SELECTOR_16));
         if base.is_some() {
             return base;
         }
         let supplementary = self.surrogate_pair(position, 0xD83C, |unit| {
-            in_ranges(TEXT_PRESENTATION_SUPPLEMENTARY, unit)
+            in_table(TEXT_PRESENTATION_SUPPLEMENTARY, unit)
         })?;
         self.class(supplementary, |unit| unit == VARIATION_SELECTOR_16)
     }

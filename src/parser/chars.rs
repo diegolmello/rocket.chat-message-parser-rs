@@ -1,6 +1,6 @@
 use super::char_tables::{ALPHA_CHAR, DECIMAL_NUMBER_CHAR, EMOJI_CHAR, MARK_CHAR};
 
-fn in_table(table: &[(u16, u16)], unit: u16) -> bool {
+pub(crate) fn in_table(table: &[(u16, u16)], unit: u16) -> bool {
     table
         .binary_search_by(|&(low, high)| {
             if high < unit {

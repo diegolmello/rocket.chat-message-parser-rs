@@ -3,6 +3,7 @@ use rustc_hash::FxHashMap as HashMap;
 use super::blocks::NestedLine;
 use super::links::Href;
 use super::reduce::Item;
+use super::repetition::Loop;
 use super::Parsed;
 use crate::ast::Node;
 
@@ -13,7 +14,7 @@ macro_rules! memo_tables {
         #[derive(Default)]
         pub(crate) struct Memo {
             $(pub(crate) $table: HashMap<Key, Parsed<$value>>,)*
-            pub(crate) repetition_end: HashMap<(u32, u8, u16), u32>,
+            pub(crate) repetition_end: HashMap<(u32, u8, Loop), u32>,
             repeated_evaluations: u64,
         }
 
