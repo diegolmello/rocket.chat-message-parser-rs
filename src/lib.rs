@@ -2,7 +2,10 @@ pub mod ast;
 mod parser;
 pub mod tld;
 
+use std::time::SystemTime;
+
 pub use ast::Node;
+pub use parser::ParseReport;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct KatexOptions {
@@ -18,6 +21,17 @@ pub struct Options {
     pub custom_domains: Option<Vec<String>>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct ParseOutcome {
+    pub nodes: Vec<Node>,
+    pub report: ParseReport,
+}
+
 pub fn parse(input: &str, options: &Options) -> Vec<Node> {
-    parser::parse(input, options)
+    parse_at(input, options, SystemTime::now()).nodes
+}
+
+pub fn parse_at(input: &str, options: &Options, now: SystemTime) -> ParseOutcome {
+    let (nodes, report) = parser::parse(input, options, now);
+    ParseOutcome { nodes, report }
 }

@@ -167,7 +167,10 @@ pub enum TableAlign {
 
 const MAX_SAFE_INTEGER: f64 = 9_007_199_254_740_991.0;
 
-fn serialize_js_number<S: Serializer>(number: &Option<f64>, serializer: S) -> Result<S::Ok, S::Error> {
+fn serialize_js_number<S: Serializer>(
+    number: &Option<f64>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
     match number {
         Some(value) if value.fract() == 0.0 && value.abs() <= MAX_SAFE_INTEGER => {
             serializer.serialize_i64(*value as i64)
@@ -178,7 +181,9 @@ fn serialize_js_number<S: Serializer>(number: &Option<f64>, serializer: S) -> Re
 }
 
 pub fn plain(value: impl Into<String>) -> Node {
-    Node::PlainText { value: value.into() }
+    Node::PlainText {
+        value: value.into(),
+    }
 }
 
 pub fn paragraph(value: Vec<Node>) -> Node {
@@ -211,17 +216,23 @@ pub fn quote(value: Vec<Node>) -> Node {
 
 pub fn code(value: Vec<Node>, language: Option<String>) -> Node {
     Node::Code {
-        language: language.filter(|language| !language.is_empty()).unwrap_or_else(|| "none".into()),
+        language: language
+            .filter(|language| !language.is_empty())
+            .unwrap_or_else(|| "none".into()),
         value,
     }
 }
 
 pub fn code_line(value: Node) -> Node {
-    Node::CodeLine { value: Box::new(value) }
+    Node::CodeLine {
+        value: Box::new(value),
+    }
 }
 
 pub fn inline_code(value: Node) -> Node {
-    Node::InlineCode { value: Box::new(value) }
+    Node::InlineCode {
+        value: Box::new(value),
+    }
 }
 
 pub fn heading(value: Vec<Node>, level: u8) -> Node {
@@ -232,7 +243,10 @@ pub fn link(src: impl Into<String>, label: Option<Vec<Node>>) -> Node {
     let src = src.into();
     let label = label.unwrap_or_else(|| vec![plain(src.clone())]);
     Node::Link {
-        value: LinkValue { src: Box::new(plain(src)), label },
+        value: LinkValue {
+            src: Box::new(plain(src)),
+            label,
+        },
     }
 }
 
@@ -240,16 +254,23 @@ pub fn image(src: impl Into<String>, label: Option<Node>) -> Node {
     let src = src.into();
     let label = label.unwrap_or_else(|| plain(src.clone()));
     Node::Image {
-        value: ImageValue { src: Box::new(plain(src)), label: Box::new(label) },
+        value: ImageValue {
+            src: Box::new(plain(src)),
+            label: Box::new(label),
+        },
     }
 }
 
 pub fn mention_user(value: impl Into<String>) -> Node {
-    Node::MentionUser { value: Box::new(plain(value)) }
+    Node::MentionUser {
+        value: Box::new(plain(value)),
+    }
 }
 
 pub fn mention_channel(value: impl Into<String>) -> Node {
-    Node::MentionChannel { value: Box::new(plain(value)) }
+    Node::MentionChannel {
+        value: Box::new(plain(value)),
+    }
 }
 
 pub fn emoji(short_code: impl Into<String>) -> Node {
@@ -262,7 +283,11 @@ pub fn emoji(short_code: impl Into<String>) -> Node {
 }
 
 pub fn emoji_unicode(unicode: impl Into<String>) -> Node {
-    Node::Emoji { value: None, short_code: None, unicode: Some(unicode.into()) }
+    Node::Emoji {
+        value: None,
+        short_code: None,
+        unicode: Some(unicode.into()),
+    }
 }
 
 pub fn emoticon(text: impl Into<String>, short_code: impl Into<String>) -> Node {
@@ -278,7 +303,9 @@ pub fn big_emoji(value: Vec<Node>) -> Node {
 }
 
 pub fn color(r: u8, g: u8, b: u8, a: u8) -> Node {
-    Node::Color { value: ColorValue { r, g, b, a } }
+    Node::Color {
+        value: ColorValue { r, g, b, a },
+    }
 }
 
 pub fn tasks(value: Vec<Node>) -> Node {
@@ -286,7 +313,11 @@ pub fn tasks(value: Vec<Node>) -> Node {
 }
 
 pub fn task(value: Vec<Node>, status: bool, nested: Option<Vec<Node>>) -> Node {
-    Node::Task { status, value, nested }
+    Node::Task {
+        status,
+        value,
+        nested,
+    }
 }
 
 pub fn ordered_list(value: Vec<Node>) -> Node {
@@ -298,7 +329,11 @@ pub fn unordered_list(value: Vec<Node>) -> Node {
 }
 
 pub fn list_item(value: Vec<Node>, number: Option<f64>, nested: Option<Vec<Node>>) -> Node {
-    Node::ListItem { value, number, nested }
+    Node::ListItem {
+        value,
+        number,
+        nested,
+    }
 }
 
 pub fn line_break() -> Node {
@@ -310,16 +345,27 @@ pub fn horizontal_rule(fallback: Option<SourceRange>) -> Node {
 }
 
 pub fn katex(value: impl Into<String>) -> Node {
-    Node::Katex { value: value.into() }
+    Node::Katex {
+        value: value.into(),
+    }
 }
 
 pub fn inline_katex(value: impl Into<String>) -> Node {
-    Node::InlineKatex { value: value.into() }
+    Node::InlineKatex {
+        value: value.into(),
+    }
 }
 
-pub fn timestamp(value: impl Into<String>, format: Option<char>, fallback: Option<SourceRange>) -> Node {
+pub fn timestamp(
+    value: impl Into<String>,
+    format: Option<char>,
+    fallback: Option<SourceRange>,
+) -> Node {
     Node::Timestamp {
-        value: TimestampValue { timestamp: value.into(), format: format.unwrap_or('t') },
+        value: TimestampValue {
+            timestamp: value.into(),
+            format: format.unwrap_or('t'),
+        },
         fallback,
     }
 }
@@ -333,5 +379,8 @@ pub fn table_row(value: Vec<Node>) -> Node {
 }
 
 pub fn table(header: Vec<Node>, rows: Vec<Node>, fallback: Option<SourceRange>) -> Node {
-    Node::Table { value: TableValue { header, rows }, fallback }
+    Node::Table {
+        value: TableValue { header, rows },
+        fallback,
+    }
 }
