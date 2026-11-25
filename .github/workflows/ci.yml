@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,6 +15,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -29,6 +30,7 @@ jobs:
 
   compare-with-upstream:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       TZ: America/New_York
     steps:
@@ -39,6 +41,8 @@ jobs:
         with:
           node-version: 24
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.20
       - run: bun install --frozen-lockfile
         working-directory: upstream
       - run: cargo test --release --features upstream-oracle --test differential
