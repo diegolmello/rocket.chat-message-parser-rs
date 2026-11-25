@@ -316,12 +316,10 @@ impl Parser<'_> {
     }
 
     fn emoji_miscellaneous_symbols_and_pictographs(&mut self, position: usize) -> Option<usize> {
-        let first = self.surrogate_pair(position, 0xD83C, between(0xDF00, 0xDFFF));
-        if first.is_some() {
-            return self.with_variation_selector(first);
-        }
-        let second = self.surrogate_pair(position, 0xD83D, between(0xDC00, 0xDDFF));
-        self.with_variation_selector(second)
+        let end = self
+            .surrogate_pair(position, 0xD83C, between(0xDF00, 0xDFFF))
+            .or_else(|| self.surrogate_pair(position, 0xD83D, between(0xDC00, 0xDDFF)));
+        self.with_variation_selector(end)
     }
 
     fn emoji_emoticon(&mut self, position: usize) -> Option<usize> {
@@ -340,14 +338,12 @@ impl Parser<'_> {
     }
 
     fn emoji_geometric_squares(&mut self, position: usize) -> Option<usize> {
-        let square = self.class(position, between(0x2B1B, 0x2B1C));
-        if square.is_some() {
-            return self.with_variation_selector(square);
-        }
-        let circle = self.surrogate_pair(position, 0xD83D, |unit| {
-            (0xDFE0..=0xDFEB).contains(&unit) || unit == 0xDFF0
+        let end = self.class(position, between(0x2B1B, 0x2B1C)).or_else(|| {
+            self.surrogate_pair(position, 0xD83D, |unit| {
+                (0xDFE0..=0xDFEB).contains(&unit) || unit == 0xDFF0
+            })
         });
-        self.with_variation_selector(circle)
+        self.with_variation_selector(end)
     }
 
     fn emoji_enclosed_badges(&mut self, position: usize) -> Option<usize> {

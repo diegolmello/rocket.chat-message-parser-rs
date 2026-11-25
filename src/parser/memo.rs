@@ -16,17 +16,7 @@ macro_rules! memo_tables {
             $(pub(crate) $table: HashMap<Key, Parsed<$value>>,)*
             pub(crate) repetition_end: HashMap<(u32, u8, Loop), u32>,
             pub(crate) spoilers_evaluated_from: HashMap<u8, u32>,
-            repeated_evaluations: u64,
-        }
-
-        impl Memo {
-            pub(crate) fn repeated_evaluations(&self) -> u64 {
-                self.repeated_evaluations
-            }
-
-            pub(crate) fn record_repeat(&mut self) {
-                self.repeated_evaluations += 1;
-            }
+            pub(crate) repeated_evaluations: u64,
         }
     };
 }
@@ -75,7 +65,7 @@ macro_rules! memoized {
             #[allow(clippy::redundant_closure_call)]
             let parsed: $crate::parser::Parsed<_> = (|| -> $crate::parser::Parsed<_> { $body })();
             if $parser.memo.$table.insert(key, parsed.clone()).is_some() {
-                $parser.memo.record_repeat();
+                $parser.memo.repeated_evaluations += 1;
             }
             parsed
         }

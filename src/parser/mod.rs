@@ -11,7 +11,7 @@ mod timestamp;
 
 use std::time::SystemTime;
 
-use crate::ast::{paragraph, plain, Node};
+use crate::ast::Node;
 use crate::Options;
 use chars::{is, is_ascii_digit, is_space};
 use memo::Memo;
@@ -245,15 +245,18 @@ impl<'source> Parser<'source> {
         self.at(position).map(|_| position + 1)
     }
 
-    pub(crate) fn email_guard(&mut self, position: usize) -> bool {
+    fn scan(&mut self, table: fn(&Scans) -> &[u32], position: usize) -> usize {
         self.report.input_reads += 1;
-        let stop = self.scans.email_stop[position.min(self.len())] as usize;
+        table(&self.scans)[position.min(self.len())] as usize
+    }
+
+    pub(crate) fn email_guard(&mut self, position: usize) -> bool {
+        let stop = self.scan(|scans| &scans.email_stop, position);
         self.source.get(stop) == Some(&(b'@' as u16))
     }
 
     pub(crate) fn url_guard(&mut self, position: usize) -> bool {
-        self.report.input_reads += 1;
-        let stop = self.scans.url_stop[position.min(self.len())] as usize;
+        let stop = self.scan(|scans| &scans.url_stop, position);
         match self.source.get(stop) {
             Some(&unit) if is(unit, b'.') => true,
             Some(&unit) if is(unit, b':') => {
@@ -265,43 +268,15 @@ impl<'source> Parser<'source> {
     }
 
     pub(crate) fn block_katex_end(&mut self, position: usize) -> usize {
-        self.report.input_reads += 1;
-        self.scans.block_katex_end[position.min(self.len())] as usize
+        self.scan(|scans| &scans.block_katex_end, position)
     }
 
     pub(crate) fn inline_katex_end(&mut self, position: usize) -> usize {
-        self.report.input_reads += 1;
-        self.scans.inline_katex_end[position.min(self.len())] as usize
+        self.scan(|scans| &scans.inline_katex_end, position)
     }
 
     pub(crate) fn extra_run_end(&mut self, position: usize) -> usize {
-        self.report.input_reads += 1;
-        self.scans.extra_run_end[position.min(self.len())] as usize
-    }
-
-    fn start(&mut self) -> Vec<Node> {
-        if let Some((end, nodes)) = self.big_emoji(0) {
-            if end == self.len() {
-                return nodes;
-            }
-        }
-        let mut nodes = Vec::new();
-        let mut position = 0;
-        loop {
-            if let Some((end, node)) = self.blocks(position) {
-                nodes.push(node);
-                position = end;
-            } else if let Some((end, node)) = self.paragraph(position) {
-                nodes.push(node);
-                position = end;
-            } else if let Some(end) = self.end_of_line(position) {
-                nodes.push(paragraph(vec![plain("")]));
-                position = end;
-            } else {
-                break;
-            }
-        }
-        nodes
+        self.scan(|scans| &scans.extra_run_end, position)
     }
 }
 
@@ -309,6 +284,6 @@ pub(crate) fn parse(input: &str, options: &Options, now: SystemTime) -> (Vec<Nod
     let mut parser = Parser::new(input, options, now);
     let nodes = parser.start();
     let mut report = parser.report;
-    report.repeated_evaluations = parser.memo.repeated_evaluations();
+    report.repeated_evaluations = parser.memo.repeated_evaluations;
     (nodes, report)
 }

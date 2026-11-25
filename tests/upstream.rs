@@ -218,18 +218,14 @@ fn clock_at(instant: &str) -> SystemTime {
         .into()
 }
 
-fn run_fixture(source: &str) {
-    let fixture: Fixture =
-        serde_json::from_str(source).expect("fixture JSON matches the extractor's schema");
+fn fixture_failures(fixture: &Fixture) -> Vec<String> {
     let mut failures = Vec::new();
-    let mut checked = 0;
     for group in &fixture.groups {
         let now = match &group.needs_clock {
             Some(clock) => clock_at(clock),
             None => SystemTime::now(),
         };
         for case in &group.cases {
-            checked += 1;
             if let Err(reason) = check_case(case, now) {
                 failures.push(format!(
                     "[{}] {}\n  input:   {:?}\n  options: {:?}\n  {reason}",
@@ -238,64 +234,7 @@ fn run_fixture(source: &str) {
             }
         }
     }
-    if !failures.is_empty() {
-        panic!(
-            "{} of {checked} case(s) from {} failed:\n\n{}",
-            failures.len(),
-            fixture.file,
-            failures.join("\n\n")
-        );
-    }
-}
-
-macro_rules! upstream_fixtures {
-    ($($test_name:ident => $fixture_stem:literal),* $(,)?) => {
-        $(
-            #[test]
-            fn $test_name() {
-                run_fixture(include_str!(concat!("fixtures/upstream/", $fixture_stem, ".json")));
-            }
-        )*
-
-        const FIXTURE_STEMS: &[&str] = &[$($fixture_stem),*];
-    };
-}
-
-upstream_fixtures! {
-    abuse => "abuse",
-    any => "any",
-    blockquotes => "blockquotes",
-    code_fence => "codeFence",
-    color => "color",
-    email => "email",
-    emoji => "emoji",
-    emoticons => "emoticons",
-    emphasis => "emphasis",
-    emphasis_with_emoticons => "emphasisWithEmoticons",
-    escaped => "escaped",
-    heading => "heading",
-    horizontal_rule => "horizontalRule",
-    image => "image",
-    inline_code => "inlineCode",
-    inline_code_strike => "inlineCodeStrike",
-    katex => "katex",
-    line_break => "lineBreak",
-    link => "link",
-    long_code_fence => "longCodeFence",
-    mention => "mention",
-    nested_list => "nestedList",
-    ordered_list => "orderedList",
-    phone_number => "phoneNumber",
-    skip_flags_regression => "skip-flags-regression",
-    spoiler => "spoiler",
-    spoiler_block => "spoilerBlock",
-    strikethrough => "strikethrough",
-    strong_emphasis => "strongEmphasis",
-    table => "table",
-    tasks => "tasks",
-    timestamp => "timestamp",
-    unordered_list => "unorderedList",
-    url => "url",
+    failures
 }
 
 const FIXTURE_DIRECTORY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/upstream");
@@ -349,24 +288,25 @@ fn every_uncaptured_upstream_test_has_a_hand_port_or_a_reason() {
 }
 
 #[test]
-fn every_fixture_file_has_a_test() {
-    let mut on_disk: Vec<String> = fixture_paths()
+fn every_upstream_fixture_case_matches() {
+    let fixtures: Vec<Fixture> = fixture_paths()
         .iter()
         .map(|path| {
-            path.file_stem()
-                .expect("fixture has a name")
-                .to_string_lossy()
-                .into_owned()
+            let source = std::fs::read_to_string(path).expect("fixture is readable");
+            serde_json::from_str(&source).expect("fixture JSON matches the extractor's schema")
         })
         .collect();
-    on_disk.sort();
-    let mut covered: Vec<String> = FIXTURE_STEMS
+    assert!(!fixtures.is_empty(), "no fixtures in {FIXTURE_DIRECTORY}");
+    let checked: usize = fixtures
         .iter()
-        .map(|stem| (*stem).to_owned())
-        .collect();
-    covered.sort();
-    assert_eq!(
-        on_disk, covered,
-        "tests/upstream.rs must list every fixture in {FIXTURE_DIRECTORY}"
+        .flat_map(|fixture| &fixture.groups)
+        .map(|group| group.cases.len())
+        .sum();
+    let failures: Vec<String> = fixtures.iter().flat_map(fixture_failures).collect();
+    assert!(
+        failures.is_empty(),
+        "{} of {checked} case(s) failed:\n\n{}",
+        failures.len(),
+        failures.join("\n\n")
     );
 }

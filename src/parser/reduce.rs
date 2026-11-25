@@ -1,3 +1,4 @@
+use super::chars::is_js_whitespace;
 use super::Parsed;
 use crate::ast::{plain, Node};
 
@@ -9,20 +10,6 @@ pub(crate) enum Item {
 
 pub(crate) fn one(parsed: Parsed<Node>) -> Parsed<Item> {
     parsed.map(|(end, node)| (end, Item::One(node)))
-}
-
-pub(crate) fn is_js_whitespace(character: char) -> bool {
-    matches!(
-        character,
-        '\t' | '\n' | '\u{0B}' | '\u{0C}' | '\r' | ' ' | '\u{A0}' | '\u{1680}' | '\u{2000}'
-            ..='\u{200A}'
-                | '\u{2028}'
-                | '\u{2029}'
-                | '\u{202F}'
-                | '\u{205F}'
-                | '\u{3000}'
-                | '\u{FEFF}'
-    )
 }
 
 fn is_blank(text: &str) -> bool {

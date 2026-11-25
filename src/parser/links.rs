@@ -18,7 +18,7 @@ pub(super) fn is_link_title_bulk_char(unit: u16) -> bool {
 }
 
 fn is_link_title2_char(unit: u16) -> bool {
-    matches!(unit, 0x20..=0x3B | 0x3D | 0x3F..=0x60 | 0x61..=0x7B | 0x7D..=0xFF) || unit >= 0x80
+    unit >= 0x20 && !is_one_of(unit, b"<>|")
 }
 
 fn is_line_end(unit: u16) -> bool {

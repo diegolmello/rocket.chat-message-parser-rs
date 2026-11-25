@@ -1,6 +1,6 @@
-use super::chars::{is, is_code_language_char};
+use super::chars::{is, is_code_language_char, is_js_whitespace};
 use super::memo::memoized;
-use super::reduce::{is_js_whitespace, reduce_plain_texts, Item};
+use super::reduce::{reduce_plain_texts, Item};
 use super::{Flags, Parsed, Parser};
 use crate::ast::{
     code, code_line, heading, horizontal_rule, katex, line_break, list_item, ordered_list,
@@ -138,17 +138,9 @@ fn group_nested_lines(lines: Vec<NestedLine>) -> Vec<Node> {
         .finish()
 }
 
-fn trim_start_js(text: &str) -> &str {
-    text.trim_start_matches(is_js_whitespace)
-}
-
-fn trim_end_js(text: &str) -> &str {
-    text.trim_end_matches(is_js_whitespace)
-}
-
 fn trim_cell_content(mut value: Vec<Node>) -> Vec<Node> {
     if let Some(Node::PlainText { value: text }) = value.first() {
-        let trimmed = trim_start_js(text).to_string();
+        let trimmed = text.trim_start_matches(is_js_whitespace).to_string();
         if trimmed.is_empty() {
             value.remove(0);
         } else {
@@ -156,7 +148,7 @@ fn trim_cell_content(mut value: Vec<Node>) -> Vec<Node> {
         }
     }
     if let Some(Node::PlainText { value: text }) = value.last() {
-        let trimmed = trim_end_js(text).to_string();
+        let trimmed = text.trim_end_matches(is_js_whitespace).to_string();
         let last = value.len() - 1;
         if trimmed.is_empty() {
             value.pop();
@@ -198,6 +190,31 @@ fn build_table(
 }
 
 impl Parser<'_> {
+    pub(super) fn start(&mut self) -> Vec<Node> {
+        if let Some((end, nodes)) = self.big_emoji(0) {
+            if end == self.len() {
+                return nodes;
+            }
+        }
+        let mut nodes = Vec::new();
+        let mut position = 0;
+        loop {
+            if let Some((end, node)) = self.blocks(position) {
+                nodes.push(node);
+                position = end;
+            } else if let Some((end, node)) = self.paragraph(position) {
+                nodes.push(node);
+                position = end;
+            } else if let Some(end) = self.end_of_line(position) {
+                nodes.push(paragraph(vec![plain("")]));
+                position = end;
+            } else {
+                break;
+            }
+        }
+        nodes
+    }
+
     pub(super) fn blocks(&mut self, position: usize) -> Parsed<Node> {
         self.blockquote(position)
             .or_else(|| self.block_spoiler(position))

@@ -3,6 +3,8 @@ use super::chars::{
     is_names_char, is_one_of, is_space,
 };
 use super::memo::{memoized, Key, Memo};
+
+type MemoTable = fn(&Memo) -> &rustc_hash::FxHashMap<Key, Parsed<Item>>;
 use super::reduce::{one, reduce_plain_texts, Item};
 use super::repetition::{Piece, Repetition, Run};
 use super::{Flags, Parsed, Parser};
@@ -59,10 +61,10 @@ impl EmphasisContent {
         }
     }
 
-    fn is_preferential_memoized(self, memo: &Memo, key: Key) -> bool {
+    fn preferential_table(self) -> MemoTable {
         match self {
-            EmphasisContent::Bold => memo.bold_preferential_item.contains_key(&key),
-            EmphasisContent::Italic => memo.italic_preferential_item.contains_key(&key),
+            EmphasisContent::Bold => |memo| &memo.bold_preferential_item,
+            EmphasisContent::Italic => |memo| &memo.italic_preferential_item,
         }
     }
 }
@@ -128,7 +130,7 @@ impl Parser<'_> {
         self.evaluate_emoticon_chain_backwards(
             end,
             flags,
-            |memo, key| memo.inline_item_pattern.contains_key(&key),
+            |memo| &memo.inline_item_pattern,
             |parser, cursor, flags| {
                 parser.inline_item_pattern(cursor, flags);
             },
@@ -141,12 +143,12 @@ impl Parser<'_> {
         &mut self,
         start: usize,
         flags: Flags,
-        is_memoized: impl Fn(&Memo, Key) -> bool,
+        table: MemoTable,
         evaluate: impl Fn(&mut Self, usize, Flags),
     ) {
         let mut chain = Vec::new();
         let mut cursor = start;
-        while !is_memoized(&self.memo, (cursor as u32, flags.bits())) {
+        while !table(&self.memo).contains_key(&(cursor as u32, flags.bits())) {
             let Some((end, _)) = self.emoticon(cursor) else {
                 break;
             };
@@ -508,7 +510,7 @@ impl Parser<'_> {
                 self.evaluate_emoticon_chain_backwards(
                     end,
                     flags,
-                    |memo, key| content.is_preferential_memoized(memo, key),
+                    content.preferential_table(),
                     |parser, cursor, flags| {
                         parser.preferential_item(cursor, flags, content);
                     },
