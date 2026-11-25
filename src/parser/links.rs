@@ -519,10 +519,7 @@ impl Parser<'_> {
 
     fn auto_link_body(&mut self, position: usize) -> usize {
         let mut cursor = position;
-        loop {
-            let Some(unit) = self.at(cursor) else {
-                break;
-            };
+        while let Some(unit) = self.at(cursor) {
             if is_auto_link_body_char(unit) {
                 cursor += 1;
                 continue;

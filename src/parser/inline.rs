@@ -352,7 +352,7 @@ impl Parser<'_> {
     }
 
     fn emphasis_with_whitespace(&mut self, position: usize) -> Parsed<Node> {
-        for marker in [b'*', b'_', b'~'] {
+        for marker in *b"*_~" {
             let Some(opening_end) = self.run_end(Run::Marker(marker), position) else {
                 continue;
             };
