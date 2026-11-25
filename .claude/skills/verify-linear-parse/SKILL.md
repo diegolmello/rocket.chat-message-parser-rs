@@ -12,17 +12,21 @@ description: Check that the message parser does linear work and bounded recursio
 ## Run
 
 ```sh
-cargo test --release --test linear_work -- --nocapture
+cargo test --release --features work-report --test linear_work -- --nocapture
+cargo test --release --test stack_depth
 ```
 
-It takes about 10 seconds. In a debug build, `cargo test` skips the seed test; always run the release command above.
+They take about 10 seconds. `tests/linear_work.rs` reads `ParseReport` through `parse_with_report`, which exists only with the `work-report` feature, so plain `cargo test` skips that file. A debug build also skips the seed test; always run the release commands above.
 
-The four tests:
+The tests in `tests/linear_work.rs`:
 
 - `every_short_input_evaluates_each_rule_position_once_within_the_work_limit`: every string up to 4 characters over ``* _ ~ [ ] ( $ : ` < \n a``, with default options and with every option on. Fails on `repeated_evaluations > 0` or work above `WORK_PER_UNIT_LIMIT × (length + 1)`.
 - `repeated_seeds_grow_linearly`: every seed in `seeds()` (all 1–2 character strings over `SEED_ALPHABET`, all 3 character strings over `CORE_SEED_ALPHABET`, `KNOWN_SEEDS`, and `PREFIXED_SEEDS`, whose prefix is written once before the repetitions, so one list item can own an unbounded run of nested lines) repeated a whole number of times, to at least 400 and then 8 times that length. Fails when work per unit grows by more than `DENSITY_GROWTH_LIMIT` (2.0) or exceeds `WORK_PER_UNIT_LIMIT` (400). On a pass it prints the worst growth and density; on the sync commit these were 1.84x (``"* `"``) and 240 per unit (`"*_~[$:"`).
+
+The tests in `tests/stack_depth.rs`, which need no feature:
+
 - `long_emoticon_chains_parse_within_a_main_thread_stack`: 50,000 chained `:)` emoticons, bare and inside bold and italic, on an 8 MiB thread.
-- `deeply_nested_lists_parse_within_a_small_stack`: 2,000 lines, each indented one space more than the last, parsed on a 1 MiB thread; checks the result is 2,000 levels deep. It walks the tree by moving each level out, so the result's drop does not recurse.
+- `deeply_nested_lists_stop_nesting_at_the_depth_limit_and_keep_every_item`: 2,000 lines, each indented one space more than the last, on a 2 MiB thread (Rust's default for spawned threads). It parses, serializes, clones and drops the result. It checks the tree stops at 64 levels (`MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs` plus the top list), the deepest list holds the remaining 1,937 items, and all 2,000 items are kept.
 
 ## Reading a failure
 
@@ -46,20 +50,20 @@ Each violation names the option set, the seed, the work at both lengths and the 
 | Deferred copies | `Parser::text` (counted reads) and `Parser::character` (keeps a surrogate pair whole; `KNOWN_SEEDS` `"~🀄"`, `"~x🇧~"` reach it) in `src/parser/mod.rs`; `Href`, `resolve_href`, `link_ref`, `markdown_link_ref`, and `phone`, `phone_number`, `phone_prefix` (which return only an end) in `src/parser/links.rs` |
 | Precomputed scans | `Scans` and `email_guard`, `url_guard`, `block_katex_end`, `inline_katex_end`, `extra_run_end` in `src/parser/mod.rs` |
 | Rule bodies reached by the seeds | `src/parser/{blocks,inline,links,emoji,timestamp}.rs` |
-| Stack depth | `evaluate_emoticon_chain_backwards`, `inline_emoticon`, `EmphasisContent`, `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
+| Stack depth | `MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs`; `evaluate_emoticon_chain_backwards`, `inline_emoticon`, `EmphasisContent`, `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
 | Nested list lines | `nested_list_lines` (memoizes flat `NestedLine`s, never the grouped tree) and its callers `task`, `ordered_list_item`, `unordered_list_item` in `src/parser/blocks.rs` |
 
 Skip flags are passed by value as `Flags`, never stored on `Parser`, so they are restored after every rule by construction; no test covers this.
 
-**Sync commit:** `f9e8278`
+**Sync commit:** `d1eada4`
 
-When covered code changes, compare it against the sync commit (`git diff f9e8278 -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff d1eada4 -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
 - Work is checked on generated inputs, not proven for all inputs. A superlinear path reachable only through strings longer than the seeds, or through characters outside the alphabets, can pass.
 - The density check catches a superlinear term once it is about half the work at 8x length. A small quadratic term can pass.
 - Clones of memoized results on a memo hit are not counted as work, and neither is `group_nested_lines`, which reruns on every `nested_lists` call, memo hits included. Both cost the size of the memoized value.
-- `Node`'s derived `Clone`, `Drop` and `Serialize` recurse once per nesting level. Dropping a 2,000-level list tree fits a 1 MiB stack; 10,000 levels (about 50 million characters of indentation) overflows it. Serializing to JSON on a 2 MiB stack overflows at about 6,500 levels. The depth test moves levels out to avoid this, so it does not cover dropping or cloning the result.
-- Wall-clock time grows a little faster than work: about 1.1–1.2x per doubling of length, measured between 4k and 64k characters, because the memo tables outgrow the CPU caches. `cargo run --release --example benchmark` shows the timings.
+- `Node`'s derived `Clone`, `Drop` and `Serialize` recurse once per nesting level, so the depth cap is what keeps them safe. A debug build's `Serialize` takes about 16 KB of stack per level: about 60 levels fit in 1 MiB. Raising `MAXIMUM_NESTED_LEVELS` past about 120 breaks debug serialization on a 2 MiB thread. Bold, italic and strike nesting is bounded by the skip flags; no other node nests without bound.
+- Wall-clock time grows a little faster than work: about 1.1–1.2x per doubling of length, measured between 4k and 64k characters, because the memo tables outgrow the CPU caches. `cargo run --release --features work-report --example benchmark` shows the timings.
 - Output correctness is `tests/upstream.rs`'s job, not this check's. Local-time resolution in `src/parser/timestamp.rs` does constant work per timestamp; the ISO date seeds in `KNOWN_SEEDS` reach it in the clock's zone, but its daylight saving branches depend on `TZ`, and `tests/local_time.rs` covers their output.
