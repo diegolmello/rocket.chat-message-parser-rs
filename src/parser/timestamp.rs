@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local, LocalResult, NaiveDateTime, TimeDelta, TimeZone};
 
 use super::chars::is;
 use super::memo::memoized;
@@ -33,11 +33,31 @@ fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
 }
 
 fn local_offset_milliseconds(local_as_utc: i64) -> i64 {
-    let naive = DateTime::from_timestamp_millis(local_as_utc).map(|moment| moment.naive_utc());
-    naive
-        .and_then(|naive| Local.from_local_datetime(&naive).earliest())
-        .map(|local| local_as_utc - local.timestamp_millis())
-        .unwrap_or(0)
+    let Some(naive) =
+        DateTime::from_timestamp_millis(local_as_utc).map(|moment| moment.naive_utc())
+    else {
+        return 0;
+    };
+    let offset_at_instant = |utc: NaiveDateTime| {
+        i64::from(Local.offset_from_utc_datetime(&utc).local_minus_utc()) * 1000
+    };
+    let candidates = match Local.from_local_datetime(&naive) {
+        LocalResult::Single(local) => vec![local],
+        LocalResult::Ambiguous(first, second) => vec![first, second],
+        LocalResult::None => Vec::new(),
+    };
+    let earliest_matching_instant = candidates
+        .into_iter()
+        .map(|local| local.timestamp_millis())
+        .filter(|&instant| {
+            DateTime::from_timestamp_millis(instant)
+                .is_some_and(|utc| utc.with_timezone(&Local).naive_local() == naive)
+        })
+        .min();
+    match earliest_matching_instant {
+        Some(instant) => local_as_utc - instant,
+        None => offset_at_instant(naive - TimeDelta::days(1)),
+    }
 }
 
 fn epoch_milliseconds(parts: &DateParts) -> Option<i64> {
