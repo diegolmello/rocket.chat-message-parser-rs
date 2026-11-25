@@ -8,8 +8,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use message_parser::parse_at;
 use proptest::prelude::*;
-use serde::Deserialize;
-use serde_json::{json, Value};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use support::{clock_at, js_equal, pretty, Fixture, JsKatexOptions, JsOptions};
 
 const UPSTREAM_DIRECTORY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/upstream");
@@ -28,6 +28,14 @@ struct Oracle {
 enum OracleResponse {
     Nodes(Value),
     Error(String),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+struct ParseCase {
+    input: String,
+    options: JsOptions,
+    now: u64,
 }
 
 impl Oracle {
@@ -52,24 +60,20 @@ impl Oracle {
         }
     }
 
-    fn parse(
-        &mut self,
-        input: &str,
-        options: &JsOptions,
-        now_milliseconds: u64,
-    ) -> Result<Value, String> {
-        let request = json!({ "input": input, "options": options, "now": now_milliseconds });
+    fn parse(&mut self, case: &ParseCase) -> Result<Value, String> {
+        let request = serde_json::to_string(case).expect("parse case serializes");
         let mut line = String::new();
         let exchanged =
             writeln!(self.requests, "{request}").and_then(|()| self.responses.read_line(&mut line));
         if !matches!(exchanged, Ok(length) if length > 0) {
+            let _ = self.process.kill();
             let status = self.process.wait().expect("oracle process can be awaited");
             *self = Oracle::start();
-            return Err(format!("upstream oracle exited ({status}) on {input:?}"));
+            return Err(format!("upstream oracle exited ({status})"));
         }
         match serde_json::from_str(&line).expect("oracle responds with one JSON object per line") {
             OracleResponse::Nodes(nodes) => Ok(nodes),
-            OracleResponse::Error(error) => Err(format!("upstream threw on {input:?}: {error}")),
+            OracleResponse::Error(error) => Err(format!("upstream threw: {error}")),
         }
     }
 }
@@ -82,20 +86,39 @@ fn oracle() -> MutexGuard<'static, Oracle> {
         .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
-fn rust_nodes(input: &str, options: &JsOptions, now_milliseconds: u64) -> Value {
-    let now = UNIX_EPOCH + Duration::from_millis(now_milliseconds);
-    serde_json::to_value(parse_at(input, &options.to_options(), now)).expect("AST serializes")
+fn rust_nodes(case: &ParseCase) -> Value {
+    let now = UNIX_EPOCH + Duration::from_millis(case.now);
+    serde_json::to_value(parse_at(&case.input, &case.options.to_options(), now))
+        .expect("AST serializes")
 }
 
-fn compare(input: &str, options: &JsOptions, now_milliseconds: u64) -> Result<(), String> {
-    let upstream = oracle().parse(input, options, now_milliseconds)?;
-    let rust = rust_nodes(input, options, now_milliseconds);
+fn ascii_json(case: &ParseCase) -> String {
+    let json = serde_json::to_string(case).expect("parse case serializes");
+    json.chars()
+        .map(|character| {
+            if character.is_ascii() {
+                return character.to_string();
+            }
+            character
+                .encode_utf16(&mut [0; 2])
+                .iter()
+                .map(|unit| format!("\\u{unit:04x}"))
+                .collect()
+        })
+        .collect()
+}
+
+fn compare(case: &ParseCase) -> Result<(), String> {
+    let pasteable_case = ascii_json(case);
+    let upstream = oracle()
+        .parse(case)
+        .map_err(|reason| format!("{pasteable_case}\n  {reason}"))?;
+    let rust = rust_nodes(case);
     if js_equal(&rust, &upstream) {
         return Ok(());
     }
     Err(format!(
-        "AST mismatch\n  input:    {input:?}\n  options:  {}\n  now (ms): {now_milliseconds}\n  upstream: {}\n  rust:     {}",
-        serde_json::to_string(options).expect("options serialize"),
+        "{pasteable_case}\n  AST mismatch\n  upstream: {}\n  rust:     {}",
         pretty(&upstream),
         pretty(&rust)
     ))
@@ -131,7 +154,7 @@ fn upstream_test_suite_inputs_produce_the_same_ast() {
         let fixture: Fixture =
             serde_json::from_str(&source).expect("fixture JSON matches the extractor's schema");
         for group in &fixture.groups {
-            let now_milliseconds = group
+            let now = group
                 .needs_clock
                 .as_deref()
                 .map_or(FIXTURE_CLOCK_MILLISECONDS, |clock| {
@@ -139,7 +162,12 @@ fn upstream_test_suite_inputs_produce_the_same_ast() {
                 });
             for case in group.cases.iter().filter(|case| !case.input.is_empty()) {
                 checked += 1;
-                if let Err(reason) = compare(&case.input, &case.options, now_milliseconds) {
+                let parse_case = ParseCase {
+                    input: case.input.clone(),
+                    options: case.options.clone(),
+                    now,
+                };
+                if let Err(reason) = compare(&parse_case) {
                     mismatches.push(format!("[{}] {}\n  {reason}", fixture.file, case.name));
                 }
             }
@@ -148,24 +176,14 @@ fn upstream_test_suite_inputs_produce_the_same_ast() {
     assert_no_mismatches(mismatches, checked);
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Regression {
-    input: String,
-    options: JsOptions,
-    now: u64,
-}
-
 #[test]
 fn regression_inputs_produce_the_same_ast() {
-    let regressions: Vec<Regression> =
+    let regressions: Vec<ParseCase> =
         serde_json::from_str(include_str!("fixtures/differential/regressions.json"))
             .expect("regressions.json lists input, options and now for each case");
     let mismatches: Vec<String> = regressions
         .iter()
-        .filter_map(|regression| {
-            compare(&regression.input, &regression.options, regression.now).err()
-        })
+        .filter_map(|regression| compare(regression).err())
         .collect();
     assert_no_mismatches(mismatches, regressions.len());
 }
@@ -179,12 +197,16 @@ struct EmojiFixture {
 fn every_emoji_produces_the_same_ast() {
     let fixture: EmojiFixture = serde_json::from_str(include_str!("fixtures/emoji/all-emoji.json"))
         .expect("all-emoji.json lists emoji");
-    let options = JsOptions::default();
     let mismatches: Vec<String> = fixture
         .emoji
         .iter()
         .flat_map(|emoji| [emoji.clone(), format!("a {emoji} b")])
-        .filter_map(|input| compare(&input, &options, FIXTURE_CLOCK_MILLISECONDS).err())
+        .map(|input| ParseCase {
+            input,
+            options: JsOptions::default(),
+            now: FIXTURE_CLOCK_MILLISECONDS,
+        })
+        .filter_map(|case| compare(&case).err())
         .collect();
     assert_no_mismatches(mismatches, fixture.emoji.len() * 2);
 }
@@ -341,11 +363,7 @@ fn fragment() -> impl Strategy<Value = String> {
 }
 
 fn message() -> impl Strategy<Value = String> {
-    proptest::collection::vec(fragment(), 1..=16)
-        .prop_map(|fragments| fragments.concat())
-        .prop_filter("upstream throws on empty input", |message| {
-            !message.is_empty()
-        })
+    proptest::collection::vec(fragment(), 1..=16).prop_map(|fragments| fragments.concat())
 }
 
 fn katex_options() -> impl Strategy<Value = Option<JsKatexOptions>> {
@@ -387,6 +405,14 @@ fn options() -> impl Strategy<Value = JsOptions> {
         })
 }
 
+fn parse_case() -> impl Strategy<Value = ParseCase> {
+    (message(), options(), 0u64..4_102_444_800_000).prop_map(|(input, options, now)| ParseCase {
+        input,
+        options,
+        now,
+    })
+}
+
 fn generated_cases() -> u32 {
     std::env::var("PROPTEST_CASES")
         .ok()
@@ -398,11 +424,7 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(generated_cases()))]
 
     #[test]
-    fn generated_messages_produce_the_same_ast(
-        input in message(),
-        options in options(),
-        now_milliseconds in 0u64..4_102_444_800_000,
-    ) {
-        compare(&input, &options, now_milliseconds).map_err(TestCaseError::fail)?;
+    fn generated_messages_produce_the_same_ast(case in parse_case()) {
+        compare(&case).map_err(TestCaseError::fail)?;
     }
 }

@@ -1,4 +1,4 @@
 [
-	{ "input": " ", "options": {}, "now": 1700000000000 },
-	{ "input": "a b", "options": {}, "now": 1700000000000 }
+	{ "input": "\u2028", "options": {}, "now": 1700000000000 },
+	{ "input": "a\u2029b", "options": {}, "now": 1700000000000 }
 ]
