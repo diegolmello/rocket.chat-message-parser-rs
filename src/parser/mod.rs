@@ -158,8 +158,9 @@ impl<'source> Parser<'source> {
         position: usize,
         predicate: impl Fn(u16) -> bool,
     ) -> Option<usize> {
-        let after_unit = self.class(position, predicate)?;
-        let starts_pair = (0xD800..=0xDBFF).contains(&self.source[position]);
+        let unit = self.at(position).filter(|&unit| predicate(unit))?;
+        let after_unit = position + 1;
+        let starts_pair = (0xD800..=0xDBFF).contains(&unit);
         if starts_pair && self.unit_is(after_unit, |unit| (0xDC00..=0xDFFF).contains(&unit)) {
             return Some(after_unit + 1);
         }

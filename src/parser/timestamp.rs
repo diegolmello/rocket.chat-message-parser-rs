@@ -228,23 +228,18 @@ impl Parser<'_> {
         Some((position + 1, format))
     }
 
-    fn timestamp_body(&mut self, position: usize) -> Option<(usize, String, Option<char>)> {
-        let date_start = self.literal(position, "<t:")?;
-        let (date_end, date) = self.timestamp_date(date_start)?;
-        if let Some(after_colon) = self.char(date_end, b':') {
-            if let Some((format_end, format)) = self.timestamp_format(after_colon) {
-                if let Some(end) = self.char(format_end, b'>') {
-                    return Some((end, date, Some(format)));
-                }
-            }
-        }
-        let end = self.char(date_end, b'>')?;
-        Some((end, date, None))
-    }
-
     pub(super) fn timestamp_rules(&mut self, position: usize) -> Parsed<Node> {
         memoized!(self, timestamp_rules, position, Flags::NONE, {
-            let (end, date, format) = self.timestamp_body(position)?;
+            let date_start = self.literal(position, "<t:")?;
+            let (date_end, date) = self.timestamp_date(date_start)?;
+            let formatted = self.char(date_end, b':').and_then(|after_colon| {
+                let (format_end, format) = self.timestamp_format(after_colon)?;
+                Some((self.char(format_end, b'>')?, format))
+            });
+            let (end, format) = match formatted {
+                Some((end, format)) => (end, Some(format)),
+                None => (self.char(date_end, b'>')?, None),
+            };
             Some((end, timestamp(date, format, Some([position, end]))))
         })
     }
@@ -252,7 +247,7 @@ impl Parser<'_> {
     pub(super) fn escaped_timestamp_rules(&mut self, position: usize) -> Parsed<Node> {
         memoized!(self, escaped_timestamp_rules, position, Flags::NONE, {
             let after_backslash = self.char(position, b'\\')?;
-            let (end, _, _) = self.timestamp_body(after_backslash)?;
+            let (end, _) = self.timestamp_rules(after_backslash)?;
             Some((end, plain(self.text(after_backslash, end))))
         })
     }
