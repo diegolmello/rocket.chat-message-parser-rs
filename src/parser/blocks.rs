@@ -33,11 +33,9 @@ fn indent_width(indent: &[u16]) -> usize {
     })
 }
 
-fn with_nested(item: Node, nested_lists: Vec<Node>) -> Node {
-    match item {
-        Node::ListItem { value, number, .. } => list_item(value, number, Some(nested_lists)),
-        Node::Task { value, status, .. } => task(value, status, Some(nested_lists)),
-        other => other,
+fn attach_nested(item: &mut Node, nested_lists: Vec<Node>) {
+    if let Node::ListItem { nested, .. } | Node::Task { nested, .. } = item {
+        *nested = Some(nested_lists);
     }
 }
 
@@ -96,8 +94,7 @@ impl NestingLevel {
 fn close_level(levels: &mut Vec<NestingLevel>) {
     let closed = levels.pop().expect("a nested level is open").finish();
     let parent = levels.last_mut().expect("a nested level has a parent");
-    let item = std::mem::replace(&mut parent.last_item, line_break());
-    parent.last_item = with_nested(item, closed);
+    attach_nested(&mut parent.last_item, closed);
 }
 
 fn group_nested_lines(lines: Vec<NestedLine>) -> Vec<Node> {

@@ -38,7 +38,7 @@ enum Emphasis {
     Strike,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) enum EmphasisContent {
     Bold,
     Italic,
@@ -425,7 +425,13 @@ impl Parser<'_> {
             bold,
             position,
             flags,
-            self.delimited(position, flags, b'*', Repetition::Bold, bold)
+            self.delimited(
+                position,
+                flags,
+                b'*',
+                Repetition::Emphasis(EmphasisContent::Bold),
+                bold
+            )
         )
     }
 
@@ -529,8 +535,11 @@ impl Parser<'_> {
             let Some(content_start) = self.literal(position, delimiter) else {
                 continue;
             };
-            let Some(content_end) = self.repetition_end(Repetition::Italic, content_start, flags)
-            else {
+            let Some(content_end) = self.repetition_end(
+                Repetition::Emphasis(EmphasisContent::Italic),
+                content_start,
+                flags,
+            ) else {
                 continue;
             };
             let Some(suffix_start) = self.literal(content_end, delimiter) else {
@@ -557,8 +566,11 @@ impl Parser<'_> {
             let Some(content_start) = self.literal(position, delimiter) else {
                 continue;
             };
-            let Some(content_end) = self.repetition_end(Repetition::Italic, content_start, flags)
-            else {
+            let Some(content_end) = self.repetition_end(
+                Repetition::Emphasis(EmphasisContent::Italic),
+                content_start,
+                flags,
+            ) else {
                 continue;
             };
             let Some(end) = self.literal(content_end, delimiter) else {
@@ -571,7 +583,12 @@ impl Parser<'_> {
     }
 
     fn italic_content_items(&mut self, position: usize, end: usize, flags: Flags) -> Vec<Node> {
-        let items = self.repetition_items(Repetition::Italic, position, end, flags);
+        let items = self.repetition_items(
+            Repetition::Emphasis(EmphasisContent::Italic),
+            position,
+            end,
+            flags,
+        );
         reduce_plain_texts(items)
     }
 

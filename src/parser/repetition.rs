@@ -7,8 +7,7 @@ use crate::ast::plain;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) enum Repetition {
-    Bold,
-    Italic,
+    Emphasis(EmphasisContent),
     Strike,
     LinkTitle,
 }
@@ -40,12 +39,7 @@ pub(super) enum Loop {
 impl Repetition {
     fn piece(self, parser: &mut Parser, position: usize, flags: Flags) -> Parsed<Piece> {
         match self {
-            Repetition::Bold => {
-                parser.emphasis_content_item(position, flags, EmphasisContent::Bold)
-            }
-            Repetition::Italic => {
-                parser.emphasis_content_item(position, flags, EmphasisContent::Italic)
-            }
+            Repetition::Emphasis(content) => parser.emphasis_content_item(position, flags, content),
             Repetition::Strike => parser.strike_content_item(position, flags),
             Repetition::LinkTitle => parser.link_title(position, flags),
         }
