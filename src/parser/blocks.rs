@@ -16,7 +16,8 @@ enum NestedMarker {
     Asterisk,
 }
 
-struct NestedLine {
+#[derive(Clone)]
+pub(super) struct NestedLine {
     width: usize,
     marker: NestedMarker,
     item: Node,
@@ -40,34 +41,94 @@ fn with_nested(item: Node, nested_lists: Vec<Node>) -> Node {
     }
 }
 
-fn group_nested_lines(lines: &[NestedLine]) -> Vec<Node> {
-    let mut lists = Vec::new();
-    let mut index = 0;
-    while index < lines.len() {
-        let marker = lines[index].marker;
-        let width = lines[index].width;
-        let mut items = Vec::new();
-        while index < lines.len() && lines[index].marker == marker && lines[index].width <= width {
-            let item_width = lines[index].width;
-            let item = lines[index].item.clone();
-            index += 1;
-            let start = index;
-            while index < lines.len() && lines[index].width > item_width {
-                index += 1;
-            }
-            items.push(if start < index {
-                with_nested(item, group_nested_lines(&lines[start..index]))
-            } else {
-                item
-            });
-        }
-        lists.push(match marker {
-            NestedMarker::Task => tasks(items),
-            NestedMarker::Ordered => ordered_list(items),
-            NestedMarker::Hyphen | NestedMarker::Asterisk => unordered_list(items),
-        });
+fn list_of(marker: NestedMarker, items: Vec<Node>) -> Node {
+    match marker {
+        NestedMarker::Task => tasks(items),
+        NestedMarker::Ordered => ordered_list(items),
+        NestedMarker::Hyphen | NestedMarker::Asterisk => unordered_list(items),
     }
-    lists
+}
+
+struct NestingLevel {
+    parent_width: Option<usize>,
+    lists: Vec<Node>,
+    marker: NestedMarker,
+    items: Vec<Node>,
+    last_item: Node,
+    last_width: usize,
+}
+
+impl NestingLevel {
+    fn new(parent_width: Option<usize>, line: NestedLine) -> Self {
+        NestingLevel {
+            parent_width,
+            lists: Vec::new(),
+            marker: line.marker,
+            items: Vec::new(),
+            last_item: line.item,
+            last_width: line.width,
+        }
+    }
+
+    fn holds(&self, width: usize) -> bool {
+        self.parent_width
+            .is_none_or(|parent_width| width > parent_width)
+    }
+
+    fn push_item(&mut self, line: NestedLine) {
+        let previous = std::mem::replace(&mut self.last_item, line.item);
+        self.items.push(previous);
+        if line.marker != self.marker {
+            let items = std::mem::take(&mut self.items);
+            self.lists.push(list_of(self.marker, items));
+            self.marker = line.marker;
+        }
+        self.last_width = line.width;
+    }
+
+    fn finish(mut self) -> Vec<Node> {
+        self.items.push(self.last_item);
+        self.lists.push(list_of(self.marker, self.items));
+        self.lists
+    }
+}
+
+fn close_level(levels: &mut Vec<NestingLevel>) {
+    let closed = levels.pop().expect("a nested level is open").finish();
+    let parent = levels.last_mut().expect("a nested level has a parent");
+    let item = std::mem::replace(&mut parent.last_item, line_break());
+    parent.last_item = with_nested(item, closed);
+}
+
+fn group_nested_lines(lines: Vec<NestedLine>) -> Vec<Node> {
+    let mut lines = lines.into_iter();
+    let Some(first) = lines.next() else {
+        return Vec::new();
+    };
+    let mut levels = vec![NestingLevel::new(None, first)];
+    for line in lines {
+        while !levels
+            .last()
+            .expect("the outermost level stays open")
+            .holds(line.width)
+        {
+            close_level(&mut levels);
+        }
+        let current = levels.last_mut().expect("the outermost level stays open");
+        if line.width > current.last_width {
+            let parent_width = Some(current.last_width);
+            levels.push(NestingLevel::new(parent_width, line));
+        } else {
+            current.push_item(line);
+        }
+    }
+    while levels.len() > 1 {
+        close_level(&mut levels);
+    }
+    levels
+        .pop()
+        .expect("the outermost level stays open")
+        .finish()
 }
 
 fn trim_start_js(text: &str) -> &str {
@@ -596,23 +657,20 @@ impl Parser<'_> {
     }
 
     fn nested_lists(&mut self, position: usize) -> Parsed<Vec<Node>> {
-        memoized!(
-            self,
-            nested_lists,
-            position,
-            Flags::NONE,
-            self.nested_lists_uncached(position)
-        )
+        let (end, lines) = self.nested_list_lines(position)?;
+        Some((end, group_nested_lines(lines)))
     }
 
-    fn nested_lists_uncached(&mut self, position: usize) -> Parsed<Vec<Node>> {
-        let mut lines = Vec::new();
-        let mut cursor = position;
-        while let Some((end, line)) = self.nested_list_line(cursor) {
-            lines.push(line);
-            cursor = end;
-        }
-        (!lines.is_empty()).then(|| (cursor, group_nested_lines(&lines)))
+    fn nested_list_lines(&mut self, position: usize) -> Parsed<Vec<NestedLine>> {
+        memoized!(self, nested_list_lines, position, Flags::NONE, {
+            let mut lines = Vec::new();
+            let mut cursor = position;
+            while let Some((end, line)) = self.nested_list_line(cursor) {
+                lines.push(line);
+                cursor = end;
+            }
+            (!lines.is_empty()).then_some((cursor, lines))
+        })
     }
 
     fn nested_list_line(&mut self, position: usize) -> Parsed<NestedLine> {

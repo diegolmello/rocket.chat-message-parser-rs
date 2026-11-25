@@ -1,5 +1,6 @@
 use rustc_hash::FxHashMap as HashMap;
 
+use super::blocks::NestedLine;
 use super::links::Href;
 use super::reduce::Item;
 use super::Parsed;
@@ -58,7 +59,7 @@ memo_tables! {
     spoiler: Node,
     image: Node,
     unordered_list_item_content: Vec<Node>,
-    nested_lists: Vec<Node>,
+    nested_list_lines: Vec<NestedLine>,
 }
 
 macro_rules! memoized {
