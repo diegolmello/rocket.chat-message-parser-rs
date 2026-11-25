@@ -50,16 +50,16 @@ Each violation names the option set, the seed, the work at both lengths and the 
 | Memo discipline | `src/parser/memo.rs` (`memo_tables!`, `memoized!`), every `memoized!` call site in `src/parser/*.rs` |
 | Loop ends | `src/parser/repetition.rs` (`steps_end`, `repetition_end`, `run_end`, `repetition_items`, `Loop`, `Repetition`, `Run`, `Piece`) |
 | Deferred copies | `Parser::text` (counted reads) and `Parser::character` (keeps a surrogate pair whole; `KNOWN_SEEDS` `"~🀄"`, `"~x🇧~"` reach it) in `src/parser/mod.rs`; `Href`, `resolve_href`, `link_ref`, `markdown_link_ref`, and `phone`, `phone_number`, `phone_prefix` (which return only an end) in `src/parser/links.rs` |
-| Precomputed scans | `Scans` and `email_guard`, `url_guard`, `block_katex_end`, `inline_katex_end`, `extra_run_end` in `src/parser/mod.rs` |
-| Rule bodies reached by the seeds | `src/parser/{blocks,inline,links,emoji,timestamp}.rs` |
-| Stack depth | `MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs`; `spoiler`, `evaluate_later_spoilers_backwards` (and `spoilers_evaluated_from` in `src/parser/memo.rs`), `evaluate_emoticon_chain_backwards`, `inline_emoticon`, `EmphasisContent`, `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
+| Precomputed scans | `Scans`, `scan` (counts one read per lookup) and its callers `email_guard`, `url_guard`, `block_katex_end`, `inline_katex_end`, `extra_run_end` in `src/parser/mod.rs` |
+| Rule bodies reached by the seeds | `src/parser/{blocks,inline,links,emoji,timestamp}.rs`, from the top-level loop `start` in `src/parser/blocks.rs` |
+| Stack depth | `MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs`; `spoiler`, `evaluate_later_spoilers_backwards` (and `spoilers_evaluated_from` in `src/parser/memo.rs`), `evaluate_emoticon_chain_backwards` (stops at the first position already in the `MemoTable` it is given), `inline_emoticon`, `EmphasisContent` (`preferential_table` picks that table), `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
 | Nested list lines | `nested_list_lines` (memoizes flat `NestedLine`s, never the grouped tree), `nested_list_line_item`, `list_line_item`, and the top-level loop `list_of_marker` that calls `nested_lists` in `src/parser/blocks.rs` |
 
 Skip flags are passed by value as `Flags`, never stored on `Parser`, so they are restored after every rule by construction; no test covers this.
 
-**Sync commit:** `6d5260b`
+**Sync commit:** `8a7b56e`
 
-When covered code changes, compare it against the sync commit (`git diff 6d5260b -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 8a7b56e -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
