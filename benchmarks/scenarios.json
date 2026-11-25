@@ -1,0 +1,15 @@
+{
+  "pattern": "*_~[$:",
+  "samples": 20,
+  "scenarios": [
+    { "length": 246, "label": "default", "options": {} },
+    { "length": 498, "label": "default", "options": {} },
+    { "length": 996, "label": "default", "options": {} },
+    { "length": 4902, "label": "default", "options": {} },
+    {
+      "length": 4902,
+      "label": "all on",
+      "options": { "emoticons": true, "katex": { "dollarSyntax": true, "parenthesisSyntax": true } }
+    }
+  ]
+}

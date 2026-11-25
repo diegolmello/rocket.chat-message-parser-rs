@@ -25,3 +25,13 @@ The `work-report` feature adds `parse_with_report`, which returns the AST with a
 cargo test --release --features work-report --test linear_work
 cargo run --release --features work-report --example benchmark
 ```
+
+## Comparing with upstream
+
+`benchmarks/upstream/compare.mjs` parses the inputs in `benchmarks/scenarios.json` with this crate and with `@rocket.chat/message-parser` 0.33.0 on Node, and prints the median of each side by side:
+
+```sh
+cd benchmarks/upstream
+bun install
+node compare.mjs
+```

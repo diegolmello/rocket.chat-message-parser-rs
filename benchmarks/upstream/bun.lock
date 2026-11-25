@@ -1,0 +1,18 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "message-parser-upstream-benchmark",
+      "dependencies": {
+        "@rocket.chat/message-parser": "0.33.0",
+      },
+    },
+  },
+  "packages": {
+    "@rocket.chat/message-parser": ["@rocket.chat/message-parser@0.33.0", "", { "dependencies": { "tldts": "~6.1.86" } }, "sha512-IU7ZUP9dn7z7+ni9A/1O5AGvk9AvSkFP8liRmHJ+D9/QMbtlchSy7bjoQVkbLe46unIvtYij3Keh30WJruOaXg=="],
+
+    "tldts": ["tldts@6.1.86", "", { "dependencies": { "tldts-core": "^6.1.86" }, "bin": { "tldts": "bin/cli.js" } }, "sha512-WMi/OQ2axVTf/ykqCQgXiIct+mSQDFdH2fkwhPwgEwvJ1kSzZRiinb0zF2Xb8u4+OqPChmyI6MEu4EezNJz+FQ=="],
+
+    "tldts-core": ["tldts-core@6.1.86", "", {}, "sha512-Je6p7pkk+KMzMv2XXKmAE3McmolOQFdxkKw0R8EYNr7sELW46JqnNeTX8ybPiQgvg1ymCoF8LXs5fzFaZvJPTA=="],
+  }
+}

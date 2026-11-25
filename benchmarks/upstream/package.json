@@ -1,0 +1,8 @@
+{
+  "name": "message-parser-upstream-benchmark",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@rocket.chat/message-parser": "0.33.0"
+  }
+}
