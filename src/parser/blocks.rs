@@ -23,6 +23,8 @@ pub(super) struct NestedLine {
     item: Node,
 }
 
+const MAXIMUM_NESTED_LEVELS: usize = 63;
+
 fn indent_width(indent: &[u16]) -> usize {
     indent.iter().fold(0, |width, &unit| {
         if is(unit, b'\t') {
@@ -111,8 +113,9 @@ fn group_nested_lines(lines: Vec<NestedLine>) -> Vec<Node> {
         {
             close_level(&mut levels);
         }
+        let below_depth_limit = levels.len() < MAXIMUM_NESTED_LEVELS;
         let current = levels.last_mut().expect("the outermost level stays open");
-        if line.width > current.last_width {
+        if line.width > current.last_width && below_depth_limit {
             let parent_width = Some(current.last_width);
             levels.push(NestingLevel::new(parent_width, line));
         } else {
