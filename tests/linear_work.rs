@@ -45,6 +45,12 @@ const KNOWN_SEEDS: &[&str] = &[
     "__a",
 ];
 
+const PREFIXED_SEEDS: &[(&str, &str)] = &[
+    ("- a", "\n - a"),
+    ("- a", "\n  * b\n 1. c\n - [ ] d"),
+    ("1. a", "\n - a\n  - b"),
+];
+
 fn fixed_clock() -> SystemTime {
     UNIX_EPOCH + std::time::Duration::from_secs(1_753_142_400)
 }
@@ -70,9 +76,9 @@ fn work_per_unit(report: &ParseReport) -> f64 {
     report.work() as f64 / (report.input_length + 1) as f64
 }
 
-fn repeated_whole(seed: &str, scale: usize) -> String {
+fn repeated_whole((prefix, seed): &(String, String), scale: usize) -> String {
     let repetitions = MINIMUM_LENGTH.div_ceil(seed.chars().count()) * scale;
-    seed.repeat(repetitions)
+    format!("{prefix}{}", seed.repeat(repetitions))
 }
 
 fn strings_up_to(alphabet: &[char], max_length: u32) -> Vec<String> {
@@ -93,7 +99,7 @@ fn strings_up_to(alphabet: &[char], max_length: u32) -> Vec<String> {
     all
 }
 
-fn seeds() -> Vec<String> {
+fn seeds() -> Vec<(String, String)> {
     let mut seeds: Vec<String> = strings_up_to(SEED_ALPHABET, 2)
         .into_iter()
         .filter(|seed| !seed.is_empty())
@@ -104,7 +110,16 @@ fn seeds() -> Vec<String> {
             .filter(|seed| seed.chars().count() == 3),
     );
     seeds.extend(KNOWN_SEEDS.iter().map(|seed| (*seed).to_owned()));
-    seeds
+    let mut prefixed: Vec<(String, String)> = seeds
+        .into_iter()
+        .map(|seed| (String::new(), seed))
+        .collect();
+    prefixed.extend(
+        PREFIXED_SEEDS
+            .iter()
+            .map(|(prefix, seed)| ((*prefix).to_owned(), (*seed).to_owned())),
+    );
+    prefixed
 }
 
 #[test]
@@ -144,7 +159,7 @@ fn repeated_seeds_grow_linearly() {
             let density_growth = work_per_unit(&large) / work_per_unit(&small);
             let density = work_per_unit(&large);
             let repeated = small.repeated_evaluations + large.repeated_evaluations;
-            let case = format!("{label} {seed:?}");
+            let case = format!("{label} {:?}+{:?}", seed.0, seed.1);
             if density_growth > worst_growth.0 {
                 worst_growth = (density_growth, case.clone());
             }
@@ -207,5 +222,41 @@ fn long_emoticon_chains_parse_within_a_main_thread_stack() {
             .join()
             .expect("parser thread finishes without overflowing")
             > 0
+    );
+}
+
+#[test]
+fn deeply_nested_lists_parse_within_a_small_stack() {
+    const SMALL_STACK_BYTES: usize = 1024 * 1024;
+    const NESTING_LEVELS: usize = 2_000;
+    let input: Vec<String> = (0..NESTING_LEVELS)
+        .map(|level| format!("{}- a", " ".repeat(level)))
+        .collect();
+    let input = input.join("\n");
+    let parser_thread = std::thread::Builder::new()
+        .stack_size(SMALL_STACK_BYTES)
+        .spawn(move || {
+            let nodes = parse_at(&input, &Options::default(), fixed_clock()).nodes;
+            let mut depth = 0;
+            let mut lists = nodes;
+            while let Some(message_parser::Node::UnorderedList { value }) = lists.pop() {
+                depth += 1;
+                let Some(message_parser::Node::ListItem {
+                    nested: Some(nested),
+                    ..
+                }) = value.into_iter().last()
+                else {
+                    break;
+                };
+                lists = nested;
+            }
+            depth
+        })
+        .expect("parser thread starts");
+    assert_eq!(
+        parser_thread
+            .join()
+            .expect("parser thread finishes without overflowing"),
+        NESTING_LEVELS
     );
 }
