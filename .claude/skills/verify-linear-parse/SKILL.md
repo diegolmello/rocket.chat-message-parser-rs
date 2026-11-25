@@ -39,7 +39,8 @@ Each violation names the option set, the seed, the work at both lengths and the 
   - A string built from the source before the enclosing rule has matched, on a path tried from many starts. Return `Piece::Text` or `Href::Source` (a range) and copy with `self.text` only once the match is certain, as `repetition_items` and `resolve_href` do.
   - A loop over lines that rescans earlier lines. `PREFIXED_SEEDS` catch this in `nested_list_lines`.
   - An unmemoized recursive lookahead. Memoize it, and evaluate the chain backwards like `evaluate_emoticon_chain_backwards` in `src/parser/inline.rs`.
-  - A lookahead into a sibling container whose content holds the same lookahead. Evaluate later containers first, as `evaluate_later_spoilers_backwards` does for `||`, once per skip-flag set.
+  - A lookahead into a sibling container whose content holds the same lookahead. Evaluate later containers first, as `evaluate_later_spoilers_backwards` does for `||`, once per skip-flag set, and only where the lookahead can start (`is_emoticon_end`): evaluating a container the forward parse never reaches costs its whole content (`KNOWN_SEEDS` `"||a.b"`).
+  - A block that scans every following line for its closer, restarted on every line. Memoize the end of the scan per start (`paragraph_run_end` for `block_spoiler`) or index the closers once per parse (`long_code_closes` for `long_code`); `KNOWN_SEEDS` `"||\n\r"` and `"````x\n"` reach them.
 - **Measurement artefact.** Some seeds switch between two linear regimes depending on the repetition count; `"* _"` costs 164 or 102 per repetition. Confirm by printing work per repetition across several counts: a flat series is linear. Never raise a limit without that series in hand.
 - **Repeated evaluations.** A memo key misses part of the rule's real input. For example, a rule reads options or flags that are not in its `(position, flags)` key, or a body was called outside `memoized!`.
 
@@ -51,18 +52,20 @@ Each violation names the option set, the seed, the work at both lengths and the 
 | Loop ends | `src/parser/repetition.rs` (`steps_end`, `repetition_end`, `run_end`, `repetition_items`, `Loop`, `Repetition`, `Run`, `Piece`) |
 | Deferred copies | `Parser::text` (counted reads) and `Parser::character` (keeps a surrogate pair whole; `KNOWN_SEEDS` `"~🀄"`, `"~x🇧~"` reach it) in `src/parser/mod.rs`; `Href`, `resolve_href`, `link_ref`, `markdown_link_ref`, and `phone`, `phone_number`, `phone_prefix` (which return only an end) in `src/parser/links.rs` |
 | Precomputed scans | `Scans`, `scan` (counts one read per lookup) and its callers `email_guard`, `url_guard`, `block_katex_end`, `inline_katex_end`, `extra_run_end` in `src/parser/mod.rs` |
+| Block closers | `block_spoiler`, `paragraph_run_end`, `long_code`, `next_long_code_close`, `long_code_closes` in `src/parser/blocks.rs` (with `paragraph_run_end` and `long_code_closes` in `src/parser/memo.rs`) |
 | Rule bodies reached by the seeds | `src/parser/{blocks,inline,links,emoji,timestamp}.rs`, from the top-level loop `start` in `src/parser/blocks.rs` |
-| Stack depth | `MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs`; `spoiler`, `evaluate_later_spoilers_backwards` (and `spoilers_evaluated_from` in `src/parser/memo.rs`), `evaluate_emoticon_chain_backwards` (stops at the first position already in the `MemoTable` it is given), `inline_emoticon`, `EmphasisContent` (`preferential_table` picks that table), `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
+| Stack depth | `MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs`; `spoiler`, `evaluate_later_spoilers_backwards` (and `spoilers_evaluated_from` in `src/parser/memo.rs`), `is_emoticon_end` in `src/parser/emoji.rs`, `evaluate_emoticon_chain_backwards` (stops at the first position already in the `MemoTable` it is given), `inline_emoticon`, `EmphasisContent` (`preferential_table` picks that table), `emphasis_content_item`, `preferential_item`, `preferential_item_uncached` in `src/parser/inline.rs`; `group_nested_lines`, `NestingLevel`, `close_level`, `attach_nested`, `nested_lists`, `nested_list_lines` in `src/parser/blocks.rs` |
 | Nested list lines | `nested_list_lines` (memoizes flat `NestedLine`s, never the grouped tree), `nested_list_line_item`, `list_line_item`, and the top-level loop `list_of_marker` that calls `nested_lists` in `src/parser/blocks.rs` |
 
 Skip flags are passed by value as `Flags`, never stored on `Parser`, so they are restored after every rule by construction; no test covers this.
 
-**Sync commit:** `8a7b56e`
+**Sync commit:** `39bb8d4`
 
-When covered code changes, compare it against the sync commit (`git diff 8a7b56e -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 39bb8d4 -- src/parser`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
+- With emoticons on, `":)||a.b"` repeated is quadratic: every `||` after an emoticon is an emoticon end, so `evaluate_later_spoilers_backwards` evaluates spoilers the forward parse never reaches. It is left out of `KNOWN_SEEDS` until the backward pass is replaced.
 - Work is checked on generated inputs, not proven for all inputs. A superlinear path reachable only through strings longer than the seeds, or through characters outside the alphabets, can pass.
 - The density check catches a superlinear term once it is about half the work at 8x length. A small quadratic term can pass.
 - Clones of memoized results on a memo hit are not counted as work, and neither is `group_nested_lines`, which reruns on every `nested_lists` call, memo hits included. Both cost the size of the memoized value.

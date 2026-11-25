@@ -52,9 +52,9 @@ Do not weaken the comparison, drop an option set, or shrink an alphabet to make 
 
 `.claude/skills/verify-linear-parse` covers work and stack depth; this skill covers only output.
 
-**Sync commit:** `8a7b56e`
+**Sync commit:** `39bb8d4`
 
-When covered code changes, compare it against the sync commit (`git diff 8a7b56e -- src`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 39bb8d4 -- src`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
