@@ -197,6 +197,9 @@ impl Parser<'_> {
             cursor = seconds_end;
         }
         let (end, timezone) = self.optional_timezone(cursor);
+        if timezone.is_none() {
+            return Some((end, "0".to_owned()));
+        }
         let (year, month, day) = utc_civil_date(self.now);
         let parts = DateParts {
             year,
