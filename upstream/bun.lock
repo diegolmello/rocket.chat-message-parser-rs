@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "message-parser-upstream-benchmark",
+      "name": "message-parser-upstream",
       "dependencies": {
         "@rocket.chat/message-parser": "0.33.0",
       },

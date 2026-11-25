@@ -1,103 +1,11 @@
 use std::panic::{self, AssertUnwindSafe};
-
 use std::time::SystemTime;
 
-use message_parser::{parse_at, KatexOptions, Node, Options};
-use serde::Deserialize;
+mod support;
+
+use message_parser::{parse_at, Node};
 use serde_json::Value;
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Fixture {
-    file: String,
-    #[serde(rename = "upstreamVersion")]
-    _upstream_version: String,
-    groups: Vec<Group>,
-    #[serde(rename = "uncaptured", default)]
-    _uncaptured: Vec<Value>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Group {
-    needs_clock: Option<String>,
-    cases: Vec<Case>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Case {
-    name: String,
-    input: String,
-    #[serde(default)]
-    options: JsOptions,
-    matcher: Matcher,
-    expected: Option<Value>,
-}
-
-#[derive(Deserialize, Clone, Copy, Debug)]
-#[serde(rename_all = "camelCase")]
-enum Matcher {
-    ToEqual,
-    ToStrictEqual,
-    ToMatchObject,
-    NotToThrow,
-}
-
-#[derive(Deserialize, Default, Debug)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct JsOptions {
-    colors: Option<bool>,
-    emoticons: Option<bool>,
-    katex: Option<JsKatexOptions>,
-    custom_domains: Option<Vec<String>>,
-}
-
-#[derive(Deserialize, Default, Debug)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct JsKatexOptions {
-    dollar_syntax: Option<bool>,
-    parenthesis_syntax: Option<bool>,
-}
-
-impl JsOptions {
-    fn to_options(&self) -> Options {
-        let katex = self.katex.as_ref();
-        Options {
-            colors: self.colors.unwrap_or(false),
-            emoticons: self.emoticons.unwrap_or(false),
-            katex: KatexOptions {
-                dollar_syntax: katex.and_then(|katex| katex.dollar_syntax).unwrap_or(false),
-                parenthesis_syntax: katex
-                    .and_then(|katex| katex.parenthesis_syntax)
-                    .unwrap_or(false),
-            },
-            custom_domains: self.custom_domains.clone(),
-        }
-    }
-}
-
-fn js_equal(actual: &Value, expected: &Value) -> bool {
-    match (actual, expected) {
-        (Value::Number(actual), Value::Number(expected)) => actual.as_f64() == expected.as_f64(),
-        (Value::Array(actual), Value::Array(expected)) => {
-            actual.len() == expected.len()
-                && actual
-                    .iter()
-                    .zip(expected)
-                    .all(|(actual, expected)| js_equal(actual, expected))
-        }
-        (Value::Object(actual), Value::Object(expected)) => {
-            actual.len() == expected.len()
-                && expected.iter().all(|(key, expected)| {
-                    actual
-                        .get(key)
-                        .is_some_and(|actual| js_equal(actual, expected))
-                })
-        }
-        (actual, expected) => actual == expected,
-    }
-}
+use support::{clock_at, js_equal, pretty, Case, Fixture, Matcher};
 
 fn matches_object(actual: &Value, expected: &Value) -> bool {
     match (actual, expected) {
@@ -125,10 +33,6 @@ fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
         .map(|message| (*message).to_owned())
         .or_else(|| payload.downcast_ref::<String>().cloned())
         .unwrap_or_else(|| "non-string panic payload".to_owned())
-}
-
-fn pretty(value: &Value) -> String {
-    serde_json::to_string_pretty(value).expect("JSON values always serialize")
 }
 
 fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
@@ -160,12 +64,6 @@ fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
         pretty(expected),
         pretty(&actual)
     ))
-}
-
-fn clock_at(instant: &str) -> SystemTime {
-    chrono::DateTime::parse_from_rfc3339(instant)
-        .expect("fixture clock is an RFC 3339 instant")
-        .into()
 }
 
 fn run_fixture(source: &str) {
