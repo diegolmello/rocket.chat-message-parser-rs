@@ -60,8 +60,7 @@ impl Oracle {
         }
     }
 
-    fn parse(&mut self, case: &ParseCase) -> Result<Value, String> {
-        let request = serde_json::to_string(case).expect("parse case serializes");
+    fn parse(&mut self, request: &str) -> Result<Value, String> {
         let mut line = String::new();
         let exchanged =
             writeln!(self.requests, "{request}").and_then(|()| self.responses.read_line(&mut line));
@@ -92,33 +91,32 @@ fn rust_nodes(case: &ParseCase) -> Value {
         .expect("AST serializes")
 }
 
-fn ascii_json(case: &ParseCase) -> String {
+fn printable_json(case: &ParseCase) -> String {
     let json = serde_json::to_string(case).expect("parse case serializes");
-    json.chars()
-        .map(|character| {
-            if character.is_ascii() {
-                return character.to_string();
-            }
-            character
-                .encode_utf16(&mut [0; 2])
-                .iter()
-                .map(|unit| format!("\\u{unit:04x}"))
-                .collect()
-        })
-        .collect()
+    let mut printable = String::with_capacity(json.len());
+    for character in json.chars() {
+        if (' '..='~').contains(&character) {
+            printable.push(character);
+            continue;
+        }
+        for unit in character.encode_utf16(&mut [0; 2]) {
+            printable.push_str(&format!("\\u{unit:04x}"));
+        }
+    }
+    printable
 }
 
 fn compare(case: &ParseCase) -> Result<(), String> {
-    let pasteable_case = ascii_json(case);
+    let request = printable_json(case);
     let upstream = oracle()
-        .parse(case)
-        .map_err(|reason| format!("{pasteable_case}\n  {reason}"))?;
+        .parse(&request)
+        .map_err(|reason| format!("{request}\n  {reason}"))?;
     let rust = rust_nodes(case);
     if js_equal(&rust, &upstream) {
         return Ok(());
     }
     Err(format!(
-        "{pasteable_case}\n  AST mismatch\n  upstream: {}\n  rust:     {}",
+        "{request}\n  AST mismatch\n  upstream: {}\n  rust:     {}",
         pretty(&upstream),
         pretty(&rust)
     ))
