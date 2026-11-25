@@ -118,6 +118,10 @@ impl Scans {
 impl<'source> Parser<'source> {
     pub(crate) fn new(input: &str, options: &'source Options, now: SystemTime) -> Self {
         let source: Vec<u16> = input.encode_utf16().collect();
+        assert!(
+            source.len() < u32::MAX as usize,
+            "input must be shorter than u32::MAX UTF-16 code units"
+        );
         let scans = Scans::new(&source, options);
         let report = ParseReport {
             input_length: source.len(),
