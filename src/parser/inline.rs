@@ -4,7 +4,7 @@ use super::chars::{
 };
 use super::memo::{memoized, Key, Memo};
 use super::reduce::{reduce_plain_texts, Item};
-use super::repetition::{Repetition, Run};
+use super::repetition::{Piece, Repetition, Run};
 use super::{Flags, Parsed, Parser};
 use crate::ast::{
     bold, color, inline_code, inline_katex, italic, mention_channel, mention_user, plain, spoiler,
@@ -404,18 +404,18 @@ impl Parser<'_> {
         )
     }
 
-    pub(super) fn bold_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
+    pub(super) fn bold_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
         if let Some(parsed) = self.bold_preferential_item(position, flags) {
-            return Some(parsed);
+            return Some((parsed.0, Piece::Item(parsed.1)));
         }
         if let Some(end) = self.run1(position, is_bold_plain_run_char) {
-            return Some((end, Item::One(plain(self.text(position, end)))));
+            return Some((end, Piece::Text));
         }
         if let Some(end) = self.class(position, |unit| !is_one_of(unit, b"\n* ")) {
-            return Some((end, Item::One(plain(self.text(position, end)))));
+            return Some((end, Piece::Text));
         }
         self.line(position)
-            .map(|(end, node)| (end, Item::One(node)))
+            .map(|(end, node)| (end, Piece::Item(Item::One(node))))
     }
 
     fn bold_preferential_item(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
@@ -516,18 +516,18 @@ impl Parser<'_> {
         reduce_plain_texts(items)
     }
 
-    pub(super) fn italic_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
+    pub(super) fn italic_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
         if let Some(parsed) = self.italic_preferential_item(position, flags) {
-            return Some(parsed);
+            return Some((parsed.0, Piece::Item(parsed.1)));
         }
         if let Some(end) = self.run1(position, is_italic_plain_run_char) {
-            return Some((end, Item::One(plain(self.text(position, end)))));
+            return Some((end, Piece::Text));
         }
         if let Some(end) = self.class(position, |unit| !is_one_of(unit, b"\n_ ")) {
-            return Some((end, Item::One(plain(self.text(position, end)))));
+            return Some((end, Piece::Text));
         }
         self.line(position)
-            .map(|(end, node)| (end, Item::One(node)))
+            .map(|(end, node)| (end, Piece::Item(Item::One(node))))
     }
 
     fn italic_preferential_item(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
@@ -570,10 +570,12 @@ impl Parser<'_> {
         )
     }
 
-    pub(super) fn strike_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
-        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
+    pub(super) fn strike_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
+        let one =
+            |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Piece::Item(Item::One(node))));
+        let item = |parsed: Parsed<Item>| parsed.map(|(end, item)| (end, Piece::Item(item)));
         if let Some(end) = self.run1(position, is_strike_plain_run_char) {
-            return Some((end, Item::One(plain(self.text(position, end)))));
+            return Some((end, Piece::Text));
         }
         one(self.escaped_timestamp_rules(position))
             .or_else(|| one(self.timestamp_rules(position)))
@@ -582,13 +584,13 @@ impl Parser<'_> {
             .or_else(|| one(self.maybe_references(position, flags)))
             .or_else(|| one(self.user_mention(position)))
             .or_else(|| one(self.channel_mention(position)))
-            .or_else(|| self.maybe_emphasis(position, flags, Emphasis::Italic))
-            .or_else(|| self.maybe_emphasis(position, flags, Emphasis::Bold))
+            .or_else(|| item(self.maybe_emphasis(position, flags, Emphasis::Italic)))
+            .or_else(|| item(self.maybe_emphasis(position, flags, Emphasis::Bold)))
             .or_else(|| one(self.emoji(position)))
             .or_else(|| one(self.emoticon(position)))
             .or_else(|| {
                 let end = self.class(position, |unit| !is_one_of(unit, b"\n~ "))?;
-                Some((end, Item::One(plain(self.text(position, end)))))
+                Some((end, Piece::Text))
             })
             .or_else(|| one(self.line(position)))
     }

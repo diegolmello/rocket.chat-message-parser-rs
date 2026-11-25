@@ -185,7 +185,8 @@ impl<'source> Parser<'source> {
         (end > position).then_some(end)
     }
 
-    pub(crate) fn text(&self, start: usize, end: usize) -> String {
+    pub(crate) fn text(&mut self, start: usize, end: usize) -> String {
+        self.report.input_reads += (end - start) as u64;
         String::from_utf16_lossy(&self.source[start..end])
     }
 

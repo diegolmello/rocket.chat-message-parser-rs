@@ -4,7 +4,7 @@ use super::chars::{
 };
 use super::memo::memoized;
 use super::reduce::{reduce_plain_texts, Item};
-use super::repetition::{Repetition, Run};
+use super::repetition::{Piece, Repetition, Run};
 use super::{Flags, Parsed, Parser};
 use crate::ast::{image, link, plain, Node};
 use crate::tld::{self, TldOptions};
@@ -98,6 +98,12 @@ fn auto_email(source: String) -> Node {
     link(href, Some(vec![plain(source)]))
 }
 
+#[derive(Clone)]
+pub(crate) enum Href {
+    Source,
+    Telephone(String),
+}
+
 impl Parser<'_> {
     pub(super) fn references(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
         memoized!(self, references, position, flags, {
@@ -114,6 +120,7 @@ impl Parser<'_> {
         let href_start = self.literal(titles_end, "](")?;
         let (href_end, href) = self.markdown_link_ref(href_start)?;
         let end = self.char(href_end, b')')?;
+        let href = self.resolve_href(href_start, href_end, href);
         let titles = self.repetition_items(Repetition::LinkTitle, titles_start, titles_end, flags);
         let label = (!titles.is_empty()).then(|| reduce_plain_texts(titles));
         Some((end, link(href, label)))
@@ -125,21 +132,22 @@ impl Parser<'_> {
         let title_start = self.char(href_end, b'|')?;
         let title_end = self.run1(title_start, is_link_title2_char)?;
         let end = self.char(title_end, b'>')?;
+        let href = self.resolve_href(href_start, href_end, href);
         Some((
             end,
             link(href, Some(vec![plain(self.text(title_start, title_end))])),
         ))
     }
 
-    pub(super) fn link_title(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
+    pub(super) fn link_title(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
         if let Some((end, node)) = self.whitespace(position) {
-            return Some((end, Item::One(node)));
+            return Some((end, Piece::Item(Item::One(node))));
         }
         if let Some(parsed) = self.emphasis(position, flags) {
-            return Some(parsed);
+            return Some((parsed.0, Piece::Item(parsed.1)));
         }
         if let Some(end) = self.run_end(Run::LinkTitleText, position) {
-            return Some((end, Item::One(plain(self.text(position, end)))));
+            return Some((end, Piece::Text));
         }
         if self.literal(position, "](").is_some() && self.any_unit(position + 2).is_some() {
             return None;
@@ -151,7 +159,7 @@ impl Parser<'_> {
             }
         }
         let end = self.any_unit(position)?;
-        Some((end, Item::One(plain(self.text(position, end)))))
+        Some((end, Piece::Text))
     }
 
     pub(super) fn image(&mut self, position: usize) -> Parsed<Node> {
@@ -164,11 +172,12 @@ impl Parser<'_> {
             let href_start = self.literal(cursor, "](")?;
             let (href_end, href) = self.markdown_link_ref(href_start)?;
             let end = self.char(href_end, b')')?;
+            let href = self.resolve_href(href_start, href_end, href);
             Some((end, image(href, title)))
         })
     }
 
-    fn markdown_link_ref(&mut self, position: usize) -> Parsed<String> {
+    fn markdown_link_ref(&mut self, position: usize) -> Parsed<Href> {
         memoized!(self, markdown_link_ref, position, Flags::NONE, {
             self.url_with_body(position, Self::markdown_link_url_body)
                 .or_else(|| self.file_path(position, Self::markdown_link_url_body))
@@ -176,7 +185,7 @@ impl Parser<'_> {
         })
     }
 
-    fn link_ref(&mut self, position: usize) -> Parsed<String> {
+    fn link_ref(&mut self, position: usize) -> Parsed<Href> {
         memoized!(self, link_ref, position, Flags::NONE, {
             self.url_with_body(position, Self::url_body)
                 .or_else(|| self.file_path(position, Self::url_body))
@@ -184,9 +193,16 @@ impl Parser<'_> {
         })
     }
 
-    fn phone_href(&mut self, position: usize) -> Parsed<String> {
+    fn phone_href(&mut self, position: usize) -> Parsed<Href> {
         let (end, phone) = self.phone(position)?;
-        Some((end, format!("tel:{}", phone.number)))
+        Some((end, Href::Telephone(phone.number)))
+    }
+
+    fn resolve_href(&mut self, start: usize, end: usize, href: Href) -> String {
+        match href {
+            Href::Source => self.text(start, end),
+            Href::Telephone(number) => format!("tel:{number}"),
+        }
     }
 
     fn url_head(&mut self, position: usize) -> Option<usize> {
@@ -202,20 +218,16 @@ impl Parser<'_> {
         &mut self,
         position: usize,
         body: fn(&mut Self, usize) -> usize,
-    ) -> Parsed<String> {
+    ) -> Parsed<Href> {
         let head_end = self.url_head(position)?;
         let end = body(self, head_end);
-        Some((end, self.text(position, end)))
+        Some((end, Href::Source))
     }
 
-    fn file_path(
-        &mut self,
-        position: usize,
-        body: fn(&mut Self, usize) -> usize,
-    ) -> Parsed<String> {
+    fn file_path(&mut self, position: usize, body: fn(&mut Self, usize) -> usize) -> Parsed<Href> {
         let scheme_end = self.url_scheme(position)?;
         let end = body(self, scheme_end);
-        (end > scheme_end).then(|| (end, self.text(position, end)))
+        (end > scheme_end).then_some((end, Href::Source))
     }
 
     fn url_body(&mut self, position: usize) -> usize {

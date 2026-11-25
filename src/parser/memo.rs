@@ -1,5 +1,6 @@
 use rustc_hash::FxHashMap as HashMap;
 
+use super::links::Href;
 use super::reduce::Item;
 use super::Parsed;
 use crate::ast::Node;
@@ -43,8 +44,8 @@ memo_tables! {
     escaped_timestamp_rules: Node,
     user_mention: Node,
     channel_mention: Node,
-    markdown_link_ref: String,
-    link_ref: String,
+    markdown_link_ref: Href,
+    link_ref: Href,
     domain_name: (),
     url_authority_host: (),
     url_scheme: (),

@@ -2,6 +2,7 @@ use super::chars::{is, is_markdown_link_extra, is_space};
 use super::links::is_link_title_bulk_char;
 use super::reduce::Item;
 use super::{Flags, Parsed, Parser};
+use crate::ast::plain;
 
 #[derive(Clone, Copy)]
 pub(super) enum Repetition {
@@ -9,6 +10,11 @@ pub(super) enum Repetition {
     Italic,
     Strike,
     LinkTitle,
+}
+
+pub(super) enum Piece {
+    Text,
+    Item(Item),
 }
 
 #[derive(Clone, Copy)]
@@ -34,7 +40,7 @@ impl Repetition {
         }
     }
 
-    fn item(self, parser: &mut Parser, position: usize, flags: Flags) -> Parsed<Item> {
+    fn piece(self, parser: &mut Parser, position: usize, flags: Flags) -> Parsed<Piece> {
         match self {
             Repetition::Bold => parser.bold_content_item(position, flags),
             Repetition::Italic => parser.italic_content_item(position, flags),
@@ -110,7 +116,9 @@ impl Parser<'_> {
         flags: Flags,
     ) -> Option<usize> {
         self.steps_end(repetition.kind(), position, flags, |parser, cursor| {
-            repetition.item(parser, cursor, flags).map(|(next, _)| next)
+            repetition
+                .piece(parser, cursor, flags)
+                .map(|(next, _)| next)
         })
     }
 
@@ -130,10 +138,13 @@ impl Parser<'_> {
         let mut items = Vec::new();
         let mut cursor = position;
         while cursor < end {
-            let Some((next, item)) = repetition.item(self, cursor, flags) else {
+            let Some((next, piece)) = repetition.piece(self, cursor, flags) else {
                 break;
             };
-            items.push(item);
+            items.push(match piece {
+                Piece::Text => Item::One(plain(self.text(cursor, next))),
+                Piece::Item(item) => item,
+            });
             cursor = next;
         }
         items
