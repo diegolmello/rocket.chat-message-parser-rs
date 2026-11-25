@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use chrono::{DateTime, Local, LocalResult, NaiveDateTime, TimeDelta, TimeZone};
+use chrono::{DateTime, Datelike, Local, LocalResult, NaiveDateTime, TimeDelta, TimeZone};
 
 use super::chars::is;
 use super::memo::memoized;
@@ -10,7 +10,13 @@ use crate::ast::{plain, timestamp, Node};
 const MILLISECONDS_PER_DAY: i64 = 86_400_000;
 const MAXIMUM_TIME_VALUE: i64 = 8_640_000_000_000_000;
 
-#[derive(Default)]
+#[derive(Clone, Copy)]
+struct TimezoneOffset {
+    sign: i64,
+    hours: i64,
+    minutes: i64,
+}
+
 struct DateParts {
     year: i64,
     month: i64,
@@ -19,7 +25,7 @@ struct DateParts {
     minutes: i64,
     seconds: i64,
     milliseconds: i64,
-    timezone: Option<(i64, i64, i64)>,
+    timezone: Option<TimezoneOffset>,
 }
 
 fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
@@ -70,7 +76,7 @@ fn epoch_milliseconds(parts: &DateParts) -> Option<i64> {
         && parts.seconds <= 59
         && parts
             .timezone
-            .is_none_or(|(_, hours, minutes)| hours <= 23 && minutes <= 59);
+            .is_none_or(|offset| offset.hours <= 23 && offset.minutes <= 59);
     if !valid {
         return None;
     }
@@ -79,7 +85,7 @@ fn epoch_milliseconds(parts: &DateParts) -> Option<i64> {
         ((parts.hours * 60 + parts.minutes) * 60 + parts.seconds) * 1000 + parts.milliseconds;
     let wall_clock = days * MILLISECONDS_PER_DAY + time;
     let utc = match parts.timezone {
-        Some((sign, hours, minutes)) => wall_clock - sign * (hours * 60 + minutes) * 60_000,
+        Some(offset) => wall_clock - offset.sign * (offset.hours * 60 + offset.minutes) * 60_000,
         None => wall_clock - local_offset_milliseconds(wall_clock),
     };
     (utc.abs() <= MAXIMUM_TIME_VALUE).then_some(utc)
@@ -99,27 +105,17 @@ fn to_int32_seconds(milliseconds: Option<i64>) -> String {
     signed.to_string()
 }
 
-fn utc_civil_date(now: SystemTime) -> (i64, i64, i64) {
+fn utc_civil_date(now: SystemTime) -> Option<(i64, i64, i64)> {
     let milliseconds = match now.duration_since(UNIX_EPOCH) {
-        Ok(elapsed) => elapsed.as_millis() as i64,
-        Err(before) => -(before.duration().as_millis() as i64),
+        Ok(elapsed) => i64::try_from(elapsed.as_millis()).ok()?,
+        Err(before) => -i64::try_from(before.duration().as_millis()).ok()?,
     };
-    let days = milliseconds.div_euclid(MILLISECONDS_PER_DAY);
-    let shifted = days + 719_468;
-    let era = shifted.div_euclid(146_097);
-    let day_of_era = shifted - era * 146_097;
-    let year_of_era =
-        (day_of_era - day_of_era / 1460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
-    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
-    let shifted_month = (5 * day_of_year + 2) / 153;
-    let day = day_of_year - (153 * shifted_month + 2) / 5 + 1;
-    let month = if shifted_month < 10 {
-        shifted_month + 3
-    } else {
-        shifted_month - 9
-    };
-    let year = year_of_era + era * 400 + i64::from(month <= 2);
-    (year, month, day)
+    let date = DateTime::from_timestamp_millis(milliseconds)?.date_naive();
+    Some((
+        i64::from(date.year()),
+        i64::from(date.month()),
+        i64::from(date.day()),
+    ))
 }
 
 impl Parser<'_> {
@@ -132,7 +128,7 @@ impl Parser<'_> {
         Some((end, self.number(position, end)))
     }
 
-    fn timezone(&mut self, position: usize) -> Parsed<(i64, i64, i64)> {
+    fn timezone(&mut self, position: usize) -> Parsed<TimezoneOffset> {
         let sign = match self.at(position)? {
             unit if is(unit, b'+') => 1,
             unit if is(unit, b'-') => -1,
@@ -141,17 +137,39 @@ impl Parser<'_> {
         let (after_hours, hours) = self.two_digits(position + 1)?;
         let after_colon = self.char(after_hours, b':')?;
         let (end, minutes) = self.two_digits(after_colon)?;
-        Some((end, (sign, hours, minutes)))
+        Some((
+            end,
+            TimezoneOffset {
+                sign,
+                hours,
+                minutes,
+            },
+        ))
     }
 
-    fn optional_timezone(&mut self, position: usize) -> (usize, Option<(i64, i64, i64)>) {
+    fn optional_timezone(&mut self, position: usize) -> (usize, Option<TimezoneOffset>) {
         match self.timezone(position) {
             Some((end, timezone)) => (end, Some(timezone)),
             None => (position, None),
         }
     }
 
-    fn iso_date(&mut self, position: usize, with_milliseconds: bool) -> Parsed<String> {
+    fn optional_fraction(&mut self, position: usize) -> (usize, i64) {
+        let fraction = self.char(position, b'.').and_then(|after_dot| {
+            let end = self.exact_digits(after_dot, 3)?;
+            Some((end, self.number(after_dot, end)))
+        });
+        fraction.unwrap_or((position, 0))
+    }
+
+    fn optional_seconds(&mut self, position: usize) -> (usize, i64) {
+        let seconds = self
+            .char(position, b':')
+            .and_then(|after_colon| self.two_digits(after_colon));
+        seconds.unwrap_or((position, 0))
+    }
+
+    fn iso_date(&mut self, position: usize) -> Parsed<String> {
         let year_end = self.exact_digits(position, 4)?;
         let year = self.number(position, year_end);
         let after_dash = self.char(year_end, b'-')?;
@@ -163,15 +181,9 @@ impl Parser<'_> {
         let after_colon = self.char(hours_end, b':')?;
         let (minutes_end, minutes) = self.two_digits(after_colon)?;
         let after_colon = self.char(minutes_end, b':')?;
-        let (mut cursor, seconds) = self.two_digits(after_colon)?;
-        let mut milliseconds = 0;
-        if with_milliseconds {
-            let after_dot = self.char(cursor, b'.')?;
-            let milliseconds_end = self.exact_digits(after_dot, 3)?;
-            milliseconds = self.number(after_dot, milliseconds_end);
-            cursor = milliseconds_end;
-        }
-        let (end, timezone) = self.optional_timezone(cursor);
+        let (seconds_end, seconds) = self.two_digits(after_colon)?;
+        let (fraction_end, milliseconds) = self.optional_fraction(seconds_end);
+        let (end, timezone) = self.optional_timezone(fraction_end);
         let parts = DateParts {
             year,
             month,
@@ -185,22 +197,16 @@ impl Parser<'_> {
         Some((end, to_int32_seconds(epoch_milliseconds(&parts))))
     }
 
-    fn time_of_day(&mut self, position: usize, with_seconds: bool) -> Parsed<String> {
+    fn time_of_day(&mut self, position: usize) -> Parsed<String> {
         let (hours_end, hours) = self.two_digits(position)?;
         let after_colon = self.char(hours_end, b':')?;
-        let (mut cursor, minutes) = self.two_digits(after_colon)?;
-        let mut seconds = 0;
-        if with_seconds {
-            let after_colon = self.char(cursor, b':')?;
-            let (seconds_end, value) = self.two_digits(after_colon)?;
-            seconds = value;
-            cursor = seconds_end;
-        }
-        let (end, timezone) = self.optional_timezone(cursor);
+        let (minutes_end, minutes) = self.two_digits(after_colon)?;
+        let (seconds_end, seconds) = self.optional_seconds(minutes_end);
+        let (end, timezone) = self.optional_timezone(seconds_end);
         if timezone.is_none() {
             return Some((end, "0".to_owned()));
         }
-        let (year, month, day) = utc_civil_date(self.now);
+        let (year, month, day) = utc_civil_date(self.now)?;
         let parts = DateParts {
             year,
             month,
@@ -218,10 +224,8 @@ impl Parser<'_> {
         if let Some(end) = self.exact_digits(position, 10) {
             return Some((end, self.text(position, end)));
         }
-        self.iso_date(position, true)
-            .or_else(|| self.iso_date(position, false))
-            .or_else(|| self.time_of_day(position, true))
-            .or_else(|| self.time_of_day(position, false))
+        self.iso_date(position)
+            .or_else(|| self.time_of_day(position))
     }
 
     fn timestamp_format(&mut self, position: usize) -> Parsed<char> {
