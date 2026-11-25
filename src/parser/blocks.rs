@@ -9,17 +9,24 @@ use crate::ast::{
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum NestedMarker {
+enum ListMarker {
     Task,
     Ordered,
     Hyphen,
     Asterisk,
 }
 
+const LIST_MARKERS: [ListMarker; 4] = [
+    ListMarker::Task,
+    ListMarker::Ordered,
+    ListMarker::Hyphen,
+    ListMarker::Asterisk,
+];
+
 #[derive(Clone)]
 pub(super) struct NestedLine {
     width: usize,
-    marker: NestedMarker,
+    marker: ListMarker,
     item: Node,
 }
 
@@ -41,18 +48,18 @@ fn attach_nested(item: &mut Node, nested_lists: Vec<Node>) {
     }
 }
 
-fn list_of(marker: NestedMarker, items: Vec<Node>) -> Node {
+fn list_of(marker: ListMarker, items: Vec<Node>) -> Node {
     match marker {
-        NestedMarker::Task => tasks(items),
-        NestedMarker::Ordered => ordered_list(items),
-        NestedMarker::Hyphen | NestedMarker::Asterisk => unordered_list(items),
+        ListMarker::Task => tasks(items),
+        ListMarker::Ordered => ordered_list(items),
+        ListMarker::Hyphen | ListMarker::Asterisk => unordered_list(items),
     }
 }
 
 struct NestingLevel {
     parent_width: Option<usize>,
     lists: Vec<Node>,
-    marker: NestedMarker,
+    marker: ListMarker,
     items: Vec<Node>,
     last_item: Node,
     last_width: usize,
@@ -199,9 +206,7 @@ impl Parser<'_> {
             .or_else(|| self.horizontal_rule(position))
             .or_else(|| self.table(position))
             .or_else(|| self.heading(position))
-            .or_else(|| self.tasks(position))
-            .or_else(|| self.ordered_list(position))
-            .or_else(|| self.unordered_list(position))
+            .or_else(|| self.list(position))
             .or_else(|| self.katex(position))
             .or_else(|| self.line_break(position))
     }
@@ -518,14 +523,8 @@ impl Parser<'_> {
             return None;
         }
         let text_start = self.run1(level_end, super::chars::is_space)?;
-        let (mut cursor, items) = self.inline_items(text_start, Flags::NONE)?;
-        if let Some(end) = self.end_of_line(cursor) {
-            cursor = end;
-        }
-        Some((
-            cursor,
-            heading(reduce_plain_texts(items), (level_end - position) as u8),
-        ))
+        let (end, text) = self.inline(text_start)?;
+        Some((end, heading(text, (level_end - position) as u8)))
     }
 
     fn task_flag(&mut self, position: usize) -> Parsed<bool> {
@@ -544,83 +543,12 @@ impl Parser<'_> {
         Some((text_start, status))
     }
 
-    fn tasks(&mut self, position: usize) -> Parsed<Node> {
-        let mut items = Vec::new();
-        let mut cursor = position;
-        while let Some((end, item)) = self.task(cursor) {
-            items.push(item);
-            cursor = end;
-        }
-        (!items.is_empty()).then(|| (cursor, tasks(items)))
-    }
-
-    fn task(&mut self, position: usize) -> Parsed<Node> {
-        let (text_start, status) = self.task_head(position)?;
-        let (mut cursor, text) = self.inline(text_start)?;
-        let nested = self.nested_lists(cursor).map(|(end, nested)| {
-            cursor = end;
-            nested
-        });
-        Some((cursor, task(text, status, nested)))
-    }
-
     fn ordered_head(&mut self, position: usize) -> Parsed<f64> {
         let digits_end = self.digits(position)?;
         let after_dot = self.char(digits_end, b'.')?;
         let text_start = self.run1(after_dot, super::chars::is_space)?;
         let number = self.text(position, digits_end).parse::<f64>().ok()?;
         Some((text_start, number))
-    }
-
-    fn ordered_list(&mut self, position: usize) -> Parsed<Node> {
-        let mut items = Vec::new();
-        let mut cursor = position;
-        while let Some((end, item)) = self.ordered_list_item(cursor) {
-            items.push(item);
-            cursor = end;
-        }
-        (!items.is_empty()).then(|| (cursor, ordered_list(items)))
-    }
-
-    fn ordered_list_item(&mut self, position: usize) -> Parsed<Node> {
-        let (text_start, number) = self.ordered_head(position)?;
-        let (mut cursor, text) = self.inline(text_start)?;
-        let nested = self.nested_lists(cursor).map(|(end, nested)| {
-            cursor = end;
-            nested
-        });
-        Some((cursor, list_item(text, Some(number), nested)))
-    }
-
-    fn unordered_list(&mut self, position: usize) -> Parsed<Node> {
-        for asterisk in [false, true] {
-            let mut items = Vec::new();
-            let mut cursor = position;
-            while let Some((end, item)) = self.unordered_list_item(cursor, asterisk) {
-                items.push(item);
-                cursor = end;
-            }
-            if !items.is_empty() {
-                return Some((cursor, unordered_list(items)));
-            }
-        }
-        None
-    }
-
-    fn unordered_list_item(&mut self, position: usize, asterisk: bool) -> Parsed<Node> {
-        let marker = if asterisk { b'*' } else { b'-' };
-        let after_marker = self.char(position, marker)?;
-        let text_start = self.run1(after_marker, super::chars::is_space)?;
-        let (mut cursor, text) = if asterisk {
-            self.unordered_list_item_content(text_start)?
-        } else {
-            self.inline(text_start)?
-        };
-        let nested = self.nested_lists(cursor).map(|(end, nested)| {
-            cursor = end;
-            nested
-        });
-        Some((cursor, list_item(text, None, nested)))
     }
 
     fn unordered_list_item_content(&mut self, position: usize) -> Parsed<Vec<Node>> {
@@ -687,32 +615,58 @@ impl Parser<'_> {
         ))
     }
 
-    fn nested_list_line_item(&mut self, position: usize) -> Option<(usize, NestedMarker, Node)> {
-        if let Some((text_start, status)) = self.task_head(position) {
-            if let Some((end, text)) = self.inline(text_start) {
-                return Some((end, NestedMarker::Task, task(text, status, None)));
+    fn nested_list_line_item(&mut self, position: usize) -> Option<(usize, ListMarker, Node)> {
+        LIST_MARKERS.into_iter().find_map(|marker| {
+            self.list_line_item(position, marker)
+                .map(|(end, item)| (end, marker, item))
+        })
+    }
+
+    fn list(&mut self, position: usize) -> Parsed<Node> {
+        LIST_MARKERS
+            .into_iter()
+            .find_map(|marker| self.list_of_marker(position, marker))
+    }
+
+    fn list_of_marker(&mut self, position: usize, marker: ListMarker) -> Parsed<Node> {
+        let mut items = Vec::new();
+        let mut cursor = position;
+        while let Some((end, mut item)) = self.list_line_item(cursor, marker) {
+            cursor = end;
+            if let Some((end, nested)) = self.nested_lists(cursor) {
+                attach_nested(&mut item, nested);
+                cursor = end;
+            }
+            items.push(item);
+        }
+        (!items.is_empty()).then(|| (cursor, list_of(marker, items)))
+    }
+
+    fn list_line_item(&mut self, position: usize, marker: ListMarker) -> Parsed<Node> {
+        match marker {
+            ListMarker::Task => {
+                let (text_start, status) = self.task_head(position)?;
+                let (end, text) = self.inline(text_start)?;
+                Some((end, task(text, status, None)))
+            }
+            ListMarker::Ordered => {
+                let (text_start, number) = self.ordered_head(position)?;
+                let (end, text) = self.inline(text_start)?;
+                Some((end, list_item(text, Some(number), None)))
+            }
+            ListMarker::Hyphen => {
+                let after_marker = self.char(position, b'-')?;
+                let text_start = self.run1(after_marker, super::chars::is_space)?;
+                let (end, text) = self.inline(text_start)?;
+                Some((end, list_item(text, None, None)))
+            }
+            ListMarker::Asterisk => {
+                let after_marker = self.char(position, b'*')?;
+                let text_start = self.run1(after_marker, super::chars::is_space)?;
+                let (end, text) = self.unordered_list_item_content(text_start)?;
+                Some((end, list_item(text, None, None)))
             }
         }
-        if let Some((text_start, number)) = self.ordered_head(position) {
-            if let Some((end, text)) = self.inline(text_start) {
-                return Some((
-                    end,
-                    NestedMarker::Ordered,
-                    list_item(text, Some(number), None),
-                ));
-            }
-        }
-        if let Some(after_marker) = self.char(position, b'-') {
-            if let Some(text_start) = self.run1(after_marker, super::chars::is_space) {
-                if let Some((end, text)) = self.inline(text_start) {
-                    return Some((end, NestedMarker::Hyphen, list_item(text, None, None)));
-                }
-            }
-        }
-        let after_marker = self.char(position, b'*')?;
-        let text_start = self.run1(after_marker, super::chars::is_space)?;
-        let (end, text) = self.unordered_list_item_content(text_start)?;
-        Some((end, NestedMarker::Asterisk, list_item(text, None, None)))
     }
 
     fn katex(&mut self, position: usize) -> Parsed<Node> {

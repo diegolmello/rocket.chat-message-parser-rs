@@ -412,31 +412,34 @@ impl Parser<'_> {
         }
     }
 
+    fn delimited_span(
+        &mut self,
+        position: usize,
+        flags: Flags,
+        delimiter: &str,
+        repetition: Repetition,
+    ) -> Option<(usize, usize, usize)> {
+        let content_start = self.literal(position, delimiter)?;
+        let content_end = self.repetition_end(repetition, content_start, flags)?;
+        let end = self.literal(content_end, delimiter)?;
+        Some((content_start, content_end, end))
+    }
+
     fn delimited(
         &mut self,
         position: usize,
         flags: Flags,
-        marker: u8,
+        double_delimiter: &'static str,
         repetition: Repetition,
         wrap: fn(Vec<Node>) -> Node,
     ) -> Parsed<Node> {
-        let double = [marker, marker];
-        let double = std::str::from_utf8(&double).unwrap_or_default().to_string();
-        let single = double[..1].to_string();
-        for delimiter in [double, single] {
-            let Some(content_start) = self.literal(position, &delimiter) else {
-                continue;
-            };
-            let Some(content_end) = self.repetition_end(repetition, content_start, flags) else {
-                continue;
-            };
-            let Some(end) = self.literal(content_end, &delimiter) else {
-                continue;
-            };
-            let items = self.repetition_items(repetition, content_start, content_end, flags);
-            return Some((end, wrap(reduce_plain_texts(items))));
-        }
-        None
+        [double_delimiter, &double_delimiter[..1]]
+            .into_iter()
+            .find_map(|delimiter| self.delimited_span(position, flags, delimiter, repetition))
+            .map(|(content_start, content_end, end)| {
+                let items = self.repetition_items(repetition, content_start, content_end, flags);
+                (end, wrap(reduce_plain_texts(items)))
+            })
     }
 
     fn bold(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
@@ -448,7 +451,7 @@ impl Parser<'_> {
             self.delimited(
                 position,
                 flags,
-                b'*',
+                "**",
                 Repetition::Emphasis(EmphasisContent::Bold),
                 bold
             )
@@ -551,18 +554,11 @@ impl Parser<'_> {
                 return Some((end, Item::One(plain(self.text(position, end)))));
             }
         }
+        let italic_content = Repetition::Emphasis(EmphasisContent::Italic);
         for (delimiter, suffix_is_alpha_digit) in [("__", true), ("_", false)] {
-            let Some(content_start) = self.literal(position, delimiter) else {
-                continue;
-            };
-            let Some(content_end) = self.repetition_end(
-                Repetition::Emphasis(EmphasisContent::Italic),
-                content_start,
-                flags,
-            ) else {
-                continue;
-            };
-            let Some(suffix_start) = self.literal(content_end, delimiter) else {
+            let Some((content_start, content_end, suffix_start)) =
+                self.delimited_span(position, flags, delimiter, italic_content)
+            else {
                 continue;
             };
             let suffix_end = if suffix_is_alpha_digit {
@@ -573,43 +569,17 @@ impl Parser<'_> {
             let Some(suffix_end) = suffix_end else {
                 continue;
             };
-            let items = self.italic_content_items(content_start, content_end, flags);
+            let items = self.repetition_items(italic_content, content_start, content_end, flags);
             let reduced = reduce_plain_texts(vec![
                 Item::One(plain(delimiter)),
-                Item::Many(items),
+                Item::Many(reduce_plain_texts(items)),
                 Item::One(plain(delimiter)),
                 Item::One(plain(self.text(suffix_start, suffix_end))),
             ]);
             return Some((suffix_end, Item::Many(reduced)));
         }
-        for delimiter in ["__", "_"] {
-            let Some(content_start) = self.literal(position, delimiter) else {
-                continue;
-            };
-            let Some(content_end) = self.repetition_end(
-                Repetition::Emphasis(EmphasisContent::Italic),
-                content_start,
-                flags,
-            ) else {
-                continue;
-            };
-            let Some(end) = self.literal(content_end, delimiter) else {
-                continue;
-            };
-            let items = self.italic_content_items(content_start, content_end, flags);
-            return Some((end, Item::One(italic(items))));
-        }
-        None
-    }
-
-    fn italic_content_items(&mut self, position: usize, end: usize, flags: Flags) -> Vec<Node> {
-        let items = self.repetition_items(
-            Repetition::Emphasis(EmphasisContent::Italic),
-            position,
-            end,
-            flags,
-        );
-        reduce_plain_texts(items)
+        self.delimited(position, flags, "__", italic_content, italic)
+            .map(|(end, node)| (end, Item::One(node)))
     }
 
     fn strikethrough(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
@@ -618,7 +588,7 @@ impl Parser<'_> {
             strikethrough,
             position,
             flags,
-            self.delimited(position, flags, b'~', Repetition::Strike, strike)
+            self.delimited(position, flags, "~~", Repetition::Strike, strike)
         )
     }
 
