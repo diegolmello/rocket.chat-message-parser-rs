@@ -49,10 +49,8 @@ fn has_absolute_scheme_prefix(source: &str) -> bool {
     bytes[1 + scheme_length..].starts_with(b"://")
 }
 
-fn auto_link(source: String, custom_domains: Option<&[String]>) -> Node {
-    let mut valid_hosts = vec!["localhost".to_string()];
-    valid_hosts.extend(custom_domains.unwrap_or_default().iter().cloned());
-    if !tld::is_linkable(&source, true, &valid_hosts) {
+fn auto_link(source: String, valid_hosts: &[String]) -> Node {
+    if !tld::is_linkable(&source, true, valid_hosts) {
         return plain(source);
     }
     let is_absolute = url::Url::parse(&source).is_ok()
@@ -487,10 +485,7 @@ impl Parser<'_> {
             let head_end = self.url_head(position)?;
             let end = self.auto_link_body(head_end);
             let source = self.text(position, end);
-            Some((
-                end,
-                auto_link(source, self.options.custom_domains.as_deref()),
-            ))
+            Some((end, auto_link(source, &self.link_hosts)))
         })
     }
 

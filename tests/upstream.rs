@@ -7,7 +7,7 @@ use serde_json::Value;
 
 mod common;
 
-use common::{canonical, panic_message};
+use common::{canonical, fixed_clock, panic_message};
 
 const UPSTREAM_VERSION: &str = "0.33.0";
 
@@ -36,37 +36,37 @@ const UNCAPTURED_UPSTREAM_TESTS: &[(&str, &str, &str)] = &[
     (
         "emoji.test.ts",
         "every emoji parses as one token, except documented components (emojibase@17.0.0)",
-        "tests/emoji.rs",
+        "tests/emoji.rs::every_emoji_parses_as_one_token_except_documented_components",
     ),
     (
         "horizontalRule.test.ts",
         "does not treat \"***\" as a horizontal rule",
-        "tests/horizontal_rule.rs",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
     ),
     (
         "horizontalRule.test.ts",
         "does not treat \"___\" as a horizontal rule",
-        "tests/horizontal_rule.rs",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
     ),
     (
         "horizontalRule.test.ts",
         "does not treat \"*******\" as a horizontal rule",
-        "tests/horizontal_rule.rs",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
     ),
     (
         "horizontalRule.test.ts",
         "does not treat \"_______\" as a horizontal rule",
-        "tests/horizontal_rule.rs",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
     ),
     (
         "table.test.ts",
         "normalizes ragged body rows to the header column count",
-        "tests/table.rs",
+        "tests/table.rs::normalizes_ragged_body_rows_to_the_header_column_count",
     ),
     (
         "table.test.ts",
         "exposes the source offsets as fallback for renderers without table support",
-        "tests/table.rs",
+        "tests/table.rs::exposes_the_source_offsets_as_fallback_for_renderers_without_table_support",
     ),
     (
         "url.test.ts",
@@ -202,7 +202,7 @@ fn fixture_failures(fixture: &Fixture) -> Vec<String> {
     for group in &fixture.groups {
         let now = match &group.needs_clock {
             Some(clock) => clock_at(clock),
-            None => SystemTime::now(),
+            None => fixed_clock(),
         };
         for case in &group.cases {
             if let Err(reason) = check_case(case, now) {
@@ -274,9 +274,14 @@ fn every_uncaptured_upstream_test_has_a_hand_port_or_a_reason() {
     );
     for (_, name, covered_by) in UNCAPTURED_UPSTREAM_TESTS {
         if *covered_by != NOT_OBSERVABLE_THROUGH_PARSE {
-            let hand_port = concat!(env!("CARGO_MANIFEST_DIR"), "/").to_owned() + covered_by;
+            let (file, test_function) = covered_by
+                .split_once("::")
+                .expect("a hand port is named as <file>::<test function>");
+            let hand_port = concat!(env!("CARGO_MANIFEST_DIR"), "/").to_owned() + file;
+            let source = std::fs::read_to_string(&hand_port)
+                .unwrap_or_else(|_| panic!("{name}: hand port {file} is missing"));
             assert!(
-                std::path::Path::new(&hand_port).exists(),
+                source.contains(&format!("fn {test_function}()")),
                 "{name}: hand port {covered_by} is missing"
             );
         }

@@ -29,6 +29,7 @@ pub(super) enum Run {
     MarkdownLinkUrlBody,
     MarkdownLinkExtras,
     MarkdownLinkParenthesized,
+    SpoilerParagraphs,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -60,6 +61,7 @@ impl Run {
             Run::MarkdownLinkUrlBody => parser.markdown_link_url_body_step(position),
             Run::MarkdownLinkExtras => parser.class(position, is_markdown_link_extra),
             Run::MarkdownLinkParenthesized => parser.markdown_link_parenthesized_step(position),
+            Run::SpoilerParagraphs => parser.spoiler_paragraph_step(position),
         }
     }
 }

@@ -11,6 +11,8 @@ mod timestamp;
 
 use std::time::SystemTime;
 
+use rustc_hash::FxHashMap;
+
 use crate::ast::Node;
 use crate::Options;
 use chars::{is, is_ascii_digit, is_space};
@@ -64,6 +66,7 @@ pub(crate) struct Parser<'source> {
     memo: Memo,
     report: ParseReport,
     scans: Scans,
+    link_hosts: Vec<String>,
 }
 
 struct Scans {
@@ -72,6 +75,7 @@ struct Scans {
     block_katex_end: Vec<u32>,
     inline_katex_end: Vec<u32>,
     extra_run_end: Vec<u32>,
+    long_code_closes: FxHashMap<usize, Vec<[u32; 2]>>,
 }
 
 fn next_index_where(length: usize, matches: impl Fn(usize) -> bool) -> Vec<u32> {
@@ -111,6 +115,7 @@ impl Scans {
                 (parenthesis && starts_with(index, b"\\)")) || (dollar && starts_with(index, b"$"))
             }),
             extra_run_end: next_index_where(length, |index| !chars::is_extra(source[index])),
+            long_code_closes: blocks::long_code_closes(source),
         }
     }
 }
@@ -123,6 +128,9 @@ impl<'source> Parser<'source> {
             "input must be shorter than u32::MAX UTF-16 code units"
         );
         let scans = Scans::new(&source, options);
+        let link_hosts = std::iter::once("localhost".to_owned())
+            .chain(options.custom_domains.iter().flatten().cloned())
+            .collect();
         let report = ParseReport {
             input_length: source.len(),
             ..ParseReport::default()
@@ -134,6 +142,7 @@ impl<'source> Parser<'source> {
             memo: Memo::default(),
             report,
             scans,
+            link_hosts,
         }
     }
 
@@ -283,7 +292,5 @@ impl<'source> Parser<'source> {
 pub(crate) fn parse(input: &str, options: &Options, now: SystemTime) -> (Vec<Node>, ParseReport) {
     let mut parser = Parser::new(input, options, now);
     let nodes = parser.start();
-    let mut report = parser.report;
-    report.repeated_evaluations = parser.memo.repeated_evaluations;
-    (nodes, report)
+    (nodes, parser.report)
 }

@@ -16,14 +16,31 @@ fn on_stack<T: Send + 'static>(bytes: usize, work: impl FnOnce() -> T + Send + '
         .expect("parser thread finishes without overflowing")
 }
 
-fn parse_with_emoticons(inputs: Vec<String>) {
+fn emoji_count(nodes: Vec<Node>) -> usize {
+    let mut pending = nodes;
+    let mut count = 0;
+    while let Some(node) = pending.pop() {
+        match node {
+            Node::Emoji { .. } => count += 1,
+            Node::Paragraph { value }
+            | Node::Bold { value }
+            | Node::Italic { value }
+            | Node::Spoiler { value } => pending.extend(value),
+            _ => {}
+        }
+    }
+    count
+}
+
+fn emoticon_counts(inputs: Vec<String>) -> Vec<usize> {
     let options = Options {
         emoticons: true,
         ..Options::default()
     };
-    for input in inputs {
-        drop(parse_at(&input, &options, fixed_clock()));
-    }
+    inputs
+        .iter()
+        .map(|input| emoji_count(parse_at(input, &options, fixed_clock())))
+        .collect()
 }
 
 #[test]
@@ -33,9 +50,8 @@ fn long_emoticon_chains_parse_within_a_main_thread_stack() {
         format!("*{}", ":)".repeat(50_000)),
         format!("_{}", ":)".repeat(50_000)),
     ];
-    on_stack(MAIN_THREAD_STACK_BYTES, move || {
-        parse_with_emoticons(inputs)
-    });
+    let counts = on_stack(MAIN_THREAD_STACK_BYTES, move || emoticon_counts(inputs));
+    assert_eq!(counts, [0, 0, 0]);
 }
 
 #[test]
@@ -47,9 +63,8 @@ fn spoilers_ending_in_emoticons_parse_within_a_spawned_thread_stack() {
         format!("_{}", "||:)".repeat(25_000)),
         format!("![{}", "||:)".repeat(25_000)),
     ];
-    on_stack(SPAWNED_THREAD_STACK_BYTES, move || {
-        parse_with_emoticons(inputs)
-    });
+    let counts = on_stack(SPAWNED_THREAD_STACK_BYTES, move || emoticon_counts(inputs));
+    assert_eq!(counts, [24_999, 0, 24_999, 24_999, 24_999]);
 }
 
 #[test]

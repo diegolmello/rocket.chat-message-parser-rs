@@ -37,8 +37,8 @@ fn normalizes_ragged_body_rows_to_the_header_column_count() {
 
 #[test]
 fn exposes_the_source_offsets_as_fallback_for_renderers_without_table_support() {
-    let input = "| a | b |\n| - | - |\n| 1 | 2 |";
+    let input = "| á | 😀 |\n| - | - |\n| 1 | 2 |";
     let (_, fallback) = first_table(input);
 
-    assert_eq!(fallback, [0, input.len()]);
+    assert_eq!(fallback, [0, input.encode_utf16().count()]);
 }

@@ -295,6 +295,9 @@ impl Parser<'_> {
     }
 
     fn evaluate_later_spoilers_backwards(&mut self, position: usize, flags: Flags) {
+        if !self.options.emoticons {
+            return;
+        }
         let evaluated_from = self
             .memo
             .spoilers_evaluated_from
@@ -575,28 +578,28 @@ impl Parser<'_> {
     }
 
     pub(super) fn strike_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
-        let one =
+        let node =
             |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Piece::Item(Item::One(node))));
         let item = |parsed: Parsed<Item>| parsed.map(|(end, item)| (end, Piece::Item(item)));
         if let Some(end) = self.run1(position, is_strike_plain_run_char) {
             return Some((end, Piece::Text));
         }
-        one(self.escaped_timestamp_rules(position))
-            .or_else(|| one(self.timestamp_rules(position)))
-            .or_else(|| one(self.whitespace(position)))
-            .or_else(|| one(self.inline_code(position)))
-            .or_else(|| one(self.maybe_references(position, flags)))
-            .or_else(|| one(self.user_mention(position)))
-            .or_else(|| one(self.channel_mention(position)))
+        node(self.escaped_timestamp_rules(position))
+            .or_else(|| node(self.timestamp_rules(position)))
+            .or_else(|| node(self.whitespace(position)))
+            .or_else(|| node(self.inline_code(position)))
+            .or_else(|| node(self.maybe_references(position, flags)))
+            .or_else(|| node(self.user_mention(position)))
+            .or_else(|| node(self.channel_mention(position)))
             .or_else(|| item(self.maybe_emphasis(position, flags, Emphasis::Italic)))
             .or_else(|| item(self.maybe_emphasis(position, flags, Emphasis::Bold)))
-            .or_else(|| one(self.emoji(position)))
-            .or_else(|| one(self.emoticon(position)))
+            .or_else(|| node(self.emoji(position)))
+            .or_else(|| node(self.emoticon(position)))
             .or_else(|| {
                 let end = self.character(position, |unit| !is_one_of(unit, b"\n~ "))?;
                 Some((end, Piece::Text))
             })
-            .or_else(|| one(self.line(position)))
+            .or_else(|| node(self.line(position)))
     }
 
     pub(super) fn maybe_references(&mut self, position: usize, flags: Flags) -> Parsed<Node> {

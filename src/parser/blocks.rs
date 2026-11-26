@@ -1,8 +1,9 @@
 use rustc_hash::FxHashMap;
 
-use super::chars::{is, is_code_language_char, is_js_whitespace};
+use super::chars::{is, is_code_language_char, is_js_whitespace, is_space};
 use super::memo::memoized;
 use super::reduce::{reduce_plain_texts, Item};
+use super::repetition::Run;
 use super::{Flags, Parsed, Parser};
 use crate::ast::{
     code, code_line, heading, horizontal_rule, katex, line_break, list_item, ordered_list,
@@ -292,10 +293,7 @@ impl Parser<'_> {
     fn block_spoiler(&mut self, position: usize) -> Parsed<Node> {
         let after_open = self.literal(position, "||")?;
         let first_paragraph = self.end_of_line(after_open)?;
-        let paragraphs_end = self.paragraph_run_end(first_paragraph);
-        if paragraphs_end == first_paragraph {
-            return None;
-        }
+        let paragraphs_end = self.run_end(Run::SpoilerParagraphs, first_paragraph)?;
         let before_close = self.end_of_line(paragraphs_end).unwrap_or(paragraphs_end);
         let end = self.literal(before_close, "||")?;
         let mut paragraphs = Vec::new();
@@ -308,28 +306,11 @@ impl Parser<'_> {
         Some((end, spoiler_block(paragraphs)))
     }
 
-    fn paragraph_run_end(&mut self, start: usize) -> usize {
-        let mut visited = Vec::new();
-        let mut cursor = start;
-        let run_end = loop {
-            if let Some(&run_end) = self.memo.paragraph_run_end.get(&(cursor as u32)) {
-                break run_end as usize;
-            }
-            if self.literal(cursor, "||").is_some() {
-                break cursor;
-            }
-            let Some((paragraph_end, _)) = self.paragraph(cursor) else {
-                break cursor;
-            };
-            visited.push(cursor as u32);
-            cursor = paragraph_end;
-        };
-        for paragraph_start in visited {
-            self.memo
-                .paragraph_run_end
-                .insert(paragraph_start, run_end as u32);
+    pub(super) fn spoiler_paragraph_step(&mut self, position: usize) -> Option<usize> {
+        if self.literal(position, "||").is_some() {
+            return None;
         }
-        run_end
+        self.paragraph(position).map(|(end, _)| end)
     }
 
     fn code_language(&mut self, position: usize) -> (usize, Option<String>) {
@@ -345,7 +326,7 @@ impl Parser<'_> {
         let fence_length = fence_end - position;
         let (after_language, language) = self.code_language(fence_end);
         let first_line = self.end_of_line(after_language)?;
-        let close = self.next_long_code_close(first_line, fence_length)?;
+        let [close, end] = self.next_long_code_close(first_line, fence_length)?;
         if close == first_line {
             return None;
         }
@@ -356,49 +337,16 @@ impl Parser<'_> {
             lines.push(code_line(plain(self.text(cursor, text_end))));
             cursor = self.end_of_line(text_end)?;
         }
-        let end = self.long_code_close(close, fence_length)?;
         Some((end, code(lines, language)))
     }
 
-    fn next_long_code_close(&mut self, position: usize, fence_length: usize) -> Option<usize> {
-        if self.memo.long_code_closes.is_none() {
-            let closes = self.long_code_closes();
-            self.memo.long_code_closes = Some(closes);
-        }
-        let line_starts = self.memo.long_code_closes.as_ref()?.get(&fence_length)?;
-        let next = line_starts.partition_point(|&start| (start as usize) < position);
-        line_starts.get(next).map(|&start| start as usize)
-    }
-
-    fn long_code_closes(&mut self) -> FxHashMap<usize, Vec<u32>> {
-        let mut closes: FxHashMap<usize, Vec<u32>> = FxHashMap::default();
-        let mut line_start = 0;
-        loop {
-            let fence_end = self.run(line_start, |unit| is(unit, b'`'));
-            if fence_end > line_start {
-                let after_spaces = self.spaces(fence_end);
-                if self.end_of_line(after_spaces).is_some() || self.is_end(after_spaces) {
-                    closes
-                        .entry(fence_end - line_start)
-                        .or_default()
-                        .push(line_start as u32);
-                }
-            }
-            let text_end = self.run(line_start, |unit| unit != 0x0A && unit != 0x0D);
-            let Some(next_line) = self.end_of_line(text_end) else {
-                return closes;
-            };
-            line_start = next_line;
-        }
-    }
-
-    fn long_code_close(&mut self, position: usize, fence_length: usize) -> Option<usize> {
-        let fence_end = self.run1(position, |unit| is(unit, b'`'))?;
-        if fence_end - position != fence_length {
-            return None;
-        }
-        let end = self.spaces(fence_end);
-        (self.end_of_line(end).is_some() || self.is_end(end)).then_some(end)
+    fn next_long_code_close(&mut self, position: usize, fence_length: usize) -> Option<[usize; 2]> {
+        self.report.input_reads += 1;
+        let closes = self.scans.long_code_closes.get(&fence_length)?;
+        let next = closes.partition_point(|&[line_start, _]| (line_start as usize) < position);
+        closes
+            .get(next)
+            .map(|&[line_start, end]| [line_start as usize, end as usize])
     }
 
     fn code(&mut self, position: usize) -> Parsed<Node> {
@@ -584,7 +532,7 @@ impl Parser<'_> {
         if level_end == position {
             return None;
         }
-        let text_start = self.run1(level_end, super::chars::is_space)?;
+        let text_start = self.run1(level_end, is_space)?;
         let (end, text) = self.inline(text_start)?;
         Some((end, heading(text, (level_end - position) as u8)))
     }
@@ -601,14 +549,14 @@ impl Parser<'_> {
         let after_open = self.literal(position, "- [")?;
         let (after_flag, status) = self.task_flag(after_open)?;
         let after_close = self.char(after_flag, b']')?;
-        let text_start = self.run1(after_close, super::chars::is_space)?;
+        let text_start = self.run1(after_close, is_space)?;
         Some((text_start, status))
     }
 
     fn ordered_head(&mut self, position: usize) -> Parsed<f64> {
         let digits_end = self.digits(position)?;
         let after_dot = self.char(digits_end, b'.')?;
-        let text_start = self.run1(after_dot, super::chars::is_space)?;
+        let text_start = self.run1(after_dot, is_space)?;
         let number = self.text(position, digits_end).parse::<f64>().ok()?;
         Some((text_start, number))
     }
@@ -664,7 +612,7 @@ impl Parser<'_> {
     }
 
     fn nested_list_line(&mut self, position: usize) -> Parsed<NestedLine> {
-        let indent_end = self.run1(position, super::chars::is_space)?;
+        let indent_end = self.run1(position, is_space)?;
         let width = indent_width(&self.source[position..indent_end]);
         let (end, marker, item) = self.nested_list_line_item(indent_end)?;
         Some((
@@ -718,13 +666,13 @@ impl Parser<'_> {
             }
             ListMarker::Hyphen => {
                 let after_marker = self.char(position, b'-')?;
-                let text_start = self.run1(after_marker, super::chars::is_space)?;
+                let text_start = self.run1(after_marker, is_space)?;
                 let (end, text) = self.inline(text_start)?;
                 Some((end, list_item(text, None, None)))
             }
             ListMarker::Asterisk => {
                 let after_marker = self.char(position, b'*')?;
-                let text_start = self.run1(after_marker, super::chars::is_space)?;
+                let text_start = self.run1(after_marker, is_space)?;
                 let (end, text) = self.unordered_list_item_content(text_start)?;
                 Some((end, list_item(text, None, None)))
             }
@@ -754,5 +702,39 @@ impl Parser<'_> {
         let after_spaces = self.spaces(position);
         let end = self.end_of_line(after_spaces)?;
         Some((end, line_break()))
+    }
+}
+
+fn run_length(units: &[u16], predicate: impl Fn(u16) -> bool) -> usize {
+    units.iter().take_while(|&&unit| predicate(unit)).count()
+}
+
+fn fence_close(source: &[u16], line_start: usize) -> Option<(usize, usize)> {
+    let fence_length = run_length(&source[line_start..], |unit| is(unit, b'`'));
+    if fence_length == 0 {
+        return None;
+    }
+    let fence_end = line_start + fence_length;
+    let end = fence_end + run_length(&source[fence_end..], is_space);
+    matches!(source.get(end), None | Some(0x0A | 0x0D)).then_some((fence_length, end))
+}
+
+pub(super) fn long_code_closes(source: &[u16]) -> FxHashMap<usize, Vec<[u32; 2]>> {
+    let mut closes: FxHashMap<usize, Vec<[u32; 2]>> = FxHashMap::default();
+    let mut line_start = 0;
+    loop {
+        if let Some((fence_length, end)) = fence_close(source, line_start) {
+            closes
+                .entry(fence_length)
+                .or_default()
+                .push([line_start as u32, end as u32]);
+        }
+        let text_end =
+            line_start + run_length(&source[line_start..], |unit| unit != 0x0A && unit != 0x0D);
+        line_start = match source[text_end..] {
+            [0x0D, 0x0A, ..] => text_end + 2,
+            [0x0D | 0x0A, ..] => text_end + 1,
+            _ => return closes,
+        };
     }
 }

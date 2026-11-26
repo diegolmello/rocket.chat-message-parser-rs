@@ -11,7 +11,6 @@ name = "message_parser"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 url = "2"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 rustc-hash = "2"
@@ -21,6 +20,7 @@ work-report = []
 
 [dev-dependencies]
 proptest = "1.12.0"
+serde_json = "1"
 
 [[test]]
 name = "linear_work"
