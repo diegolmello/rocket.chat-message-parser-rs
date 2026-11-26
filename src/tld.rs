@@ -29,7 +29,8 @@ pub(crate) fn is_linkable(url: &str, detect_ip: bool, valid_hosts: &[String]) ->
         && (has_public_suffix_rule(&hostname)
             || valid_hosts
                 .iter()
-                .any(|valid_host| share_same_domain_suffix(&hostname, valid_host)))
+                .find(|valid_host| share_same_domain_suffix(&hostname, valid_host))
+                .is_some_and(|valid_host| !valid_host.is_empty()))
 }
 
 fn is_ascii_byte_in(code: u16, first: u8, last: u8) -> bool {
