@@ -49,6 +49,9 @@ const KNOWN_SEEDS: &[&str] = &[
     "#a",
     "```\n",
     "````x\n",
+    "````\n```\n",
+    "`````\n````x\n",
+    "||\n||a.b\n",
     "- ",
     "1. ",
     "> ",
@@ -65,6 +68,8 @@ const PREFIXED_SEEDS: &[(&str, &str)] = &[
     ("- a", "\n - a"),
     ("- a", "\n  * b\n 1. c\n - [ ] d"),
     ("1. a", "\n - a\n  - b"),
+    ("````", "\n```"),
+    ("||", "\na"),
 ];
 
 fn option_sets() -> [(&'static str, Options); 2] {

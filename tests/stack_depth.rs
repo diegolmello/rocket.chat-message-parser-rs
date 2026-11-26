@@ -59,12 +59,14 @@ fn spoilers_ending_in_emoticons_parse_within_a_spawned_thread_stack() {
     let inputs = vec![
         "||:)".repeat(25_000),
         "||x<3".repeat(20_000),
+        "||>:-)".repeat(20_000),
+        "||-___-".repeat(20_000),
         format!("*{}", "||:)".repeat(25_000)),
         format!("_{}", "||:)".repeat(25_000)),
         format!("![{}", "||:)".repeat(25_000)),
     ];
     let counts = on_stack(SPAWNED_THREAD_STACK_BYTES, move || emoticon_counts(inputs));
-    assert_eq!(counts, [24_999, 0, 24_999, 24_999, 24_999]);
+    assert_eq!(counts, [24_999, 0, 19_999, 0, 24_999, 24_999, 24_999]);
 }
 
 #[test]

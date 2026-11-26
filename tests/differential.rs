@@ -75,6 +75,23 @@ const TOKENS: &[&str] = &[
     "\\*",
     "__",
     "**",
+    "||\n",
+    "\n||",
+    "a\nb",
+    ";-)",
+    "*\\0/*",
+    "````\n",
+    "\n````",
+    "`````",
+    "<t:2038-01-19T03:14:08+00:00>",
+    "<t:9999-12-31T23:59:59.999>",
+    "<t:1800-06-15T12:00:00.500-03:00>",
+    "a+b://c.co",
+    "http://a.b:99999",
+    "abcdefghijklmnopqrstuvwxyz012345://b.com",
+    "abcdefghijklmnopqrstuvwxyz0123456://b.com",
+    ":99999",
+    "\r",
 ];
 const TOKEN_LENGTH: usize = 3;
 const RANDOM_TOKEN_MAX: usize = 12;
