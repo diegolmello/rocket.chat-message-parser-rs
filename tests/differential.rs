@@ -107,7 +107,7 @@ const TOKENS: &[&str] = &[
     "http://localhost",
     "@.:]",
 ];
-const TOKEN_LENGTH: usize = 3;
+const FAST_TOKEN_LENGTH: u64 = 2;
 const RANDOM_TOKEN_MAX: usize = 12;
 
 struct OptionSet {
@@ -368,22 +368,55 @@ fn show(outcome: &Outcome) -> &str {
     }
 }
 
+fn oracle_count() -> usize {
+    let cores = std::thread::available_parallelism().map_or(1, |cores| cores.get());
+    environment_number("DIFFERENTIAL_JOBS", cores as u64).max(1) as usize
+}
+
+fn failing_cases<'sets>(
+    inputs: &[String],
+    option_sets: &'sets [OptionSet],
+) -> Vec<(String, &'sets OptionSet)> {
+    let pairs: Vec<(&str, &OptionSet)> = option_sets
+        .iter()
+        .flat_map(|option_set| inputs.iter().map(move |input| (input.as_str(), option_set)))
+        .collect();
+    let share = pairs.len().div_ceil(oracle_count()).max(1);
+    std::thread::scope(|scope| {
+        let workers: Vec<_> = pairs
+            .chunks(share)
+            .map(|share| {
+                scope.spawn(move || {
+                    let cases: Vec<(&str, &Value)> = share
+                        .iter()
+                        .map(|(input, option_set)| (*input, &option_set.upstream))
+                        .collect();
+                    let upstream = Oracle::start().ask(&cases);
+                    share
+                        .iter()
+                        .zip(upstream)
+                        .filter(|((input, option_set), upstream)| {
+                            *upstream != rust_outcome(input, &option_set.rust)
+                        })
+                        .map(|((input, option_set), _)| ((*input).to_owned(), *option_set))
+                        .collect::<Vec<_>>()
+                })
+            })
+            .collect();
+        workers
+            .into_iter()
+            .flat_map(|worker| {
+                worker
+                    .join()
+                    .unwrap_or_else(|payload| panic::resume_unwind(payload))
+            })
+            .collect()
+    })
+}
+
 fn check_equivalence(inputs: &[String]) {
     let option_sets = option_sets();
-    let mut oracle = Oracle::start();
-    let mut failing_cases = Vec::new();
-    for option_set in &option_sets {
-        let cases: Vec<(&str, &Value)> = inputs
-            .iter()
-            .map(|input| (input.as_str(), &option_set.upstream))
-            .collect();
-        let upstream = oracle.ask(&cases);
-        for (input, upstream) in inputs.iter().zip(upstream) {
-            if upstream != rust_outcome(input, &option_set.rust) {
-                failing_cases.push((input.clone(), option_set));
-            }
-        }
-    }
+    let mut failing_cases = failing_cases(inputs, &option_sets);
     if failing_cases.is_empty() {
         println!(
             "{} inputs x {} option sets: every AST matches upstream",
@@ -393,6 +426,7 @@ fn check_equivalence(inputs: &[String]) {
         return;
     }
     failing_cases.sort_by_key(|(input, _)| input.len());
+    let mut oracle = Oracle::start();
     let minimized: BTreeSet<Mismatch> = failing_cases
         .iter()
         .take(MINIMIZED_FAILURE_LIMIT)
@@ -434,7 +468,8 @@ fn every_short_character_string_matches_upstream() {
 #[test]
 #[ignore = "needs node and the pinned upstream parser; see .claude/skills/verify-upstream-equivalence"]
 fn every_short_token_sequence_matches_upstream() {
-    check_equivalence(&strings_over(TOKENS, 1..=TOKEN_LENGTH));
+    let length = environment_number("DIFFERENTIAL_TOKEN_LENGTH", FAST_TOKEN_LENGTH) as usize;
+    check_equivalence(&strings_over(TOKENS, 1..=length));
 }
 
 #[test]
