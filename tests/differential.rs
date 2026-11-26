@@ -76,6 +76,7 @@ const TOKENS: &[&str] = &[
     "__",
     "**",
     "||\n",
+    "||\r\n",
     "\n||",
     "a\nb",
     ";-)",
@@ -104,6 +105,7 @@ const TOKENS: &[&str] = &[
     "X.LOCAL",
     "http://x.Local/a",
     "http://localhost",
+    "@.:]",
 ];
 const TOKEN_LENGTH: usize = 3;
 const RANDOM_TOKEN_MAX: usize = 12;
@@ -115,7 +117,7 @@ struct OptionSet {
 }
 
 fn option_sets() -> Vec<OptionSet> {
-    let custom_domains = ["a", "local"];
+    let custom_domains = ["a", "local", ".", ""];
     [
         ("default", json!({})),
         (
@@ -137,7 +139,7 @@ fn option_sets() -> Vec<OptionSet> {
         ("customDomains", json!({ "customDomains": custom_domains })),
         (
             "customDomains near misses",
-            json!({ "customDomains": ["LOCAL", "ocal", "chat", ""] }),
+            json!({ "customDomains": ["LOCAL", "ocal", "chat", "", "."] }),
         ),
         (
             "all",
