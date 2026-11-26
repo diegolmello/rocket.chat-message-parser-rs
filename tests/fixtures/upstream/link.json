@@ -1,0 +1,2555 @@
+{
+	"file": "link.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"<https://domain.com|Test>\"",
+					"input": "<https://domain.com|Test>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://domain.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<https://domain.com|Test\n>\"",
+					"input": "<https://domain.com|Test\n>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "<https://domain.com|Test"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ">"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<https://domain.com|Test\n> quote here\"",
+					"input": "<https://domain.com|Test\n> quote here",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "<https://domain.com|Test"
+								}
+							]
+						},
+						{
+							"type": "QUOTE",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "quote here"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Link](https://domain.com/link?a=%28node_filesystem_avail_bytes%29)\"",
+					"input": "[Link](https://domain.com/link?a=%28node_filesystem_avail_bytes%29)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://domain.com/link?a=%28node_filesystem_avail_bytes%29"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Link"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[](https://rocket.chat)\"",
+					"input": "[](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[ ](https://rocket.chat)\"",
+					"input": "[ ](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": " "
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[ test](https://rocket.chat)\"",
+					"input": "[ test](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": " test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[ test ](https://rocket.chat)\"",
+					"input": "[ test ](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": " test "
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](https://rocket.chat)\"",
+					"input": "[title](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](http://localhost)\"",
+					"input": "[title](http://localhost)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://localhost"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](http://localhost?testing=true)\"",
+					"input": "[title](http://localhost?testing=true)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://localhost?testing=true"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[**title**](https://rocket.chat)\"",
+					"input": "[**title**](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "BOLD",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "title"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[~~title~~](https://rocket.chat)\"",
+					"input": "[~~title~~](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "title"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[__title__](https://rocket.chat)\"",
+					"input": "[__title__](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "ITALIC",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "title"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[__**~~title~~**__](https://rocket.chat)\"",
+					"input": "[__**~~title~~**__](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "ITALIC",
+												"value": [
+													{
+														"type": "BOLD",
+														"value": [
+															{
+																"type": "STRIKE",
+																"value": [
+																	{
+																		"type": "PLAIN_TEXT",
+																		"value": "title"
+																	}
+																]
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351\"",
+					"input": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351|Test>\"",
+					"input": "<https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351|Test>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[**title**](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[**title**](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "BOLD",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "title"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[~~title~~](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[~~title~~](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "title"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[__title__](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[__title__](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "ITALIC",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "title"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[__**~~title~~**__](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[__**~~title~~**__](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "ITALIC",
+												"value": [
+													{
+														"type": "BOLD",
+														"value": [
+															{
+																"type": "STRIKE",
+																"value": [
+																	{
+																		"type": "PLAIN_TEXT",
+																		"value": "title"
+																	}
+																]
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34)\"",
+					"input": "[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do?query=test12-34#Cases/dv/413244000073043351)\"",
+					"input": "[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do?query=test12-34#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do?query=test12-34#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34&query2=abc123)\"",
+					"input": "[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34&query2=abc123)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34&query2=abc123"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases?query=test12-34&query2=abcd!e/dv/413244000073043351)\"",
+					"input": "[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases?query=test12-34&query2=abcd!e/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases?query=test12-34&query2=abcd!e/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34&query2=abcd!~-._%2B+)\"",
+					"input": "[title](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34&query2=abcd!~-._%2B+)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351?query=test12-34&query2=abcd!~-._%2B+"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "title"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"google.com\"",
+					"input": "google.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "google.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"www.google.com\"",
+					"input": "www.google.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//www.google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "www.google.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"rocket.chat:8080\"",
+					"input": "rocket.chat:8080",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "rocket.chat:8080"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "rocket.chat:8080"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"ShouldNotBeALink\"",
+					"input": "ShouldNotBeALink",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "ShouldNotBeALink"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"http:/ google.com\"",
+					"input": "http:/ google.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "http:/ "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "google.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[custom](custom://google.com)\"",
+					"input": "[custom](custom://google.com)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "custom://google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "custom"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[thing](https://www.thingiverse.com/thing:5451684)\"",
+					"input": "[thing](https://www.thingiverse.com/thing:5451684)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.thingiverse.com/thing:5451684"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "thing"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://t.me/joinchat/chatexample\"",
+					"input": "https://t.me/joinchat/chatexample",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://t.me/joinchat/chatexample"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://t.me/joinchat/chatexample"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[telegram invite](https://t.me/joinchat/chatexample)\"",
+					"input": "[telegram invite](https://t.me/joinchat/chatexample)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://t.me/joinchat/chatexample"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "telegram invite"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Github link with hash](https://github.com/RocketChat/Rocket.Chat/pull/26751/files#diff-c87b108ecf1ede549f8ede68eca840fbb330180b927df0b8a0b4df5d06cbd89b)\"",
+					"input": "[Github link with hash](https://github.com/RocketChat/Rocket.Chat/pull/26751/files#diff-c87b108ecf1ede549f8ede68eca840fbb330180b927df0b8a0b4df5d06cbd89b)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/RocketChat/Rocket.Chat/pull/26751/files#diff-c87b108ecf1ede549f8ede68eca840fbb330180b927df0b8a0b4df5d06cbd89b"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Github link with hash"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Github link with hash](https://github.com/RocketChat/Rocket.Chat/pull/26751/files#diff)\"",
+					"input": "[Github link with hash](https://github.com/RocketChat/Rocket.Chat/pull/26751/files#diff)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/RocketChat/Rocket.Chat/pull/26751/files#diff"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Github link with hash"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Github link without hash](https://github.com/RocketChat/Rocket.Chat/pull/26751/files)\"",
+					"input": "[Github link without hash](https://github.com/RocketChat/Rocket.Chat/pull/26751/files)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/RocketChat/Rocket.Chat/pull/26751/files"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Github link without hash"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Link with special chars](https://github.com/RocketChat/Rocket.Chat*[/]^_`{}~)\"",
+					"input": "[Link with special chars](https://github.com/RocketChat/Rocket.Chat*[/]^_`{}~)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/RocketChat/Rocket.Chat*[/]^_`{}~"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Link with special chars"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Google complex Link](https://www.google.com/url?rct=j&sa=t&url=https://ga.de/freizeit/region-erleben/bonn-und-region-tipps-fuers-wochenende-flohmarkt-rheinaue-weltkindertag-stadtfest_aid-53876987&ct=ga&cd=CAIyHDQ0NzEyYWE3MDA1MGNhNTQ6Y29tOmRlOkRFOlI&usg=AOvVaw3ySYrO9lM0iNSnk43gPVwZ)\"",
+					"input": "[Google complex Link](https://www.google.com/url?rct=j&sa=t&url=https://ga.de/freizeit/region-erleben/bonn-und-region-tipps-fuers-wochenende-flohmarkt-rheinaue-weltkindertag-stadtfest_aid-53876987&ct=ga&cd=CAIyHDQ0NzEyYWE3MDA1MGNhNTQ6Y29tOmRlOkRFOlI&usg=AOvVaw3ySYrO9lM0iNSnk43gPVwZ)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.google.com/url?rct=j&sa=t&url=https://ga.de/freizeit/region-erleben/bonn-und-region-tipps-fuers-wochenende-flohmarkt-rheinaue-weltkindertag-stadtfest_aid-53876987&ct=ga&cd=CAIyHDQ0NzEyYWE3MDA1MGNhNTQ6Y29tOmRlOkRFOlI&usg=AOvVaw3ySYrO9lM0iNSnk43gPVwZ"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Google complex Link"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Rocket.Chat](https://rocket.chat) Inline Text\"",
+					"input": "[Rocket.Chat](https://rocket.chat) Inline Text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Rocket.Chat"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " Inline Text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://analytics.zoho.com/open-view/123456789 Same Line\"",
+					"input": "https://analytics.zoho.com/open-view/123456789 Same Line",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://analytics.zoho.com/open-view/123456789"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://analytics.zoho.com/open-view/123456789"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " Same Line"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Rocket.Chat](https://rocket.chat)\nText after in a new line after link\"",
+					"input": "[Rocket.Chat](https://rocket.chat)\nText after in a new line after link",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Rocket.Chat"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Text after in a new line after link"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://analytics.zoho.com/open-view/123456789\nSecond line\"",
+					"input": "https://analytics.zoho.com/open-view/123456789\nSecond line",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://analytics.zoho.com/open-view/123456789"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://analytics.zoho.com/open-view/123456789"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Second line"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Rocket.Chat](https://rocket.chat)\n\nText after line break\"",
+					"input": "[Rocket.Chat](https://rocket.chat)\n\nText after line break",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Rocket.Chat"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Text after line break"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[List Header Link](https://rocket.chat)\n- First item\n- Second item\n- Third item\n- *Fourth item*\"",
+					"input": "[List Header Link](https://rocket.chat)\n- First item\n- Second item\n- Third item\n- *Fourth item*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "List Header Link"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "First item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Second item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Third item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fourth item"
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[List Header Link](https://rocket.chat)\n7. First item\n2. Second item\n8. Third item\n4. *Fourth item*\n15. *Fifteenth item*\"",
+					"input": "[List Header Link](https://rocket.chat)\n7. First item\n2. Second item\n8. Third item\n4. *Fourth item*\n15. *Fifteenth item*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "List Header Link"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "ORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "First item"
+										}
+									],
+									"number": 7
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Second item"
+										}
+									],
+									"number": 2
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Third item"
+										}
+									],
+									"number": 8
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fourth item"
+												}
+											]
+										}
+									],
+									"number": 4
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fifteenth item"
+												}
+											]
+										}
+									],
+									"number": 15
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[9gag](https://9gag.com/)\"",
+					"input": "[9gag](https://9gag.com/)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://9gag.com/"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "9gag"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[9gag](9gag.com)\"",
+					"input": "[9gag](9gag.com)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "9gag.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "9gag"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<9gag.com|9gag>\"",
+					"input": "<9gag.com|9gag>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "9gag.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "9gag"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"9gag.com\"",
+					"input": "9gag.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//9gag.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "9gag.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[notes link](notes://Server/C3257116002CAD60/0/CCAF6BE2824A1F49432588D2001FA73E)\"",
+					"input": "[notes link](notes://Server/C3257116002CAD60/0/CCAF6BE2824A1F49432588D2001FA73E)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "notes://Server/C3257116002CAD60/0/CCAF6BE2824A1F49432588D2001FA73E"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "notes link"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[File Path](C:/Users/user1/Documents/projects/file.js)\"",
+					"input": "[File Path](C:/Users/user1/Documents/projects/file.js)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "C:/Users/user1/Documents/projects/file.js"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "File Path"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Test with **bold** element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[Test with **bold** element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Test with "
+											},
+											{
+												"type": "BOLD",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "bold"
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " element"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Test with *bold* element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[Test with *bold* element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Test with "
+											},
+											{
+												"type": "BOLD",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "bold"
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " element"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Test with _italic_ element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[Test with _italic_ element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Test with "
+											},
+											{
+												"type": "ITALIC",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "italic"
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " element"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Test with ~strike~ element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[Test with ~strike~ element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Test with "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "strike"
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " element"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Test with __**~~title~~**__ element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)\"",
+					"input": "[Test with __**~~title~~**__ element](https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://desk.rocket.chat/support/rocketchat/ShowHomePage.do#Cases/dv/413244000073043351"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Test with "
+											},
+											{
+												"type": "ITALIC",
+												"value": [
+													{
+														"type": "BOLD",
+														"value": [
+															{
+																"type": "STRIKE",
+																"value": [
+																	{
+																		"type": "PLAIN_TEXT",
+																		"value": "title"
+																	}
+																]
+															}
+														]
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " element"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"([Github Issue: #24929](https://github.com/RocketChat/Rocket.Chat/issues/24929))\"",
+					"input": "([Github Issue: #24929](https://github.com/RocketChat/Rocket.Chat/issues/24929))",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "("
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/RocketChat/Rocket.Chat/issues/24929"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Github Issue: #24929"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ")"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"the [audio_url and video_url for post message attachments](https://developer.rocket.chat/reference/api/rest-api/endpoints/core-endpoints/chat-endpoints/postmessage)\"",
+					"input": "the [audio_url and video_url for post message attachments](https://developer.rocket.chat/reference/api/rest-api/endpoints/core-endpoints/chat-endpoints/postmessage)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "the "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat/reference/api/rest-api/endpoints/core-endpoints/chat-endpoints/postmessage"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "audio_url and video_url for post message attachments"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"the [Jira [Task] parentheses not working](rocket.chat)\"",
+					"input": "the [Jira [Task] parentheses not working](rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "the "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Jira [Task] parentheses not working"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"the [Jira (Task) parentheses not working](rocket.chat)\"",
+					"input": "the [Jira (Task) parentheses not working](rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "the "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Jira (Task) parentheses not working"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Jira [Task] parentheses not working](rocket.chat)\"",
+					"input": "[Jira [Task] parentheses not working](rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Jira [Task] parentheses not working"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Jira (Task) parentheses not working](rocket.chat)\"",
+					"input": "[Jira (Task) parentheses not working](rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Jira (Task) parentheses not working"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"77.77%\"",
+					"input": "77.77%",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "77.77%"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"77.77\"",
+					"input": "77.77",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "77.77"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://77.77\"",
+					"input": "https://77.77",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "https://77.77"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"test.9gag\"",
+					"input": "test.9gag",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "test.9gag"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[here](https://github.com/RocketChat/Rocket.Chat/releases/tag/6.0.0-rc.3)\"",
+					"input": "[here](https://github.com/RocketChat/Rocket.Chat/releases/tag/6.0.0-rc.3)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/RocketChat/Rocket.Chat/releases/tag/6.0.0-rc.3"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "here"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [test](https://rocket.chat)\"",
+					"input": "[ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [ ~ [test](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": " "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": " [ "
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " [ "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": " [ "
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " [ "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": " [ "
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " [ "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": " [ "
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " [ "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": " [ "
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " [ "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": " [ "
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " [ "
+											},
+											{
+												"type": "STRIKE",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": " [ "
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " [test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[test **bold** and __italic__](https://rocket.chat)\"",
+					"input": "[test **bold** and __italic__](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "test "
+											},
+											{
+												"type": "BOLD",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "bold"
+													}
+												]
+											},
+											{
+												"type": "PLAIN_TEXT",
+												"value": " and "
+											},
+											{
+												"type": "ITALIC",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "italic"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[test **bold with __italic__**](https://rocket.chat)\"",
+					"input": "[test **bold with __italic__**](https://rocket.chat)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "test "
+											},
+											{
+												"type": "BOLD",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "bold with "
+													},
+													{
+														"type": "ITALIC",
+														"value": [
+															{
+																"type": "PLAIN_TEXT",
+																"value": "italic"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[Rocket.Chat] [New release](https://www.rocket.chat/blog/new-starter-pro-plans)\"",
+					"input": "[Rocket.Chat] [New release](https://www.rocket.chat/blog/new-starter-pro-plans)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "[Rocket.Chat] "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.rocket.chat/blog/new-starter-pro-plans"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "New release"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[BUG #11111](https://github.com/) - [BACK] changelog description\"",
+					"input": "[BUG #11111](https://github.com/) - [BACK] changelog description",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "BUG #11111"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " - [BACK] changelog description"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[BUG #11111](https://github.com/) - [BACK] [Another link](https://github.com/)\"",
+					"input": "[BUG #11111](https://github.com/) - [BACK] [Another link](https://github.com/)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "BUG #11111"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " - [BACK] "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Another link"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[link](https://example.com/query?this=(is)&a=problem)\"",
+					"input": "[link](https://example.com/query?this=(is)&a=problem)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://example.com/query?this=(is)&a=problem"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "link"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[link](https://example.com/path/to/func(param))\"",
+					"input": "[link](https://example.com/path/to/func(param))",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://example.com/path/to/func(param)"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "link"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[link](https://example.com/path/(section)/page)\"",
+					"input": "[link](https://example.com/path/(section)/page)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://example.com/path/(section)/page"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "link"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

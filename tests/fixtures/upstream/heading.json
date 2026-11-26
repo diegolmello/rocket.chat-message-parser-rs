@@ -1,0 +1,798 @@
+{
+	"file": "heading.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"# h1\"",
+					"input": "# h1",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "h1"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# Hello\"",
+					"input": "# Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# Rocket.Cat\"",
+					"input": "# Rocket.Cat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//Rocket.Cat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Rocket.Cat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# Hi\"",
+					"input": "# Hi",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# Hello this is dog\"",
+					"input": "# Hello this is dog",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# Rocket cat says Hello\"",
+					"input": "# Rocket cat says Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# He said Hello to her\"",
+					"input": "# He said Hello to her",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said Hello to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#Hello\"",
+					"input": "#Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_CHANNEL",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "Hello"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#Hello#\"",
+					"input": "#Hello#",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "MENTION_CHANNEL",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "Hello"
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "#"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He#llo\"",
+					"input": "He#llo",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He#llo"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"## Hello\"",
+					"input": "## Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 2,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"## Rocket.Cat\"",
+					"input": "## Rocket.Cat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 2,
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//Rocket.Cat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Rocket.Cat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"## Hi\"",
+					"input": "## Hi",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 2,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"## Hello this is dog\"",
+					"input": "## Hello this is dog",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 2,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"## Rocket cat says Hello\"",
+					"input": "## Rocket cat says Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 2,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"## He said Hello to her\"",
+					"input": "## He said Hello to her",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 2,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said Hello to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"##Hello\"",
+					"input": "##Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "##Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"##Hello##\"",
+					"input": "##Hello##",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "##Hello##"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He##llo\"",
+					"input": "He##llo",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He##llo"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"### Hello\"",
+					"input": "### Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 3,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"### Rocket.Cat\"",
+					"input": "### Rocket.Cat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 3,
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//Rocket.Cat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Rocket.Cat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"### Hi\"",
+					"input": "### Hi",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 3,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"### Hello this is dog\"",
+					"input": "### Hello this is dog",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 3,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"### Rocket cat says Hello\"",
+					"input": "### Rocket cat says Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 3,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"### He said Hello to her\"",
+					"input": "### He said Hello to her",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 3,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said Hello to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"###Hello\"",
+					"input": "###Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "###Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"###Hello###\"",
+					"input": "###Hello###",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "###Hello###"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He###llo\"",
+					"input": "He###llo",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He###llo"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#### Hello\"",
+					"input": "#### Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 4,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#### Rocket.Cat\"",
+					"input": "#### Rocket.Cat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 4,
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//Rocket.Cat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "Rocket.Cat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#### Hi\"",
+					"input": "#### Hi",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 4,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#### Hello this is dog\"",
+					"input": "#### Hello this is dog",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 4,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello this is dog"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#### Rocket cat says Hello\"",
+					"input": "#### Rocket cat says Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 4,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Rocket cat says Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"#### He said Hello to her\"",
+					"input": "#### He said Hello to her",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 4,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He said Hello to her"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"####Hello\"",
+					"input": "####Hello",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "####Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"####Hello####\"",
+					"input": "####Hello####",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "####Hello####"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"He####llo\"",
+					"input": "He####llo",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "He####llo"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# Hello\n\"",
+					"input": "# Hello\n",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# # Hello\n\"",
+					"input": "# # Hello\n",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "# Hello"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"# :newspaper: Headline\"",
+					"input": "# :newspaper: Headline",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 1,
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "newspaper"
+									},
+									"shortCode": "newspaper"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " Headline"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"## Hello :smile:\"",
+					"input": "## Hello :smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 2,
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hello "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"### :smile: text :newspaper:\"",
+					"input": "### :smile: text :newspaper:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HEADING",
+							"level": 3,
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " text "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "newspaper"
+									},
+									"shortCode": "newspaper"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

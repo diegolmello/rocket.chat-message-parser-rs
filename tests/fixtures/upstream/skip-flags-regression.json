@@ -1,0 +1,265 @@
+{
+	"file": "skip-flags-regression.spec.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*text*",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**text**",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***text***",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "****text****",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*****text*****",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "******text******",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*******text*******",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "********text********",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*********text*********",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**********text**********",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***********text***********",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "************text************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*************text*************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**************text**************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***************text***************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "****************text****************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*****************text*****************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "******************text******************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*******************text*******************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "********************text********************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*********************text*********************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**********************text**********************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***********************text***********************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "************************text************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*************************text*************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**************************text**************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***************************text***************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "****************************text****************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*****************************text*****************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "******************************text******************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*******************************text*******************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "********************************text********************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*********************************text*********************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**********************************text**********************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***********************************text***********************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "************************************text************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*************************************text*************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**************************************text**************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***************************************text***************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "****************************************text****************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*****************************************text*****************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "******************************************text******************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*******************************************text*******************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "********************************************text********************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*********************************************text*********************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**********************************************text**********************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "***********************************************text***********************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "************************************************text************************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "*************************************************text*************************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should parse nested formatting across multiple depths without throwing",
+					"input": "**************************************************text**************************************************",
+					"matcher": "notToThrow"
+				},
+				{
+					"name": "Skip Flags Regression (Complexity Audit) > should handle pathological unmatched markers without crashing",
+					"input": "*_~*_~*_~*_~*_~ hello*_~*_~*_~*_~*_~ hello*_~*_~*_~*_~*_~ hello*_~*_~*_~*_~*_~ hello*_~*_~*_~*_~*_~ hello",
+					"matcher": "notToThrow"
+				}
+			]
+		}
+	]
+}

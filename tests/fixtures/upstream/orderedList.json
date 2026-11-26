@@ -1,0 +1,106 @@
+{
+	"file": "orderedList.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"0. Zeroth item\n7. First item\n2. Second item\n8. Third item\n4. *Fourth item*\n15. *Fifteenth item*\n20. :smile:\"",
+					"input": "0. Zeroth item\n7. First item\n2. Second item\n8. Third item\n4. *Fourth item*\n15. *Fifteenth item*\n20. :smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "ORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Zeroth item"
+										}
+									],
+									"number": 0
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "First item"
+										}
+									],
+									"number": 7
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Second item"
+										}
+									],
+									"number": 2
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Third item"
+										}
+									],
+									"number": 8
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fourth item"
+												}
+											]
+										}
+									],
+									"number": 4
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fifteenth item"
+												}
+											]
+										}
+									],
+									"number": 15
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "smile"
+											},
+											"shortCode": "smile"
+										}
+									],
+									"number": 20
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,1980 @@
+{
+	"file": "emoji.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \":smile: asd\"",
+					"input": ":smile: asd",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " asd"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile:asd\"",
+					"input": ":smile:asd",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":smile:asd"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"text:inner:outer\"",
+					"input": "text:inner:outer",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text:inner:outer"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"10:20:30\"",
+					"input": "10:20:30",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "10:20:30"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"10:20:30:\"",
+					"input": "10:20:30:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "10:20:30:"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\":smile:\\\"\"",
+					"input": "\":smile:\"",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\":smile:\""
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\":smile: \\\"\"",
+					"input": "\":smile: \"",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\":smile: \""
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\" :smile: \\\"\"",
+					"input": "\" :smile: \"",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\" "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " \""
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile:\n  :smile:\n  \"",
+					"input": ":smile:\n  :smile:\n  ",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"asdas :smile: asd\"",
+					"input": "asdas :smile: asd",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "asdas "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " asd"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"normal emojis :smile: :smile: :smile:\"",
+					"input": "normal emojis :smile: :smile: :smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "normal emojis "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile::smile::smile:\"",
+					"input": ":smile::smile::smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \" :smile::smile::smile: \"",
+					"input": " :smile::smile::smile: ",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\n :smile::smile::smile: \n\"",
+					"input": "\n :smile::smile::smile: \n",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile:  :smile:  :smile:\"",
+					"input": ":smile:  :smile:  :smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile::smile:\"",
+					"input": ":smile::smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile:a:smile:\"",
+					"input": ":smile:a:smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": ":smile:a:smile:"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":smile:\"",
+					"input": ":smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "smile"
+									},
+									"shortCode": "smile"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :+1:\"",
+					"input": "Hi :+1:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "+1"
+									},
+									"shortCode": "+1"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :+1_tone4:\"",
+					"input": "Hi :+1_tone4:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "+1_tone4"
+									},
+									"shortCode": "+1_tone4"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :thumbsup_tone3:\"",
+					"input": "Hi :thumbsup_tone3:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "thumbsup_tone3"
+									},
+									"shortCode": "thumbsup_tone3"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :yes_tone3:\"",
+					"input": "Hi :yes_tone3:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "yes_tone3"
+									},
+									"shortCode": "yes_tone3"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :clapping_hands_tone2:\"",
+					"input": "Hi :clapping_hands_tone2:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "clapping_hands_tone2"
+									},
+									"shortCode": "clapping_hands_tone2"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :pray_tone4:\"",
+					"input": "Hi :pray_tone4:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "pray_tone4"
+									},
+									"shortCode": "pray_tone4"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :regional_indicator_a:\"",
+					"input": "Hi :regional_indicator_a:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "regional_indicator_a"
+									},
+									"shortCode": "regional_indicator_a"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :digit_zero:\"",
+					"input": "Hi :digit_zero:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "digit_zero"
+									},
+									"shortCode": "digit_zero"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :pound_symbol:\"",
+					"input": "Hi :pound_symbol:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "pound_symbol"
+									},
+									"shortCode": "pound_symbol"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :asterisk_symbol:\"",
+					"input": "Hi :asterisk_symbol:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "asterisk_symbol"
+									},
+									"shortCode": "asterisk_symbol"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi :tone3:\"",
+					"input": "Hi :tone3:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "tone3"
+									},
+									"shortCode": "tone3"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":thumbsup_tone3:\"",
+					"input": ":thumbsup_tone3:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "thumbsup_tone3"
+									},
+									"shortCode": "thumbsup_tone3"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":regional_indicator_a:\"",
+					"input": ":regional_indicator_a:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "regional_indicator_a"
+									},
+									"shortCode": "regional_indicator_a"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \":digit_zero:\"",
+					"input": ":digit_zero:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "digit_zero"
+									},
+									"shortCode": "digit_zero"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😀\"",
+					"input": "😀",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😀"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😃\"",
+					"input": "😃",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😃"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🥵\"",
+					"input": "🥵",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🥵"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🧿\"",
+					"input": "🧿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🧿"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🐶\"",
+					"input": "🐶",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🐶"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🍏\"",
+					"input": "🍏",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🍏"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"⚽\"",
+					"input": "⚽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "⚽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"⚽️\"",
+					"input": "⚽️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "⚽️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👨‍👩‍👧‍👦\"",
+					"input": "👨‍👩‍👧‍👦",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👨‍👩‍👧‍👦"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🚗\"",
+					"input": "🚗",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🚗"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"⌚️\"",
+					"input": "⌚️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "⌚️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"❤️\"",
+					"input": "❤️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "❤️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏳️\"",
+					"input": "🏳️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏳️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🧑🏾‍💻\"",
+					"input": "🧑🏾‍💻",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🧑🏾‍💻"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🧑🏾‍💻🧑🏾‍💻\"",
+					"input": "🧑🏾‍💻🧑🏾‍💻",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🧑🏾‍💻"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🧑🏾‍💻"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🧑🏾‍💻🧑🏾‍💻🧑🏾‍💻\"",
+					"input": "🧑🏾‍💻🧑🏾‍💻🧑🏾‍💻",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🧑🏾‍💻"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🧑🏾‍💻"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🧑🏾‍💻"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👆🏽\"",
+					"input": "👆🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👆🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👆🏽👆🏽\"",
+					"input": "👆🏽👆🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👆🏽"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "👆🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👆🏽👆🏽👆🏽\"",
+					"input": "👆🏽👆🏽👆🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👆🏽"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "👆🏽"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "👆🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👆🏺\"",
+					"input": "👆🏺",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👆"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏺"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"✋🏽\"",
+					"input": "✋🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "✋🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"✌🏽\"",
+					"input": "✌🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "✌🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"✍🏽\"",
+					"input": "✍🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "✍🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"☝🏽\"",
+					"input": "☝🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "☝🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"⛹🏽\"",
+					"input": "⛹🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "⛹🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"✋🏽✌🏽\"",
+					"input": "✋🏽✌🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "✋🏽"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "✌🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"✋🏺\"",
+					"input": "✋🏺",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "✋"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏺"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi ✋🏽\"",
+					"input": "Hi ✋🏽",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "✋🏽"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi 👍\"",
+					"input": "Hi 👍",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "👍"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🫠\"",
+					"input": "🫠",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🫠"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🫡\"",
+					"input": "🫡",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🫡"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🫶\"",
+					"input": "🫶",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🫶"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi 🫠\"",
+					"input": "Hi 🫠",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🫠"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👨‍❤️‍💋‍👨\"",
+					"input": "👨‍❤️‍💋‍👨",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👨‍❤️‍💋‍👨"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👩‍❤️‍💋‍👩\"",
+					"input": "👩‍❤️‍💋‍👩",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👩‍❤️‍💋‍👩"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👨‍❤️‍👨\"",
+					"input": "👨‍❤️‍👨",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👨‍❤️‍👨"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"💑\"",
+					"input": "💑",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "💑"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi 👨‍❤️‍💋‍👨\"",
+					"input": "Hi 👨‍❤️‍💋‍👨",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "👨‍❤️‍💋‍👨"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👨‍⚕️\"",
+					"input": "👨‍⚕️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👨‍⚕️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👩‍⚖️\"",
+					"input": "👩‍⚖️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👩‍⚖️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"👨‍✈️\"",
+					"input": "👨‍✈️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "👨‍✈️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🩷\"",
+					"input": "🩷",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🩷"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🫱🏿‍🫲🏻\"",
+					"input": "🫱🏿‍🫲🏻",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🫱🏿‍🫲🏻"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🫩\"",
+					"input": "🫩",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🫩"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🇨🇶\"",
+					"input": "🇨🇶",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🇨🇶"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😶‍🌫️\"",
+					"input": "😶‍🌫️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😶‍🌫️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😮‍💨\"",
+					"input": "😮‍💨",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😮‍💨"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😵‍💫\"",
+					"input": "😵‍💫",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😵‍💫"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi 😶‍🌫️\"",
+					"input": "Hi 😶‍🌫️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "😶‍🌫️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😶‍🌫️😮‍💨\"",
+					"input": "😶‍🌫️😮‍💨",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😶‍🌫️"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "😮‍💨"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🙋🏽‍♂️\"",
+					"input": "🙋🏽‍♂️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🙋🏽‍♂️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😀\"",
+					"input": "😀",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😀"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴󠁧󠁢󠁥󠁮󠁧󠁿\"",
+					"input": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴󠁧󠁢󠁳󠁣󠁴󠁿\"",
+					"input": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁳󠁣󠁴󠁿"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴󠁧󠁢󠁷󠁬󠁳󠁿\"",
+					"input": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hi 🏴󠁧󠁢󠁥󠁮󠁧󠁿\"",
+					"input": "Hi 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hi "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴\"",
+					"input": "🏴",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴‍☠️\"",
+					"input": "🏴‍☠️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴‍☠️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴󠁧󠁢󠁥󠁮󠁧󠁿🏴󠁧󠁢󠁳󠁣󠁴󠁿🏴󠁧󠁢󠁷󠁬󠁳󠁿\"",
+					"input": "🏴󠁧󠁢󠁥󠁮󠁧󠁿🏴󠁧󠁢󠁳󠁣󠁴󠁿🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁳󠁣󠁴󠁿"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴🏴󠁧󠁢󠁥󠁮󠁧󠁿\"",
+					"input": "🏴🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"🏴󠁧󠁢󠁥󠁮󠁧󠁿🏴\"",
+					"input": "🏴󠁧󠁢󠁥󠁮󠁧󠁿🏴",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😶‍🌫️😮‍💨😵‍💫\"",
+					"input": "😶‍🌫️😮‍💨😵‍💫",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😶‍🌫️"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "😮‍💨"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "😵‍💫"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😀😶‍🌫️\"",
+					"input": "😀😶‍🌫️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😀"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "😶‍🌫️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😶‍🌫️🏴󠁧󠁢󠁥󠁮󠁧󠁿🏴‍☠️\"",
+					"input": "😶‍🌫️🏴󠁧󠁢󠁥󠁮󠁧󠁿🏴‍☠️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "BIG_EMOJI",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😶‍🌫️"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴‍☠️"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"😶‍🌫️😮‍💨😵‍💫👍\"",
+					"input": "😶‍🌫️😮‍💨😵‍💫👍",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "EMOJI",
+									"unicode": "😶‍🌫️"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "😮‍💨"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "😵‍💫"
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "👍"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"England 🏴󠁧󠁢󠁥󠁮󠁧󠁿 and Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿\"",
+					"input": "England 🏴󠁧󠁢󠁥󠁮󠁧󠁿 and Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "England "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " and Scotland "
+								},
+								{
+									"type": "EMOJI",
+									"unicode": "🏴󠁧󠁢󠁳󠁣󠁴󠁿"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"uncaptured": [
+		{
+			"name": "every emoji parses as one token, except documented components (emojibase@17.0.0)",
+			"reason": "Error: assertion failed: toEqual([]) on [\"😀\",\"😃\",\"😄\",\"😁\",\"😆\",\"😅\",\"🤣\",\"😂\",\"🙂\",\"🙃\",\"🫠\",\"😉\",\"😊\",\"😇\",\"🥰\",\"😍\",\"🤩\",\"😘\",\"😗\",\"☺️\",\"😚\",\"😙\",\"🥲\",\"😋\",\"😛\",\"😜\",\"🤪\",\"😝\",\"🤑\",\"🤗\",\"🤭\",\"🫢\"…"
+		}
+	]
+}

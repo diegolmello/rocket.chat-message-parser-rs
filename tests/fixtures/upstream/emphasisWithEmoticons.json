@@ -1,0 +1,712 @@
+{
+	"file": "emphasisWithEmoticons.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses emphasisWithEmoticons \"*test:*\"",
+					"input": "*test:*",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test:"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_test:_\"",
+					"input": "_test:_",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test:"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*bold ending with colon:*\"",
+					"input": "*bold ending with colon:*",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold ending with colon:"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*bold ending with colon:* and some more text\"",
+					"input": "*bold ending with colon:* and some more text",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold ending with colon:"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " and some more text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*bold ending with colon :*and some more text\"",
+					"input": "*bold ending with colon :*and some more text",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold ending with colon :"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "and some more text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*bold with a kissing emoji :* *\"",
+					"input": "*bold with a kissing emoji :* *",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold with a kissing emoji "
+										},
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": ":*"
+											},
+											"shortCode": "kissing_heart"
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*bold with a broken kissing emoji:**\"",
+					"input": "*bold with a broken kissing emoji:**",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold with a broken kissing emoji:"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*bold with a broken kissing emoji:*:*\"",
+					"input": "*bold with a broken kissing emoji:*:*",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold with a broken kissing emoji:"
+										}
+									]
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":*"
+									},
+									"shortCode": "kissing_heart"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*bold with a broken kissing emoji :*text *\"",
+					"input": "*bold with a broken kissing emoji :*text *",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold with a broken kissing emoji :"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "text *"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*broken bold with a kissing emoji :*\"",
+					"input": "*broken bold with a kissing emoji :*",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*broken bold with a kissing emoji "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":*"
+									},
+									"shortCode": "kissing_heart"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*broken bold with a kissing emoji :* \"",
+					"input": "*broken bold with a kissing emoji :* ",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*broken bold with a kissing emoji "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":*"
+									},
+									"shortCode": "kissing_heart"
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " "
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*two bolds**second*\"",
+					"input": "*two bolds**second*",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "two bolds"
+										}
+									]
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "second"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"*two bolds*:**separated by kissing emoji*\"",
+					"input": "*two bolds*:**separated by kissing emoji*",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "two bolds"
+										}
+									]
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ":*"
+									},
+									"shortCode": "kissing_heart"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "separated by kissing emoji"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_test-_-\"",
+					"input": "_test-_-",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test-"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_test -_- _\"",
+					"input": "_test -_- _",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "-_-"
+											},
+											"shortCode": "expressionless"
+										},
+										{
+											"type": "PLAIN_TEXT",
+											"value": " "
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_test -_-_\"",
+					"input": "_test -_-_",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "test "
+										},
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "-_-"
+											},
+											"shortCode": "expressionless"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_two italics__second_\"",
+					"input": "_two italics__second_",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "two italics"
+										}
+									]
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "second"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_italic with broken emoticon-_-_\"",
+					"input": "_italic with broken emoticon-_-_",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic with broken emoticon-"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-_"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_italic with broken emoticon-_-_ and more text\"",
+					"input": "_italic with broken emoticon-_-_ and more text",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic with broken emoticon-"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-_ and more text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_italic with broken emoticon -_-and more text\"",
+					"input": "_italic with broken emoticon -_-and more text",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic with broken emoticon -"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-and more text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_italic with broken emoticon -_-and more text -_-\"",
+					"input": "_italic with broken emoticon -_-and more text -_-",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic with broken emoticon -"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-and more text "
+								},
+								{
+									"type": "EMOJI",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "-_-"
+									},
+									"shortCode": "expressionless"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"_italic with broken emoticon -_-and more text -_-_\"",
+					"input": "_italic with broken emoticon -_-and more text -_-_",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "italic with broken emoticon -"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-and more text -"
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "-"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses emphasisWithEmoticons \"-_-italic content-_-\"",
+					"input": "-_-italic content-_-",
+					"options": {
+						"emoticons": true
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-"
+								},
+								{
+									"type": "ITALIC",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "-italic content-"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "-"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

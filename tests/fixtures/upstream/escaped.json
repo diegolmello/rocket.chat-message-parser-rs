@@ -1,0 +1,247 @@
+{
+	"file": "escaped.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"¯\\\\\\\\_(ツ)_/¯\"",
+					"input": "¯\\\\_(ツ)_/¯",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "¯\\_(ツ)_/¯"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\*escaped as*bold*escaped*\"",
+					"input": "\\*escaped as*bold*escaped*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*escaped as"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "escaped*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\*not bold*\"",
+					"input": "\\*not bold*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*not bold*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*\\\\_\\\\~\\\\`\\\\#\\\\.\"",
+					"input": "*\\_\\~\\`\\#\\.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*_~`#."
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\*not emphasized*\"",
+					"input": "\\*not emphasized*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*not emphasized*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\<br/> tag plain text\"",
+					"input": "\\<br/> tag plain text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\\<br/> tag plain text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\[it is not a link](/foo)\"",
+					"input": "\\[it is not a link](/foo)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\\[it is not a link](/foo)"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\`not code`\"",
+					"input": "\\`not code`",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "`not code`"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"1\\\\. not a list\"",
+					"input": "1\\. not a list",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "1. not a list"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\* not a list\"",
+					"input": "\\* not a list",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "* not a list"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\# not a heading\"",
+					"input": "\\# not a heading",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "# not a heading"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\[foo]: /url \\\"not a reference\\\"\"",
+					"input": "\\[foo]: /url \"not a reference\"",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\\[foo]: /url \"not a reference\""
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\&ouml; not a character entity\"",
+					"input": "\\&ouml; not a character entity",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "\\&ouml; not a character entity"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"\\\\<t:1708551317:R>\"",
+					"input": "\\<t:1708551317:R>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "<t:1708551317:R>"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

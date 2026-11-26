@@ -1,0 +1,103 @@
+{
+	"file": "spoilerBlock.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "block spoiler parsing > parses block spoilers: \"||\nline one\n||\"",
+					"input": "||\nline one\n||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "SPOILER_BLOCK",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "line one"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "block spoiler parsing > parses block spoilers: \"||\nline one\nline two\n||\"",
+					"input": "||\nline one\nline two\n||",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "SPOILER_BLOCK",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "line one"
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "line two"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "block spoiler parsing > parses block spoilers: \"before\n||\nhidden\n||\nafter\"",
+					"input": "before\n||\nhidden\n||\nafter",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "before"
+								}
+							]
+						},
+						{
+							"type": "SPOILER_BLOCK",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "hidden"
+										}
+									]
+								}
+							]
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "after"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

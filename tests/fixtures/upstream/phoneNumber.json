@@ -1,0 +1,441 @@
+{
+	"file": "phoneNumber.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"+07563546725\"",
+					"input": "+07563546725",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:07563546725"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+07563546725"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+075-63546725\"",
+					"input": "+075-63546725",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:07563546725"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+075-63546725"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+(075)-63546725\"",
+					"input": "+(075)-63546725",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:07563546725"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+(075)-63546725"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+(075)63546725\"",
+					"input": "+(075)63546725",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:07563546725"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+(075)63546725"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[here](+(075)63546725)\"",
+					"input": "[here](+(075)63546725)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:07563546725"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "here"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[**here**](+(075)63546725)\"",
+					"input": "[**here**](+(075)63546725)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:07563546725"
+										},
+										"label": [
+											{
+												"type": "BOLD",
+												"value": [
+													{
+														"type": "PLAIN_TEXT",
+														"value": "here"
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+(11)99999-9999\"",
+					"input": "+(11)99999-9999",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:11999999999"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+(11)99999-9999"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"5 +51231\"",
+					"input": "5 +51231",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "5 "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:51231"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+51231"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"5 +51231 5\"",
+					"input": "5 +51231 5",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "5 "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:51231"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+51231"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " 5"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+(12)3-45\"",
+					"input": "+(12)3-45",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "tel:12345"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "+(12)3-45"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+1.599123\"",
+					"input": "+1.599123",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "+1.599123"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"1+1=2\"",
+					"input": "1+1=2",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "1+1=2"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"1+1=2 text\"",
+					"input": "1+1=2 text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "1+1=2 text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+1000,00\"",
+					"input": "+1000,00",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "+1000,00"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+ 1199999999\"",
+					"input": "+ 1199999999",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "+ 1199999999"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+1234\"",
+					"input": "+1234",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "+1234"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+(12)3-4\"",
+					"input": "+(12)3-4",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "+(12)3-4"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"+123-4\"",
+					"input": "+123-4",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "+123-4"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"5+51231\"",
+					"input": "5+51231",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "5+51231"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

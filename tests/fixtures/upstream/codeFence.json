@@ -1,0 +1,334 @@
+{
+	"file": "codeFence.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"```\ncode\n\n\n\n\ncode\n```\"",
+					"input": "```\ncode\n\n\n\n\ncode\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ""
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ""
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ""
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ""
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\ncode\n\n\n```\"",
+					"input": "```\ncode\n\n\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ""
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ""
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\ncode\n```\"",
+					"input": "```\ncode\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\nvar a = \\\"teste\\\";\n```\"",
+					"input": "```\nvar a = \"teste\";\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "var a = \"teste\";"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```javascript\ncode\n```\"",
+					"input": "```javascript\ncode\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "javascript",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```bash c\ncode\n```\"",
+					"input": "```bash c\ncode\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "bash c",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"  ```\ncode\n```\"",
+					"input": "  ```\ncode\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "  ```"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "code"
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "```"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\ncode\ncode\n```\"",
+					"input": "```\ncode\ncode\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\n# code\n**code**\n```\"",
+					"input": "```\n# code\n**code**\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "# code"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "**code**"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\n- **Node**: `22.22.3`\n- **Apps-Engine**: `1.64.0`\n```\"",
+					"input": "```\n- **Node**: `22.22.3`\n- **Apps-Engine**: `1.64.0`\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "- **Node**: `22.22.3`"
+									}
+								},
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "- **Apps-Engine**: `1.64.0`"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\nfoo`\n```\"",
+					"input": "```\nfoo`\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "foo`"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"```\nfoo``\n```\"",
+					"input": "```\nfoo``\n```",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "CODE",
+							"language": "none",
+							"value": [
+								{
+									"type": "CODE_LINE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "foo``"
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,210 @@
+{
+	"file": "blockquotes.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"As Rocket Cat said:\n> meowww\n> grr.\"",
+					"input": "As Rocket Cat said:\n> meowww\n> grr.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "As Rocket Cat said:"
+								}
+							]
+						},
+						{
+							"type": "QUOTE",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "meowww"
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "grr."
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"As Rocket Cat said:\n> *meowww*\n> grr.\"",
+					"input": "As Rocket Cat said:\n> *meowww*\n> grr.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "As Rocket Cat said:"
+								}
+							]
+						},
+						{
+							"type": "QUOTE",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "meowww"
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "grr."
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"As Rocket Cat said:\n>meowww\n>grr.\"",
+					"input": "As Rocket Cat said:\n>meowww\n>grr.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "As Rocket Cat said:"
+								}
+							]
+						},
+						{
+							"type": "QUOTE",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "meowww"
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "grr."
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"> meowww\n>\n> grr.\"",
+					"input": "> meowww\n>\n> grr.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "QUOTE",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "meowww"
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": ""
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "grr."
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"> meowww\n> \n> grr.\"",
+					"input": "> meowww\n> \n> grr.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "QUOTE",
+							"value": [
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "meowww"
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": ""
+										}
+									]
+								},
+								{
+									"type": "PARAGRAPH",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "grr."
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

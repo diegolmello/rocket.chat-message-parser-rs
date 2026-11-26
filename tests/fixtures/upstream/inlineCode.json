@@ -1,0 +1,113 @@
+{
+	"file": "inlineCode.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"`[asd](https://localhost)`\"",
+					"input": "`[asd](https://localhost)`",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "INLINE_CODE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "[asd](https://localhost)"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"`code`\"",
+					"input": "`code`",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "INLINE_CODE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "code"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"File extension (`.mov`)\"",
+					"input": "File extension (`.mov`)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "File extension ("
+								},
+								{
+									"type": "INLINE_CODE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": ".mov"
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ")"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"`@rocket.chat`\"",
+					"input": "`@rocket.chat`",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "INLINE_CODE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "@rocket.chat"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"`@rocket.chat/message-parser`\"",
+					"input": "`@rocket.chat/message-parser`",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "INLINE_CODE",
+									"value": {
+										"type": "PLAIN_TEXT",
+										"value": "@rocket.chat/message-parser"
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

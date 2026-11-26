@@ -1,0 +1,1922 @@
+{
+	"file": "url.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"https://pt.wikipedia.org/wiki/Condi%C3%A7%C3%A3o_de_corrida#:~:text=Uma%20condi%C3%A7%C3%A3o%20de%20corrida%20%C3%A9,sequ%C3%AAncia%20ou%20sincronia%20doutros%20eventos\"",
+					"input": "https://pt.wikipedia.org/wiki/Condi%C3%A7%C3%A3o_de_corrida#:~:text=Uma%20condi%C3%A7%C3%A3o%20de%20corrida%20%C3%A9,sequ%C3%AAncia%20ou%20sincronia%20doutros%20eventos",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://pt.wikipedia.org/wiki/Condi%C3%A7%C3%A3o_de_corrida#:~:text=Uma%20condi%C3%A7%C3%A3o%20de%20corrida%20%C3%A9,sequ%C3%AAncia%20ou%20sincronia%20doutros%20eventos"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://pt.wikipedia.org/wiki/Condi%C3%A7%C3%A3o_de_corrida#:~:text=Uma%20condi%C3%A7%C3%A3o%20de%20corrida%20%C3%A9,sequ%C3%AAncia%20ou%20sincronia%20doutros%20eventos"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://pt.wikipedia.org/\"",
+					"input": "https://pt.wikipedia.org/",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://pt.wikipedia.org/"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://pt.wikipedia.org/"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://pt.wikipedia.org/with-hyphen\"",
+					"input": "https://pt.wikipedia.org/with-hyphen",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://pt.wikipedia.org/with-hyphen"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://pt.wikipedia.org/with-hyphen"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://pt.wikipedia.org/with_underscore\"",
+					"input": "https://pt.wikipedia.org/with_underscore",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://pt.wikipedia.org/with_underscore"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://pt.wikipedia.org/with_underscore"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://www.npmjs.com/package/@rocket.chat/message-parser\"",
+					"input": "https://www.npmjs.com/package/@rocket.chat/message-parser",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.npmjs.com/package/@rocket.chat/message-parser"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://www.npmjs.com/package/@rocket.chat/message-parser"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"http:/rocket.chat/teste\"",
+					"input": "http:/rocket.chat/teste",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "http:/rocket.chat/teste"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https:/rocket.chat/\"",
+					"input": "https:/rocket.chat/",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "https:/rocket.chat/"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://test\"",
+					"input": "https://test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "https://test"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"httpsss://rocket.chat/test\"",
+					"input": "httpsss://rocket.chat/test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "httpsss://rocket.chat/test"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "httpsss://rocket.chat/test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://rocket.chat:3000/test\"",
+					"input": "https://rocket.chat:3000/test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat:3000/test"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat:3000/test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://rocket.chat:99999\"",
+					"input": "https://rocket.chat:99999",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat:99999"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat:99999"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://rocket.chat:99999/test\"",
+					"input": "https://rocket.chat:99999/test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat:99999/test"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat:99999/test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://rocket.chat/test?search\"",
+					"input": "https://rocket.chat/test?search",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat/test?search"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat/test?search"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://rocket.chat/test?search=test\"",
+					"input": "https://rocket.chat/test?search=test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat/test?search=test"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat/test?search=test"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://rocket.chat\"",
+					"input": "https://rocket.chat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"http://127.0.0.1:3000/images/logo/logo.png\"",
+					"input": "http://127.0.0.1:3000/images/logo/logo.png",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://127.0.0.1:3000/images/logo/logo.png"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "http://127.0.0.1:3000/images/logo/logo.png"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://localhost\"",
+					"input": "https://localhost",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://localhost"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://localhost"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://localhost:3000\"",
+					"input": "https://localhost:3000",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://localhost:3000"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://localhost:3000"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://localhost:3000#fragment\"",
+					"input": "https://localhost:3000#fragment",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://localhost:3000#fragment"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://localhost:3000#fragment"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://localhost:3000#\"",
+					"input": "https://localhost:3000#",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://localhost:3000#"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://localhost:3000#"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://localhost:3000?\"",
+					"input": "https://localhost:3000?",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://localhost:3000?"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://localhost:3000?"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://localhost:3000/\"",
+					"input": "https://localhost:3000/",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://localhost:3000/"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://localhost:3000/"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"ftp://user:pass@localhost:21/etc/hosts\"",
+					"input": "ftp://user:pass@localhost:21/etc/hosts",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "ftp://user:pass@localhost:21/etc/hosts"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "ftp://user:pass@localhost:21/etc/hosts"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"ssh://test@example.com\"",
+					"input": "ssh://test@example.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "ssh://test@example.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "ssh://test@example.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"custom://test@example.com\"",
+					"input": "custom://test@example.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "custom://test@example.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "custom://test@example.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"ftp://example.com\"",
+					"input": "ftp://example.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "ftp://example.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "ftp://example.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://www.thingiverse.com/thing:5451684\"",
+					"input": "https://www.thingiverse.com/thing:5451684",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.thingiverse.com/thing:5451684"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://www.thingiverse.com/thing:5451684"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"http://📙.la/❤️\"",
+					"input": "http://📙.la/❤️",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://📙.la/❤️"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "http://📙.la/❤️"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat/reference/api/rest-api#production-security-concerns look at this\"",
+					"input": "https://developer.rocket.chat/reference/api/rest-api#production-security-concerns look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat/reference/api/rest-api#production-security-concerns"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat/reference/api/rest-api#production-security-concerns"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat/reference/api/rest-api look at this\"",
+					"input": "https://developer.rocket.chat/reference/api/rest-api look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat/reference/api/rest-api"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat/reference/api/rest-api"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat/reference/api/rest-api#fragment?query=query look at this\"",
+					"input": "https://developer.rocket.chat/reference/api/rest-api#fragment?query=query look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat/reference/api/rest-api#fragment?query=query"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat/reference/api/rest-api#fragment?query=query"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat look at this\"",
+					"input": "https://developer.rocket.chat look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat?query=query look at this\"",
+					"input": "https://developer.rocket.chat?query=query look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat?query=query"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat?query=query"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat?query=query\nline break\"",
+					"input": "https://developer.rocket.chat?query=query\nline break",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat?query=query"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat?query=query"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "line break"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat?query=query\n\nline break\"",
+					"input": "https://developer.rocket.chat?query=query\n\nline break",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat?query=query"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat?query=query"
+											}
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "LINE_BREAK"
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "line break"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat?query=query_with_underscore look at this\"",
+					"input": "https://developer.rocket.chat?query=query_with_underscore look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat?query=query_with_underscore"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat?query=query_with_underscore"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat/path_with_underscore look at this\"",
+					"input": "https://developer.rocket.chat/path_with_underscore look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat/path_with_underscore"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat/path_with_underscore"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat#fragment_with_underscore look at this\"",
+					"input": "https://developer.rocket.chat#fragment_with_underscore look at this",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat#fragment_with_underscore"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat#fragment_with_underscore"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " look at this"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://developer.rocket.chat followed by text\"",
+					"input": "https://developer.rocket.chat followed by text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " followed by text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"two urls https://developer.rocket.chat , https://rocket.chat\"",
+					"input": "two urls https://developer.rocket.chat , https://rocket.chat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "two urls "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://developer.rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://developer.rocket.chat"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": " , "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://1developer.rocket.chat\"",
+					"input": "https://1developer.rocket.chat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://1developer.rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://1developer.rocket.chat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://en.m.wikipedia.org/wiki/Main_Page\"",
+					"input": "https://en.m.wikipedia.org/wiki/Main_Page",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://en.m.wikipedia.org/wiki/Main_Page"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://en.m.wikipedia.org/wiki/Main_Page"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"test.1test.com\"",
+					"input": "test.1test.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//test.1test.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "test.1test.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"http://test.e-xample.com\"",
+					"input": "http://test.e-xample.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://test.e-xample.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "http://test.e-xample.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"www.n-tv.de\"",
+					"input": "www.n-tv.de",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//www.n-tv.de"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "www.n-tv.de"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"www.n-tv.de/test, test\"",
+					"input": "www.n-tv.de/test, test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//www.n-tv.de/test"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "www.n-tv.de/test"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ", test"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"www.n-tv.de/, test\"",
+					"input": "www.n-tv.de/, test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//www.n-tv.de/"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "www.n-tv.de/"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ", test"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"www.n-tv.de, test\"",
+					"input": "www.n-tv.de, test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//www.n-tv.de"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "www.n-tv.de"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ", test"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://www.n-tv.de, test\"",
+					"input": "https://www.n-tv.de, test",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.n-tv.de"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://www.n-tv.de"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": ", test"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"http://te_st.com\"",
+					"input": "http://te_st.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://te_st.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "http://te_st.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"www.te_st.com\"",
+					"input": "www.te_st.com",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//www.te_st.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "www.te_st.com"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"[google_search](http://google.com)\"",
+					"input": "[google_search](http://google.com)",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "google_search"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"app...https://rocket.chat https://rocket.chat\"",
+					"input": "app...https://rocket.chat https://rocket.chat",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "app...https://rocket.chat "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"Hey check it out the best communication platform https://rocket.chat! There is not discussion about it.\"",
+					"input": "Hey check it out the best communication platform https://rocket.chat! There is not discussion about it.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "Hey check it out the best communication platform "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocket.chat"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocket.chat"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "! There is not discussion about it."
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"This is a normal phrase.This in another phrase.\"",
+					"input": "This is a normal phrase.This in another phrase.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "This is a normal phrase.This in another phrase."
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://github.com/RocketChat/Rocket.Chat/releases/tag/6.0.0-rc.3\"",
+					"input": "https://github.com/RocketChat/Rocket.Chat/releases/tag/6.0.0-rc.3",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://github.com/RocketChat/Rocket.Chat/releases/tag/6.0.0-rc.3"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://github.com/RocketChat/Rocket.Chat/releases/tag/6.0.0-rc.3"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://www.rocket.chat/(W(601))/Main?ScreenId=GI000027\"",
+					"input": "https://www.rocket.chat/(W(601))/Main?ScreenId=GI000027",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.rocket.chat/(W(601))/Main?ScreenId=GI000027"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://www.rocket.chat/(W(601))/Main?ScreenId=GI000027"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://rocketchat.atlassian.net/browse/OC-718?filter=10078&jql=%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20created%20%3E%3D%20-48h%20ORDER%20BY%20cf%5B10070%5D%20ASC%2C%20status%20ASC%2C%20created%20DESC\"",
+					"input": "https://rocketchat.atlassian.net/browse/OC-718?filter=10078&jql=%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20created%20%3E%3D%20-48h%20ORDER%20BY%20cf%5B10070%5D%20ASC%2C%20status%20ASC%2C%20created%20DESC",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://rocketchat.atlassian.net/browse/OC-718?filter=10078&jql=%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20created%20%3E%3D%20-48h%20ORDER%20BY%20cf%5B10070%5D%20ASC%2C%20status%20ASC%2C%20created%20DESC"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://rocketchat.atlassian.net/browse/OC-718?filter=10078&jql=%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20%22Defect%20from%5BVersion%20Picker%20(multiple%20versions)%5D%22%20%3D%206.0.0%20AND%20created%20%3E%3D%20-48h%20ORDER%20BY%20cf%5B10070%5D%20ASC%2C%20status%20ASC%2C%20created%20DESC"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"go to https://www.google.com.\"",
+					"input": "go to https://www.google.com.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "go to "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://www.google.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "."
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://www.google.com.\"",
+					"input": "https://www.google.com.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://www.google.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "."
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"https://www.google.com!\"",
+					"input": "https://www.google.com!",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "https://www.google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "https://www.google.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "!"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"visit www.google.com.\"",
+					"input": "visit www.google.com.",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "visit "
+								},
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//www.google.com"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "www.google.com"
+											}
+										]
+									}
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "."
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "autoLink with custom hosts settings comming from Rocket.Chat > parses \"http://gitlab.local\"",
+					"input": "http://gitlab.local",
+					"options": {
+						"customDomains": [
+							"local",
+							"intranet"
+						]
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "http://gitlab.local"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "http://gitlab.local"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "autoLink with custom hosts settings comming from Rocket.Chat > parses \"gitlab.local\"",
+					"input": "gitlab.local",
+					"options": {
+						"customDomains": [
+							"local",
+							"intranet"
+						]
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//gitlab.local"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "gitlab.local"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "autoLink with custom hosts settings comming from Rocket.Chat > parses \"internaltool.intranet\"",
+					"input": "internaltool.intranet",
+					"options": {
+						"customDomains": [
+							"local",
+							"intranet"
+						]
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "LINK",
+									"value": {
+										"src": {
+											"type": "PLAIN_TEXT",
+											"value": "//internaltool.intranet"
+										},
+										"label": [
+											{
+												"type": "PLAIN_TEXT",
+												"value": "internaltool.intranet"
+											}
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "autoLink WITHOUT custom hosts settings comming from Rocket.Chat > parses \"https://internaltool.testt\"",
+					"input": "https://internaltool.testt",
+					"options": {
+						"customDomains": [
+							"local"
+						]
+					},
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "https://internaltool.testt"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"uncaptured": [
+		{
+			"name": "autoLink helper function > should preserve the original protocol if the protocol is http or https",
+			"reason": "UtilityCallError: direct call to src/utils.autoLink, not observable through parse()"
+		},
+		{
+			"name": "autoLink helper function > should preserve the original protocol for invalid absolute URLs",
+			"reason": "UtilityCallError: direct call to src/utils.autoLink, not observable through parse()"
+		},
+		{
+			"name": "autoLink helper function > should preserve the original protocol even if for custom protocols",
+			"reason": "UtilityCallError: direct call to src/utils.autoLink, not observable through parse()"
+		},
+		{
+			"name": "autoLink helper function > should return // as the protocol if // is the protocol specified",
+			"reason": "UtilityCallError: direct call to src/utils.autoLink, not observable through parse()"
+		},
+		{
+			"name": "autoLink helper function > should return an url concatenated '//' if the url has no protocol",
+			"reason": "UtilityCallError: direct call to src/utils.autoLink, not observable through parse()"
+		},
+		{
+			"name": "autoLink helper function > should return an url concatenated '//' if the url has no protocol and has sub-domain",
+			"reason": "UtilityCallError: direct call to src/utils.autoLink, not observable through parse()"
+		},
+		{
+			"name": "autoLink helper function > should return an plain text url due to invalid TLD that's validate with the external library TLDTS",
+			"reason": "UtilityCallError: direct call to src/utils.autoLink, not observable through parse()"
+		}
+	]
+}

@@ -1,0 +1,58 @@
+{
+	"file": "any.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"free text\"",
+					"input": "free text",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "free text"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"free text, with comma\"",
+					"input": "free text, with comma",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "free text, with comma"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"free text with unxpected/unfinished blocks *bold_\"",
+					"input": "free text with unxpected/unfinished blocks *bold_",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "free text with unxpected/unfinished blocks *bold_"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

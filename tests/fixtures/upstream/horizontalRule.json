@@ -1,0 +1,200 @@
+{
+	"file": "horizontalRule.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"---\" as a horizontal rule",
+					"input": "---",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HORIZONTAL_RULE",
+							"fallback": [
+								0,
+								3
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"----------\" as a horizontal rule",
+					"input": "----------",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HORIZONTAL_RULE",
+							"fallback": [
+								0,
+								10
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"   ---   \" as a horizontal rule",
+					"input": "   ---   ",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "HORIZONTAL_RULE",
+							"fallback": [
+								3,
+								6
+							]
+						}
+					]
+				},
+				{
+					"name": "parses a horizontal rule between paragraphs",
+					"input": "above\n---\nbelow",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "above"
+								}
+							]
+						},
+						{
+							"type": "HORIZONTAL_RULE",
+							"fallback": [
+								6,
+								9
+							]
+						},
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "below"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "does not treat \"--\" as a horizontal rule",
+					"input": "--",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "--"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "does not treat \"**\" as a horizontal rule",
+					"input": "**",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "**"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "does not treat \"***bold italic***\" as a horizontal rule",
+					"input": "***bold italic***",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								},
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "bold italic"
+										}
+									]
+								},
+								{
+									"type": "PLAIN_TEXT",
+									"value": "*"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "does not treat \"** **\" as a horizontal rule",
+					"input": "** **",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "** **"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "does not treat \"- item\" as a horizontal rule",
+					"input": "- item",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "item"
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"uncaptured": [
+		{
+			"name": "does not treat \"***\" as a horizontal rule",
+			"reason": "TypeError: undefined is not a function (near '...[node]...')"
+		},
+		{
+			"name": "does not treat \"___\" as a horizontal rule",
+			"reason": "TypeError: undefined is not a function (near '...[node]...')"
+		},
+		{
+			"name": "does not treat \"*******\" as a horizontal rule",
+			"reason": "TypeError: undefined is not a function (near '...[node]...')"
+		},
+		{
+			"name": "does not treat \"_______\" as a horizontal rule",
+			"reason": "TypeError: undefined is not a function (near '...[node]...')"
+		}
+	]
+}

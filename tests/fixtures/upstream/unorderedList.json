@@ -1,0 +1,187 @@
+{
+	"file": "unorderedList.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"- First item\n- Second item\n- Third item\n- *Fourth item*\n- :smile:\"",
+					"input": "- First item\n- Second item\n- Third item\n- *Fourth item*\n- :smile:",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "First item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Second item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Third item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fourth item"
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "EMOJI",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "smile"
+											},
+											"shortCode": "smile"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"* First item\n* Second item\n* Third item\n* *Fourth item*\"",
+					"input": "* First item\n* Second item\n* Third item\n* *Fourth item*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "First item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Second item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Third item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fourth item"
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"- First item\n* Second item\n* Third item\n* *Fourth item*\"",
+					"input": "- First item\n* Second item\n* Third item\n* *Fourth item*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "First item"
+										}
+									]
+								}
+							]
+						},
+						{
+							"type": "UNORDERED_LIST",
+							"value": [
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Second item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "PLAIN_TEXT",
+											"value": "Third item"
+										}
+									]
+								},
+								{
+									"type": "LIST_ITEM",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "PLAIN_TEXT",
+													"value": "Fourth item"
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

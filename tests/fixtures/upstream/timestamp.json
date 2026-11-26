@@ -1,0 +1,365 @@
+{
+	"file": "timestamp.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"<t:1708551317>\"",
+					"input": "<t:1708551317>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1708551317",
+										"format": "t"
+									},
+									"fallback": [
+										0,
+										14
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<t:1708551317:R>\"",
+					"input": "<t:1708551317:R>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1708551317",
+										"format": "R"
+									},
+									"fallback": [
+										0,
+										16
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"hello <t:1708551317>\"",
+					"input": "hello <t:1708551317>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "hello "
+								},
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1708551317",
+										"format": "t"
+									},
+									"fallback": [
+										6,
+										20
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<t:1708551317:I>\"",
+					"input": "<t:1708551317:I>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "<t:1708551317:I>"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<t:17>\"",
+					"input": "<t:17>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "PLAIN_TEXT",
+									"value": "<t:17>"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"~<t:1708551317>~\"",
+					"input": "~<t:1708551317>~",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "TIMESTAMP",
+											"value": {
+												"timestamp": "1708551317",
+												"format": "t"
+											},
+											"fallback": [
+												1,
+												15
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"~<t:1708551317:R>~\"",
+					"input": "~<t:1708551317:R>~",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "TIMESTAMP",
+											"value": {
+												"timestamp": "1708551317",
+												"format": "R"
+											},
+											"fallback": [
+												1,
+												17
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"*<t:1708551317>*\"",
+					"input": "*<t:1708551317>*",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "BOLD",
+									"value": [
+										{
+											"type": "TIMESTAMP",
+											"value": {
+												"timestamp": "1708551317",
+												"format": "t"
+											},
+											"fallback": [
+												1,
+												15
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<t:2025-07-22T10:00:00.000+00:00:R>\"",
+					"input": "<t:2025-07-22T10:00:00.000+00:00:R>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1753178400",
+										"format": "R"
+									},
+									"fallback": [
+										0,
+										35
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<t:2025-07-22T10:00:00+00:00:R>\"",
+					"input": "<t:2025-07-22T10:00:00+00:00:R>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1753178400",
+										"format": "R"
+									},
+									"fallback": [
+										0,
+										31
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"<t:2025-07-24T20:19:58.154+00:00:R>\"",
+					"input": "<t:2025-07-24T20:19:58.154+00:00:R>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1753388398",
+										"format": "R"
+									},
+									"fallback": [
+										0,
+										35
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"needsClock": "2025-07-22T00:00:00.000Z",
+			"cases": [
+				{
+					"name": "relative hour timestamp parsing > parses \"<t:10:00:00+00:00:R>\"",
+					"input": "<t:10:00:00+00:00:R>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1753178400",
+										"format": "R"
+									},
+									"fallback": [
+										0,
+										20
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "relative hour timestamp parsing > parses \"<t:10:00+00:00:R>\"",
+					"input": "<t:10:00+00:00:R>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1753178400",
+										"format": "R"
+									},
+									"fallback": [
+										0,
+										17
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "relative hour timestamp parsing > parses \"<t:10:00:05+00:00>\"",
+					"input": "<t:10:00:05+00:00>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1753178405",
+										"format": "t"
+									},
+									"fallback": [
+										0,
+										18
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "relative hour timestamp parsing > parses \"<t:10:00+00:00>\"",
+					"input": "<t:10:00+00:00>",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "TIMESTAMP",
+									"value": {
+										"timestamp": "1753178400",
+										"format": "t"
+									},
+									"fallback": [
+										0,
+										15
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

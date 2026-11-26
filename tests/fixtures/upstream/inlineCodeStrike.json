@@ -1,0 +1,126 @@
+{
+	"file": "inlineCodeStrike.test.ts",
+	"upstreamVersion": "0.33.0",
+	"groups": [
+		{
+			"cases": [
+				{
+					"name": "parses \"~~`Striking Inline Code`~~\"",
+					"input": "~~`Striking Inline Code`~~",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "INLINE_CODE",
+											"value": {
+												"type": "PLAIN_TEXT",
+												"value": "Striking Inline Code"
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"~~_`Striking Inline Code with Italics`_~~\"",
+					"input": "~~_`Striking Inline Code with Italics`_~~",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "ITALIC",
+											"value": [
+												{
+													"type": "INLINE_CODE",
+													"value": {
+														"type": "PLAIN_TEXT",
+														"value": "Striking Inline Code with Italics"
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"~~**`Striking Inline Code with Bold`**~~\"",
+					"input": "~~**`Striking Inline Code with Bold`**~~",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "BOLD",
+											"value": [
+												{
+													"type": "INLINE_CODE",
+													"value": {
+														"type": "PLAIN_TEXT",
+														"value": "Striking Inline Code with Bold"
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "parses \"~~__*`Striking Inline Code with Bold`*__~~\"",
+					"input": "~~__*`Striking Inline Code with Bold`*__~~",
+					"matcher": "toEqual",
+					"expected": [
+						{
+							"type": "PARAGRAPH",
+							"value": [
+								{
+									"type": "STRIKE",
+									"value": [
+										{
+											"type": "ITALIC",
+											"value": [
+												{
+													"type": "BOLD",
+													"value": [
+														{
+															"type": "INLINE_CODE",
+															"value": {
+																"type": "PLAIN_TEXT",
+																"value": "Striking Inline Code with Bold"
+															}
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
