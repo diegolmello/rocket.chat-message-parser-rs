@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use message_parser::ast::Emoji;
 use message_parser::{parse, Node, Options};
 use serde::Deserialize;
 
@@ -17,11 +18,7 @@ fn parses_whole(input: &str) -> bool {
     let [Node::BigEmoji { value }] = nodes.as_slice() else {
         return false;
     };
-    let [Node::Emoji {
-        unicode: Some(unicode),
-        ..
-    }] = value.as_slice()
-    else {
+    let [Node::Emoji(Emoji::Unicode { unicode })] = value.as_slice() else {
         return false;
     };
     unicode == input

@@ -3,7 +3,11 @@ use super::chars::{
     is_names_char, is_one_of, is_space,
 };
 use super::memo::{memoized, Key, Memo};
-use super::reduce::{reduce_plain_texts, Item};
+
+const MAXIMUM_EMOTICON_LOOKAHEAD_DEPTH: usize = 500;
+
+type MemoTable = fn(&Memo) -> &rustc_hash::FxHashMap<Key, Parsed<Item>>;
+use super::reduce::{one, reduce_plain_texts, Item};
 use super::repetition::{Piece, Repetition, Run};
 use super::{Flags, Parsed, Parser};
 use crate::ast::{
@@ -59,10 +63,10 @@ impl EmphasisContent {
         }
     }
 
-    fn is_preferential_memoized(self, memo: &Memo, key: Key) -> bool {
+    fn preferential_table(self) -> MemoTable {
         match self {
-            EmphasisContent::Bold => memo.bold_preferential_item.contains_key(&key),
-            EmphasisContent::Italic => memo.italic_preferential_item.contains_key(&key),
+            EmphasisContent::Bold => |memo| &memo.bold_preferential_item,
+            EmphasisContent::Italic => |memo| &memo.italic_preferential_item,
         }
     }
 }
@@ -77,7 +81,6 @@ impl Parser<'_> {
     }
 
     fn dispatched_inline_item(&mut self, position: usize, unit: u16, flags: Flags) -> Parsed<Item> {
-        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
         match char::from_u32(u32::from(unit)) {
             Some(' ' | '\t') => one(self.whitespace(position)),
             Some('\\') => one(self
@@ -98,14 +101,10 @@ impl Parser<'_> {
             Some(':') => one(self
                 .emoji(position)
                 .or_else(|| self.inline_emoticon(position, flags))),
-            Some('*') => self
-                .emphasis_with_whitespace(position)
-                .map(|(end, node)| (end, Item::One(node)))
+            Some('*') => one(self.emphasis_with_whitespace(position))
                 .or_else(|| self.emphasis(position, flags))
                 .or_else(|| one(self.inline_emoticon(position, flags))),
-            Some('~') => self
-                .emphasis_with_whitespace(position)
-                .map(|(end, node)| (end, Item::One(node)))
+            Some('~') => one(self.emphasis_with_whitespace(position))
                 .or_else(|| self.emphasis(position, flags)),
             Some('-') => one(self
                 .plain_run_before_emoticon(position)
@@ -115,7 +114,6 @@ impl Parser<'_> {
     }
 
     fn inline_item_slow_path(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
-        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
         one(self.autolinked_email(position))
             .or_else(|| one(self.plain_underscore_then_domain(position)))
             .or_else(|| one(self.autolinked_url(position)))
@@ -134,25 +132,38 @@ impl Parser<'_> {
         self.evaluate_emoticon_chain_backwards(
             end,
             flags,
-            |memo, key| memo.inline_item_pattern.contains_key(&key),
+            |memo| &memo.inline_item_pattern,
             |parser, cursor, flags| {
                 parser.inline_item_pattern(cursor, flags);
             },
         );
-        (self.emoticon_neighbor(end) || self.inline_item_pattern(end, flags).is_some())
-            .then_some((end, node))
+        let followed = self.emoticon_neighbor(end)
+            || self.within_emoticon_lookahead(|parser| {
+                parser.inline_item_pattern(end, flags).is_some()
+            });
+        followed.then_some((end, node))
+    }
+
+    fn within_emoticon_lookahead(&mut self, lookahead: impl FnOnce(&mut Self) -> bool) -> bool {
+        if self.emoticon_lookahead_depth >= MAXIMUM_EMOTICON_LOOKAHEAD_DEPTH {
+            return false;
+        }
+        self.emoticon_lookahead_depth += 1;
+        let followed = lookahead(self);
+        self.emoticon_lookahead_depth -= 1;
+        followed
     }
 
     fn evaluate_emoticon_chain_backwards(
         &mut self,
         start: usize,
         flags: Flags,
-        is_memoized: impl Fn(&Memo, Key) -> bool,
+        table: MemoTable,
         evaluate: impl Fn(&mut Self, usize, Flags),
     ) {
         let mut chain = Vec::new();
         let mut cursor = start;
-        while !is_memoized(&self.memo, (cursor as u32, flags.bits())) {
+        while !table(&self.memo).contains_key(&(cursor as u32, flags.bits())) {
             let Some((end, _)) = self.emoticon(cursor) else {
                 break;
             };
@@ -281,28 +292,20 @@ impl Parser<'_> {
 
     pub(super) fn spoiler(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
         memoized!(self, spoiler, position, flags, {
-            let mut cursor = self.literal(position, "||")?;
-            let mut items = Vec::new();
-            loop {
-                if self.literal(cursor, "||").is_some() {
-                    break;
-                }
-                if let Some((end, item)) = self.inline_item_pattern(cursor, flags) {
-                    items.push(item);
-                    cursor = end;
-                } else if let Some(end) = self.any(cursor) {
-                    items.push(Item::One(plain(self.text(cursor, end))));
-                    cursor = end;
-                } else {
-                    break;
-                }
-            }
-            if items.is_empty() {
-                return None;
-            }
-            let end = self.literal(cursor, "||")?;
+            let (content_start, content_end, end) =
+                self.delimited_span(position, flags, "||", Repetition::Spoiler)?;
+            let items =
+                self.repetition_items(Repetition::Spoiler, content_start, content_end, flags);
             Some((end, spoiler(reduce_plain_texts(items))))
         })
+    }
+
+    pub(super) fn spoiler_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
+        if self.literal(position, "||").is_some() {
+            return None;
+        }
+        self.inline_item_or_any(position, flags)
+            .map(|(end, item)| (end, Piece::Item(item)))
     }
 
     fn names(&mut self, position: usize) -> Option<usize> {
@@ -382,41 +385,40 @@ impl Parser<'_> {
         }
         let inner = flags.with(flag);
         match kind {
-            Emphasis::Bold => self
-                .bold(position, inner)
-                .map(|(end, node)| (end, Item::One(node))),
+            Emphasis::Bold => one(self.bold(position, inner)),
             Emphasis::Italic => self.italic(position, inner),
-            Emphasis::Strike => self
-                .strikethrough(position, inner)
-                .map(|(end, node)| (end, Item::One(node))),
+            Emphasis::Strike => one(self.strikethrough(position, inner)),
         }
+    }
+
+    fn delimited_span(
+        &mut self,
+        position: usize,
+        flags: Flags,
+        delimiter: &str,
+        repetition: Repetition,
+    ) -> Option<(usize, usize, usize)> {
+        let content_start = self.literal(position, delimiter)?;
+        let content_end = self.repetition_end(repetition, content_start, flags)?;
+        let end = self.literal(content_end, delimiter)?;
+        Some((content_start, content_end, end))
     }
 
     fn delimited(
         &mut self,
         position: usize,
         flags: Flags,
-        marker: u8,
+        double_delimiter: &'static str,
         repetition: Repetition,
         wrap: fn(Vec<Node>) -> Node,
     ) -> Parsed<Node> {
-        let double = [marker, marker];
-        let double = std::str::from_utf8(&double).unwrap_or_default().to_string();
-        let single = double[..1].to_string();
-        for delimiter in [double, single] {
-            let Some(content_start) = self.literal(position, &delimiter) else {
-                continue;
-            };
-            let Some(content_end) = self.repetition_end(repetition, content_start, flags) else {
-                continue;
-            };
-            let Some(end) = self.literal(content_end, &delimiter) else {
-                continue;
-            };
-            let items = self.repetition_items(repetition, content_start, content_end, flags);
-            return Some((end, wrap(reduce_plain_texts(items))));
-        }
-        None
+        [double_delimiter, &double_delimiter[..1]]
+            .into_iter()
+            .find_map(|delimiter| self.delimited_span(position, flags, delimiter, repetition))
+            .map(|(content_start, content_end, end)| {
+                let items = self.repetition_items(repetition, content_start, content_end, flags);
+                (end, wrap(reduce_plain_texts(items)))
+            })
     }
 
     fn bold(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
@@ -428,7 +430,7 @@ impl Parser<'_> {
             self.delimited(
                 position,
                 flags,
-                b'*',
+                "**",
                 Repetition::Emphasis(EmphasisContent::Bold),
                 bold
             )
@@ -485,7 +487,6 @@ impl Parser<'_> {
         flags: Flags,
         content: EmphasisContent,
     ) -> Parsed<Item> {
-        let one = |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Item::One(node)));
         one(self.whitespace(position))
             .or_else(|| one(self.inline_code(position)))
             .or_else(|| one(self.timestamp_rules(position)))
@@ -500,13 +501,15 @@ impl Parser<'_> {
                 self.evaluate_emoticon_chain_backwards(
                     end,
                     flags,
-                    |memo, key| content.is_preferential_memoized(memo, key),
+                    content.preferential_table(),
                     |parser, cursor, flags| {
                         parser.preferential_item(cursor, flags, content);
                     },
                 );
                 let followed = self.emoticon_neighbor(end)
-                    || self.preferential_item(end, flags, content).is_some()
+                    || self.within_emoticon_lookahead(|parser| {
+                        parser.preferential_item(end, flags, content).is_some()
+                    })
                     || matches!(content, EmphasisContent::Italic) && self.char(end, b'_').is_some();
                 followed.then_some((end, Item::One(node)))
             })
@@ -531,18 +534,11 @@ impl Parser<'_> {
                 return Some((end, Item::One(plain(self.text(position, end)))));
             }
         }
+        let italic_content = Repetition::Emphasis(EmphasisContent::Italic);
         for (delimiter, suffix_is_alpha_digit) in [("__", true), ("_", false)] {
-            let Some(content_start) = self.literal(position, delimiter) else {
-                continue;
-            };
-            let Some(content_end) = self.repetition_end(
-                Repetition::Emphasis(EmphasisContent::Italic),
-                content_start,
-                flags,
-            ) else {
-                continue;
-            };
-            let Some(suffix_start) = self.literal(content_end, delimiter) else {
+            let Some((content_start, content_end, suffix_start)) =
+                self.delimited_span(position, flags, delimiter, italic_content)
+            else {
                 continue;
             };
             let suffix_end = if suffix_is_alpha_digit {
@@ -553,43 +549,16 @@ impl Parser<'_> {
             let Some(suffix_end) = suffix_end else {
                 continue;
             };
-            let items = self.italic_content_items(content_start, content_end, flags);
+            let items = self.repetition_items(italic_content, content_start, content_end, flags);
             let reduced = reduce_plain_texts(vec![
                 Item::One(plain(delimiter)),
-                Item::Many(items),
+                Item::Many(reduce_plain_texts(items)),
                 Item::One(plain(delimiter)),
                 Item::One(plain(self.text(suffix_start, suffix_end))),
             ]);
             return Some((suffix_end, Item::Many(reduced)));
         }
-        for delimiter in ["__", "_"] {
-            let Some(content_start) = self.literal(position, delimiter) else {
-                continue;
-            };
-            let Some(content_end) = self.repetition_end(
-                Repetition::Emphasis(EmphasisContent::Italic),
-                content_start,
-                flags,
-            ) else {
-                continue;
-            };
-            let Some(end) = self.literal(content_end, delimiter) else {
-                continue;
-            };
-            let items = self.italic_content_items(content_start, content_end, flags);
-            return Some((end, Item::One(italic(items))));
-        }
-        None
-    }
-
-    fn italic_content_items(&mut self, position: usize, end: usize, flags: Flags) -> Vec<Node> {
-        let items = self.repetition_items(
-            Repetition::Emphasis(EmphasisContent::Italic),
-            position,
-            end,
-            flags,
-        );
-        reduce_plain_texts(items)
+        one(self.delimited(position, flags, "__", italic_content, italic))
     }
 
     fn strikethrough(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
@@ -598,33 +567,33 @@ impl Parser<'_> {
             strikethrough,
             position,
             flags,
-            self.delimited(position, flags, b'~', Repetition::Strike, strike)
+            self.delimited(position, flags, "~~", Repetition::Strike, strike)
         )
     }
 
     pub(super) fn strike_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
-        let one =
+        let node =
             |parsed: Parsed<Node>| parsed.map(|(end, node)| (end, Piece::Item(Item::One(node))));
         let item = |parsed: Parsed<Item>| parsed.map(|(end, item)| (end, Piece::Item(item)));
         if let Some(end) = self.run1(position, is_strike_plain_run_char) {
             return Some((end, Piece::Text));
         }
-        one(self.escaped_timestamp_rules(position))
-            .or_else(|| one(self.timestamp_rules(position)))
-            .or_else(|| one(self.whitespace(position)))
-            .or_else(|| one(self.inline_code(position)))
-            .or_else(|| one(self.maybe_references(position, flags)))
-            .or_else(|| one(self.user_mention(position)))
-            .or_else(|| one(self.channel_mention(position)))
+        node(self.escaped_timestamp_rules(position))
+            .or_else(|| node(self.timestamp_rules(position)))
+            .or_else(|| node(self.whitespace(position)))
+            .or_else(|| node(self.inline_code(position)))
+            .or_else(|| node(self.maybe_references(position, flags)))
+            .or_else(|| node(self.user_mention(position)))
+            .or_else(|| node(self.channel_mention(position)))
             .or_else(|| item(self.maybe_emphasis(position, flags, Emphasis::Italic)))
             .or_else(|| item(self.maybe_emphasis(position, flags, Emphasis::Bold)))
-            .or_else(|| one(self.emoji(position)))
-            .or_else(|| one(self.emoticon(position)))
+            .or_else(|| node(self.emoji(position)))
+            .or_else(|| node(self.emoticon(position)))
             .or_else(|| {
                 let end = self.character(position, |unit| !is_one_of(unit, b"\n~ "))?;
                 Some((end, Piece::Text))
             })
-            .or_else(|| one(self.line(position)))
+            .or_else(|| node(self.line(position)))
     }
 
     pub(super) fn maybe_references(&mut self, position: usize, flags: Flags) -> Parsed<Node> {

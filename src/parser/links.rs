@@ -1,5 +1,5 @@
 use super::chars::{
-    is, is_alpha_digit, is_alpha_numeric_or_mark_char, is_any_text, is_extra,
+    is, is_alpha_digit, is_alpha_numeric_or_mark_char, is_any_text, is_extra, is_line_break,
     is_markdown_url_symbol, is_one_of, is_safe, is_space, is_url_symbol,
 };
 use super::memo::memoized;
@@ -7,7 +7,7 @@ use super::reduce::{reduce_plain_texts, Item};
 use super::repetition::{Piece, Repetition, Run};
 use super::{Flags, Parsed, Parser};
 use crate::ast::{image, link, plain, Node};
-use crate::tld::{self, TldOptions};
+use crate::tld;
 
 fn phone_digits(phone_text: &str) -> String {
     phone_text.chars().filter(char::is_ascii_digit).collect()
@@ -18,11 +18,7 @@ pub(super) fn is_link_title_bulk_char(unit: u16) -> bool {
 }
 
 fn is_link_title2_char(unit: u16) -> bool {
-    matches!(unit, 0x20..=0x3B | 0x3D | 0x3F..=0x60 | 0x61..=0x7B | 0x7D..=0xFF) || unit >= 0x80
-}
-
-fn is_line_end(unit: u16) -> bool {
-    unit == 0x0A || unit == 0x0D
+    unit >= 0x20 && !is_one_of(unit, b"<>|")
 }
 
 fn is_domain_forbidden(unit: u16) -> bool {
@@ -46,27 +42,17 @@ fn has_absolute_scheme_prefix(source: &str) -> bool {
         .take(31)
         .take_while(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-'))
         .count();
-    (0..=scheme_length).any(|length| bytes[1 + length..].starts_with(b"://"))
+    bytes[1 + scheme_length..].starts_with(b"://")
 }
 
-fn auto_link(source: String, custom_domains: Option<&[String]>) -> Node {
-    let mut valid_hosts = vec!["localhost".to_string()];
-    valid_hosts.extend(custom_domains.unwrap_or_default().iter().cloned());
-    let options = TldOptions {
-        detect_ip: true,
-        allow_private_domains: true,
-        valid_hosts: Some(valid_hosts.clone()),
-    };
-    let parsed = tld::parse(&source, &options);
-    let is_known_host = parsed
-        .domain
-        .as_ref()
-        .is_some_and(|domain| valid_hosts.contains(domain));
-    let is_linkable = parsed.is_icann == Some(true)
-        || parsed.is_ip == Some(true)
-        || parsed.is_private == Some(true)
-        || is_known_host;
-    if !is_linkable {
+pub(super) fn link_hosts(custom_domains: Option<&[String]>) -> Vec<String> {
+    std::iter::once("localhost".to_owned())
+        .chain(custom_domains.unwrap_or_default().iter().cloned())
+        .collect()
+}
+
+fn auto_link(source: String, valid_hosts: &[String]) -> Node {
+    if !tld::is_linkable(&source, true, valid_hosts) {
         return plain(source);
     }
     let is_absolute = url::Url::parse(&source).is_ok()
@@ -82,16 +68,7 @@ fn auto_link(source: String, custom_domains: Option<&[String]>) -> Node {
 
 fn auto_email(source: String) -> Node {
     let href = format!("mailto:{source}");
-    let options = TldOptions {
-        detect_ip: false,
-        allow_private_domains: true,
-        valid_hosts: None,
-    };
-    let parsed = tld::parse(&href, &options);
-    let is_linkable = parsed.is_icann == Some(true)
-        || parsed.is_ip == Some(true)
-        || parsed.is_private == Some(true);
-    if !is_linkable {
+    if !tld::is_linkable(&href, false, &[]) {
         return plain(source);
     }
     link(href, Some(vec![plain(source)]))
@@ -406,7 +383,7 @@ impl Parser<'_> {
             position
         };
         let consumed = self.at(consumed_start)?;
-        if is_line_end(consumed) || is_space(consumed) || is_domain_forbidden(consumed) {
+        if is_line_break(consumed) || is_space(consumed) || is_domain_forbidden(consumed) {
             return None;
         }
         Some(consumed_start + 1)
@@ -510,10 +487,7 @@ impl Parser<'_> {
             let head_end = self.url_head(position)?;
             let end = self.auto_link_body(head_end);
             let source = self.text(position, end);
-            Some((
-                end,
-                auto_link(source, self.options.custom_domains.as_deref()),
-            ))
+            Some((end, auto_link(source, &self.link_hosts)))
         })
     }
 

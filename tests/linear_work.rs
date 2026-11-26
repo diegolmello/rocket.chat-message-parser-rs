@@ -1,21 +1,24 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use message_parser::{parse_with_report, KatexOptions, Options, ParseReport};
 
-const WORK_PER_UNIT_LIMIT: u64 = 400;
+mod common;
+
+use common::{fixed_clock, strings_over};
+
+const WORK_PER_UNIT_LIMIT: f64 = 400.0;
 const DENSITY_GROWTH_LIMIT: f64 = 2.0;
 const MINIMUM_LENGTH: usize = 400;
+const KNOWN_SEED_MINIMUM_LENGTH: usize = 4_000;
 const SCALES: [usize; 2] = [1, 8];
-const EXHAUSTIVE_LENGTH: u32 = 4;
+const EXHAUSTIVE_LENGTH: usize = 4;
 
-const EXHAUSTIVE_ALPHABET: &[char] = &['*', '_', '~', '[', ']', '(', '$', ':', '`', '<', '\n', 'a'];
+const EXHAUSTIVE_ALPHABET: &[&str] = &["*", "_", "~", "[", "]", "(", "$", ":", "`", "<", "\n", "a"];
 
-const SEED_ALPHABET: &[char] = &[
-    '*', '_', '~', '[', ']', '(', ')', '$', ':', '`', '<', '>', '|', '@', '#', ' ', '\n', '\\',
-    '!', '-', '.', '/', '+', '1', 't', 'a',
+const SEED_ALPHABET: &[&str] = &[
+    "*", "_", "~", "[", "]", "(", ")", "$", ":", "`", "<", ">", "|", "@", "#", " ", "\n", "\\",
+    "!", "-", ".", "/", "+", "1", "t", "a",
 ];
 
-const CORE_SEED_ALPHABET: &[char] = &['*', '_', '~', '[', ']', '$', ':', '`', ' ', 'a'];
+const CORE_SEED_ALPHABET: &[&str] = &["*", "_", "~", "[", "]", "$", ":", "`", " ", "a"];
 
 const KNOWN_SEEDS: &[&str] = &[
     "*_~[$:",
@@ -26,6 +29,16 @@ const KNOWN_SEEDS: &[&str] = &[
     "\\[",
     "$$",
     "||",
+    "||:)",
+    "||x:)",
+    "||`",
+    "`||",
+    "||`:)",
+    "||-___-",
+    "||[",
+    "||a.b",
+    "||\n\r",
+    "*||:)",
     ":)",
     ":a",
     "](",
@@ -37,6 +50,10 @@ const KNOWN_SEEDS: &[&str] = &[
     "@a.",
     "#a",
     "```\n",
+    "````x\n",
+    "````\n```\n",
+    "`````\n````x\n",
+    "||\n||a.b\n",
     "- ",
     "1. ",
     "> ",
@@ -47,17 +64,22 @@ const KNOWN_SEEDS: &[&str] = &[
     "__a",
     "~🀄",
     "~x🇧~",
+    ":)||a.b",
+    ":D||a.b",
+    "x<3||a.b",
+    "||~-___-",
+    "||*-___-",
+    "-___-||a",
+    "-___-||*",
 ];
 
 const PREFIXED_SEEDS: &[(&str, &str)] = &[
     ("- a", "\n - a"),
     ("- a", "\n  * b\n 1. c\n - [ ] d"),
     ("1. a", "\n - a\n  - b"),
+    ("````", "\n```"),
+    ("||", "\na"),
 ];
-
-fn fixed_clock() -> SystemTime {
-    UNIX_EPOCH + std::time::Duration::from_secs(1_753_142_400)
-}
 
 fn option_sets() -> [(&'static str, Options); 2] {
     let everything = Options {
@@ -80,61 +102,43 @@ fn work_per_unit(report: &ParseReport) -> f64 {
     report.work() as f64 / (report.input_length + 1) as f64
 }
 
-fn repeated_whole((prefix, seed): &(String, String), scale: usize) -> String {
-    let repetitions = MINIMUM_LENGTH.div_ceil(seed.chars().count()) * scale;
-    format!("{prefix}{}", seed.repeat(repetitions))
+struct Seed {
+    prefix: String,
+    repeated: String,
+    minimum_length: usize,
 }
 
-fn strings_up_to(alphabet: &[char], max_length: u32) -> Vec<String> {
-    let mut all = vec![String::new()];
-    let mut previous = vec![String::new()];
-    for _ in 0..max_length {
-        let next: Vec<String> = previous
-            .iter()
-            .flat_map(|prefix| {
-                alphabet
-                    .iter()
-                    .map(move |character| format!("{prefix}{character}"))
-            })
-            .collect();
-        all.extend(next.iter().cloned());
-        previous = next;
-    }
-    all
+fn repeated_whole(seed: &Seed, scale: usize) -> String {
+    let repetitions = seed.minimum_length.div_ceil(seed.repeated.chars().count()) * scale;
+    format!("{}{}", seed.prefix, seed.repeated.repeat(repetitions))
 }
 
-fn seeds() -> Vec<(String, String)> {
-    let mut seeds: Vec<String> = strings_up_to(SEED_ALPHABET, 2)
-        .into_iter()
-        .filter(|seed| !seed.is_empty())
-        .collect();
-    seeds.extend(
-        strings_up_to(CORE_SEED_ALPHABET, 3)
-            .into_iter()
-            .filter(|seed| seed.chars().count() == 3),
-    );
-    seeds.extend(KNOWN_SEEDS.iter().map(|seed| (*seed).to_owned()));
-    let mut prefixed: Vec<(String, String)> = seeds
-        .into_iter()
-        .map(|seed| (String::new(), seed))
-        .collect();
-    prefixed.extend(
-        PREFIXED_SEEDS
-            .iter()
-            .map(|(prefix, seed)| ((*prefix).to_owned(), (*seed).to_owned())),
-    );
-    prefixed
+fn seeds() -> Vec<Seed> {
+    let mut generated = strings_over(SEED_ALPHABET, 1..=2);
+    generated.extend(strings_over(CORE_SEED_ALPHABET, 3..=3));
+    let generated = generated.into_iter().map(|repeated| Seed {
+        prefix: String::new(),
+        repeated,
+        minimum_length: MINIMUM_LENGTH,
+    });
+    let known = KNOWN_SEEDS.iter().map(|repeated| ("", *repeated));
+    let hand_picked = known
+        .chain(PREFIXED_SEEDS.iter().copied())
+        .map(|(prefix, repeated)| Seed {
+            prefix: prefix.to_owned(),
+            repeated: repeated.to_owned(),
+            minimum_length: KNOWN_SEED_MINIMUM_LENGTH,
+        });
+    generated.chain(hand_picked).collect()
 }
 
 #[test]
 fn every_short_input_evaluates_each_rule_position_once_within_the_work_limit() {
     let mut violations = Vec::new();
     for (label, options) in option_sets() {
-        for input in strings_up_to(EXHAUSTIVE_ALPHABET, EXHAUSTIVE_LENGTH) {
+        for input in strings_over(EXHAUSTIVE_ALPHABET, 0..=EXHAUSTIVE_LENGTH) {
             let report = report(&input, &options);
-            let within_limit =
-                report.work() <= WORK_PER_UNIT_LIMIT * (report.input_length as u64 + 1);
-            if report.repeated_evaluations > 0 || !within_limit {
+            if report.repeated_evaluations > 0 || work_per_unit(&report) > WORK_PER_UNIT_LIMIT {
                 violations.push(format!("{label} {input:?}: {report:?}"));
             }
         }
@@ -160,10 +164,10 @@ fn repeated_seeds_grow_linearly() {
         for seed in seeds() {
             let [small, large] =
                 SCALES.map(|scale| report(&repeated_whole(&seed, scale), &options));
-            let density_growth = work_per_unit(&large) / work_per_unit(&small);
             let density = work_per_unit(&large);
+            let density_growth = density / work_per_unit(&small);
             let repeated = small.repeated_evaluations + large.repeated_evaluations;
-            let case = format!("{label} {:?}+{:?}", seed.0, seed.1);
+            let case = format!("{label} {:?}+{:?}", seed.prefix, seed.repeated);
             if density_growth > worst_growth.0 {
                 worst_growth = (density_growth, case.clone());
             }
@@ -172,7 +176,7 @@ fn repeated_seeds_grow_linearly() {
             }
             if repeated > 0
                 || density_growth > DENSITY_GROWTH_LIMIT
-                || density > WORK_PER_UNIT_LIMIT as f64
+                || density > WORK_PER_UNIT_LIMIT
             {
                 violations.push(format!(
                     "{case}: work {} at {} units, {} at {} units (work per unit grew {density_growth:.2}x to {density:.0}, {repeated} repeated evaluations)",

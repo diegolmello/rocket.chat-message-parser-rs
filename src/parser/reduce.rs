@@ -1,4 +1,6 @@
-use crate::ast::{plain, Node};
+use super::chars::is_js_whitespace;
+use super::Parsed;
+use crate::ast::{plain, Emoji, Node};
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
@@ -6,18 +8,8 @@ pub(crate) enum Item {
     Many(Vec<Node>),
 }
 
-pub(crate) fn is_js_whitespace(character: char) -> bool {
-    matches!(
-        character,
-        '\t' | '\n' | '\u{0B}' | '\u{0C}' | '\r' | ' ' | '\u{A0}' | '\u{1680}' | '\u{2000}'
-            ..='\u{200A}'
-                | '\u{2028}'
-                | '\u{2029}'
-                | '\u{202F}'
-                | '\u{205F}'
-                | '\u{3000}'
-                | '\u{FEFF}'
-    )
+pub(crate) fn one(parsed: Parsed<Node>) -> Parsed<Item> {
+    parsed.map(|(end, node)| (end, Item::One(node)))
 }
 
 fn is_blank(text: &str) -> bool {
@@ -29,21 +21,17 @@ fn is_non_blank_plain(node: Option<&Node>) -> bool {
 }
 
 fn is_emoji(node: Option<&Node>) -> bool {
-    matches!(node, Some(Node::Emoji { .. }))
+    matches!(node, Some(Node::Emoji(_)))
 }
 
 fn join_emoji(current: &Node, previous: Option<&Node>, next: Option<&Node>) -> Node {
-    let Node::Emoji {
-        value: Some(text_node),
+    let Node::Emoji(Emoji::ShortCode {
+        value: text_node,
         short_code,
-        ..
-    } = current
+    }) = current
     else {
         return current.clone();
     };
-    if previous.is_none() && next.is_none() {
-        return current.clone();
-    }
     let has_emoji_neighbor = is_emoji(previous) || is_emoji(next);
     let has_plain_neighbor = is_non_blank_plain(previous) || is_non_blank_plain(next);
     if !(has_emoji_neighbor || has_plain_neighbor) {
@@ -52,7 +40,7 @@ fn join_emoji(current: &Node, previous: Option<&Node>, next: Option<&Node>) -> N
     let Node::PlainText { value: text } = text_node.as_ref() else {
         return current.clone();
     };
-    let is_emoticon = short_code.as_deref() != Some(text.as_str());
+    let is_emoticon = short_code != text;
     if is_emoticon {
         plain(text.clone())
     } else {

@@ -1,3 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
+import { createInterface } from 'node:readline';
+import { pathToFileURL } from 'node:url';
+
+const [upstreamDirectory] = process.argv.slice(2);
+if (!upstreamDirectory) {
+	throw new Error('usage: node oracle.mjs <directory holding node_modules/@rocket.chat/message-parser>');
+}
+
 const SystemDate = Date;
 let pinnedNow = SystemDate.now();
 
@@ -17,24 +28,26 @@ class PinnedDate extends SystemDate {
 
 globalThis.Date = PinnedDate;
 
-const { parse } = await import('@rocket.chat/message-parser');
-
-const respond = (response) => process.stdout.write(`${JSON.stringify(response)}\n`);
+const requireFromUpstream = createRequire(join(upstreamDirectory, 'package.json'));
+const packageJson = JSON.parse(
+	readFileSync(join(upstreamDirectory, 'node_modules', '@rocket.chat', 'message-parser', 'package.json'), 'utf8'),
+);
+if (packageJson.version !== '0.33.0') {
+	throw new Error(`expected @rocket.chat/message-parser 0.33.0, found ${packageJson.version}`);
+}
+const { parse } = await import(pathToFileURL(requireFromUpstream.resolve('@rocket.chat/message-parser')).href);
 
 const answer = (request) => {
 	const { input, options, now } = JSON.parse(request);
 	pinnedNow = now;
 	try {
-		respond({ nodes: parse(input, options) });
+		return { nodes: parse(input, options) };
 	} catch (error) {
-		respond({ error: String(error) });
+		return { error: String(error) };
 	}
 };
 
-let pending = '';
-process.stdin.setEncoding('utf8');
-for await (const chunk of process.stdin) {
-	const requests = (pending + chunk).split('\n');
-	pending = requests.pop();
-	requests.forEach(answer);
+const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
+for await (const line of lines) {
+	process.stdout.write(`${JSON.stringify(answer(line))}\n`);
 }

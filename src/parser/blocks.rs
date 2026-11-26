@@ -1,6 +1,11 @@
-use super::chars::{is, is_code_language_char};
+use rustc_hash::FxHashMap;
+
+use super::chars::{
+    is, is_code_language_char, is_js_whitespace, is_line_break, is_space, line_break_length,
+};
 use super::memo::memoized;
-use super::reduce::{is_js_whitespace, reduce_plain_texts, Item};
+use super::reduce::{reduce_plain_texts, Item};
+use super::repetition::Run;
 use super::{Flags, Parsed, Parser};
 use crate::ast::{
     code, code_line, heading, horizontal_rule, katex, line_break, list_item, ordered_list,
@@ -9,17 +14,24 @@ use crate::ast::{
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum NestedMarker {
+enum ListMarker {
     Task,
     Ordered,
     Hyphen,
     Asterisk,
 }
 
+const LIST_MARKERS: [ListMarker; 4] = [
+    ListMarker::Task,
+    ListMarker::Ordered,
+    ListMarker::Hyphen,
+    ListMarker::Asterisk,
+];
+
 #[derive(Clone)]
 pub(super) struct NestedLine {
     width: usize,
-    marker: NestedMarker,
+    marker: ListMarker,
     item: Node,
 }
 
@@ -41,18 +53,18 @@ fn attach_nested(item: &mut Node, nested_lists: Vec<Node>) {
     }
 }
 
-fn list_of(marker: NestedMarker, items: Vec<Node>) -> Node {
+fn list_of(marker: ListMarker, items: Vec<Node>) -> Node {
     match marker {
-        NestedMarker::Task => tasks(items),
-        NestedMarker::Ordered => ordered_list(items),
-        NestedMarker::Hyphen | NestedMarker::Asterisk => unordered_list(items),
+        ListMarker::Task => tasks(items),
+        ListMarker::Ordered => ordered_list(items),
+        ListMarker::Hyphen | ListMarker::Asterisk => unordered_list(items),
     }
 }
 
 struct NestingLevel {
     parent_width: Option<usize>,
     lists: Vec<Node>,
-    marker: NestedMarker,
+    marker: ListMarker,
     items: Vec<Node>,
     last_item: Node,
     last_width: usize,
@@ -131,17 +143,9 @@ fn group_nested_lines(lines: Vec<NestedLine>) -> Vec<Node> {
         .finish()
 }
 
-fn trim_start_js(text: &str) -> &str {
-    text.trim_start_matches(is_js_whitespace)
-}
-
-fn trim_end_js(text: &str) -> &str {
-    text.trim_end_matches(is_js_whitespace)
-}
-
 fn trim_cell_content(mut value: Vec<Node>) -> Vec<Node> {
     if let Some(Node::PlainText { value: text }) = value.first() {
-        let trimmed = trim_start_js(text).to_string();
+        let trimmed = text.trim_start_matches(is_js_whitespace).to_string();
         if trimmed.is_empty() {
             value.remove(0);
         } else {
@@ -149,7 +153,7 @@ fn trim_cell_content(mut value: Vec<Node>) -> Vec<Node> {
         }
     }
     if let Some(Node::PlainText { value: text }) = value.last() {
-        let trimmed = trim_end_js(text).to_string();
+        let trimmed = text.trim_end_matches(is_js_whitespace).to_string();
         let last = value.len() - 1;
         if trimmed.is_empty() {
             value.pop();
@@ -187,10 +191,35 @@ fn build_table(
             )
         })
         .collect();
-    table(header_cells, body_rows, Some(range))
+    table(header_cells, body_rows, range)
 }
 
 impl Parser<'_> {
+    pub(super) fn start(&mut self) -> Vec<Node> {
+        if let Some((end, nodes)) = self.big_emoji(0) {
+            if end == self.len() {
+                return nodes;
+            }
+        }
+        let mut nodes = Vec::new();
+        let mut position = 0;
+        loop {
+            if let Some((end, node)) = self.blocks(position) {
+                nodes.push(node);
+                position = end;
+            } else if let Some((end, node)) = self.paragraph(position) {
+                nodes.push(node);
+                position = end;
+            } else if let Some(end) = self.end_of_line(position) {
+                nodes.push(paragraph(vec![plain("")]));
+                position = end;
+            } else {
+                break;
+            }
+        }
+        nodes
+    }
+
     pub(super) fn blocks(&mut self, position: usize) -> Parsed<Node> {
         self.blockquote(position)
             .or_else(|| self.block_spoiler(position))
@@ -199,9 +228,7 @@ impl Parser<'_> {
             .or_else(|| self.horizontal_rule(position))
             .or_else(|| self.table(position))
             .or_else(|| self.heading(position))
-            .or_else(|| self.tasks(position))
-            .or_else(|| self.ordered_list(position))
-            .or_else(|| self.unordered_list(position))
+            .or_else(|| self.list(position))
             .or_else(|| self.katex(position))
             .or_else(|| self.line_break(position))
     }
@@ -232,18 +259,18 @@ impl Parser<'_> {
     pub(super) fn inline_items(&mut self, position: usize, flags: Flags) -> Parsed<Vec<Item>> {
         let mut items = Vec::new();
         let mut cursor = position;
-        loop {
-            if let Some((end, item)) = self.inline_item_pattern(cursor, flags) {
-                items.push(item);
-                cursor = end;
-            } else if let Some(end) = self.any(cursor) {
-                items.push(Item::One(plain(self.text(cursor, end))));
-                cursor = end;
-            } else {
-                break;
-            }
+        while let Some((end, item)) = self.inline_item_or_any(cursor, flags) {
+            items.push(item);
+            cursor = end;
         }
         (!items.is_empty()).then_some((cursor, items))
+    }
+
+    pub(super) fn inline_item_or_any(&mut self, position: usize, flags: Flags) -> Parsed<Item> {
+        self.inline_item_pattern(position, flags).or_else(|| {
+            let end = self.any(position)?;
+            Some((end, Item::One(plain(self.text(position, end)))))
+        })
     }
 
     fn blockquote(&mut self, position: usize) -> Parsed<Node> {
@@ -267,26 +294,25 @@ impl Parser<'_> {
 
     fn block_spoiler(&mut self, position: usize) -> Parsed<Node> {
         let after_open = self.literal(position, "||")?;
-        let mut cursor = self.end_of_line(after_open)?;
+        let first_paragraph = self.end_of_line(after_open)?;
+        let paragraphs_end = self.run_end(Run::SpoilerParagraphs, first_paragraph)?;
+        let before_close = self.end_of_line(paragraphs_end).unwrap_or(paragraphs_end);
+        let end = self.literal(before_close, "||")?;
         let mut paragraphs = Vec::new();
-        loop {
-            if self.literal(cursor, "||").is_some() {
-                break;
-            }
-            let Some((end, line)) = self.paragraph(cursor) else {
-                break;
-            };
-            paragraphs.push(line);
-            cursor = end;
+        let mut cursor = first_paragraph;
+        while cursor < paragraphs_end {
+            let (paragraph_end, paragraph) = self.paragraph(cursor)?;
+            paragraphs.push(paragraph);
+            cursor = paragraph_end;
         }
-        if paragraphs.is_empty() {
+        Some((end, spoiler_block(paragraphs)))
+    }
+
+    pub(super) fn spoiler_paragraph_step(&mut self, position: usize) -> Option<usize> {
+        if self.literal(position, "||").is_some() {
             return None;
         }
-        if let Some(end) = self.end_of_line(cursor) {
-            cursor = end;
-        }
-        let end = self.literal(cursor, "||")?;
-        Some((end, spoiler_block(paragraphs)))
+        self.paragraph(position).map(|(end, _)| end)
     }
 
     fn code_language(&mut self, position: usize) -> (usize, Option<String>) {
@@ -301,33 +327,27 @@ impl Parser<'_> {
         let fence_end = self.run(after_minimum_fence, |unit| is(unit, b'`'));
         let fence_length = fence_end - position;
         let (after_language, language) = self.code_language(fence_end);
-        let mut cursor = self.end_of_line(after_language)?;
-        let mut lines = Vec::new();
-        loop {
-            if self.long_code_close(cursor, fence_length).is_some() {
-                break;
-            }
-            let text_end = self.run(cursor, |unit| unit != 0x0A && unit != 0x0D);
-            let Some(line_end) = self.end_of_line(text_end) else {
-                break;
-            };
-            lines.push(code_line(plain(self.text(cursor, text_end))));
-            cursor = line_end;
-        }
-        if lines.is_empty() {
+        let first_line = self.end_of_line(after_language)?;
+        let close = self.next_long_code_close(first_line, fence_length)?;
+        let close_line = close.line_start as usize;
+        if close_line == first_line {
             return None;
         }
-        let end = self.long_code_close(cursor, fence_length)?;
-        Some((end, code(lines, language)))
+        let mut lines = Vec::new();
+        let mut cursor = first_line;
+        while cursor < close_line {
+            let text_end = self.run(cursor, |unit| !is_line_break(unit));
+            lines.push(code_line(plain(self.text(cursor, text_end))));
+            cursor = self.end_of_line(text_end)?;
+        }
+        Some((close.end as usize, code(lines, language)))
     }
 
-    fn long_code_close(&mut self, position: usize, fence_length: usize) -> Option<usize> {
-        let fence_end = self.run1(position, |unit| is(unit, b'`'))?;
-        if fence_end - position != fence_length {
-            return None;
-        }
-        let end = self.spaces(fence_end);
-        (self.end_of_line(end).is_some() || self.is_end(end)).then_some(end)
+    fn next_long_code_close(&mut self, position: usize, fence_length: usize) -> Option<FenceClose> {
+        self.report.input_reads += 1;
+        let closes = self.scans.long_code_closes.get(&fence_length)?;
+        let next = closes.partition_point(|close| (close.line_start as usize) < position);
+        closes.get(next).copied()
     }
 
     fn code(&mut self, position: usize) -> Parsed<Node> {
@@ -362,8 +382,8 @@ impl Parser<'_> {
     }
 
     fn code_chunk_char(&mut self, position: usize) -> Option<usize> {
-        let is_line_end_or_fence = |unit: u16| is(unit, b'`') || unit == 0x0A || unit == 0x0D;
-        let is_line_end = |unit: Option<u16>| matches!(unit, None | Some(0x0A) | Some(0x0D));
+        let is_line_end_or_fence = |unit: u16| is(unit, b'`') || is_line_break(unit);
+        let is_line_end = |unit: Option<u16>| unit.is_none_or(is_line_break);
         let unit = self.at(position)?;
         if !is_line_end_or_fence(unit) {
             return Some(position + 1);
@@ -407,7 +427,7 @@ impl Parser<'_> {
             None if self.is_end(trailing_end) => trailing_end,
             None => return None,
         };
-        Some((end, horizontal_rule(Some([markers_start, markers_end]))))
+        Some((end, horizontal_rule([markers_start, markers_end])))
     }
 
     fn table(&mut self, position: usize) -> Parsed<Node> {
@@ -456,15 +476,11 @@ impl Parser<'_> {
             if self.char(cursor, b'|').is_some() || self.end_of_line(cursor).is_some() {
                 break;
             }
-            if let Some((end, item)) = self.inline_item_pattern(cursor, Flags::NONE) {
-                items.push(item);
-                cursor = end;
-            } else if let Some(end) = self.any(cursor) {
-                items.push(Item::One(plain(self.text(cursor, end))));
-                cursor = end;
-            } else {
+            let Some((end, item)) = self.inline_item_or_any(cursor, Flags::NONE) else {
                 break;
-            }
+            };
+            items.push(item);
+            cursor = end;
         }
         (cursor, reduce_plain_texts(items))
     }
@@ -517,15 +533,9 @@ impl Parser<'_> {
         if level_end == position {
             return None;
         }
-        let text_start = self.run1(level_end, super::chars::is_space)?;
-        let (mut cursor, items) = self.inline_items(text_start, Flags::NONE)?;
-        if let Some(end) = self.end_of_line(cursor) {
-            cursor = end;
-        }
-        Some((
-            cursor,
-            heading(reduce_plain_texts(items), (level_end - position) as u8),
-        ))
+        let text_start = self.run1(level_end, is_space)?;
+        let (end, text) = self.inline(text_start)?;
+        Some((end, heading(text, (level_end - position) as u8)))
     }
 
     fn task_flag(&mut self, position: usize) -> Parsed<bool> {
@@ -540,87 +550,16 @@ impl Parser<'_> {
         let after_open = self.literal(position, "- [")?;
         let (after_flag, status) = self.task_flag(after_open)?;
         let after_close = self.char(after_flag, b']')?;
-        let text_start = self.run1(after_close, super::chars::is_space)?;
+        let text_start = self.run1(after_close, is_space)?;
         Some((text_start, status))
-    }
-
-    fn tasks(&mut self, position: usize) -> Parsed<Node> {
-        let mut items = Vec::new();
-        let mut cursor = position;
-        while let Some((end, item)) = self.task(cursor) {
-            items.push(item);
-            cursor = end;
-        }
-        (!items.is_empty()).then(|| (cursor, tasks(items)))
-    }
-
-    fn task(&mut self, position: usize) -> Parsed<Node> {
-        let (text_start, status) = self.task_head(position)?;
-        let (mut cursor, text) = self.inline(text_start)?;
-        let nested = self.nested_lists(cursor).map(|(end, nested)| {
-            cursor = end;
-            nested
-        });
-        Some((cursor, task(text, status, nested)))
     }
 
     fn ordered_head(&mut self, position: usize) -> Parsed<f64> {
         let digits_end = self.digits(position)?;
         let after_dot = self.char(digits_end, b'.')?;
-        let text_start = self.run1(after_dot, super::chars::is_space)?;
+        let text_start = self.run1(after_dot, is_space)?;
         let number = self.text(position, digits_end).parse::<f64>().ok()?;
         Some((text_start, number))
-    }
-
-    fn ordered_list(&mut self, position: usize) -> Parsed<Node> {
-        let mut items = Vec::new();
-        let mut cursor = position;
-        while let Some((end, item)) = self.ordered_list_item(cursor) {
-            items.push(item);
-            cursor = end;
-        }
-        (!items.is_empty()).then(|| (cursor, ordered_list(items)))
-    }
-
-    fn ordered_list_item(&mut self, position: usize) -> Parsed<Node> {
-        let (text_start, number) = self.ordered_head(position)?;
-        let (mut cursor, text) = self.inline(text_start)?;
-        let nested = self.nested_lists(cursor).map(|(end, nested)| {
-            cursor = end;
-            nested
-        });
-        Some((cursor, list_item(text, Some(number), nested)))
-    }
-
-    fn unordered_list(&mut self, position: usize) -> Parsed<Node> {
-        for asterisk in [false, true] {
-            let mut items = Vec::new();
-            let mut cursor = position;
-            while let Some((end, item)) = self.unordered_list_item(cursor, asterisk) {
-                items.push(item);
-                cursor = end;
-            }
-            if !items.is_empty() {
-                return Some((cursor, unordered_list(items)));
-            }
-        }
-        None
-    }
-
-    fn unordered_list_item(&mut self, position: usize, asterisk: bool) -> Parsed<Node> {
-        let marker = if asterisk { b'*' } else { b'-' };
-        let after_marker = self.char(position, marker)?;
-        let text_start = self.run1(after_marker, super::chars::is_space)?;
-        let (mut cursor, text) = if asterisk {
-            self.unordered_list_item_content(text_start)?
-        } else {
-            self.inline(text_start)?
-        };
-        let nested = self.nested_lists(cursor).map(|(end, nested)| {
-            cursor = end;
-            nested
-        });
-        Some((cursor, list_item(text, None, nested)))
     }
 
     fn unordered_list_item_content(&mut self, position: usize) -> Parsed<Vec<Node>> {
@@ -674,7 +613,7 @@ impl Parser<'_> {
     }
 
     fn nested_list_line(&mut self, position: usize) -> Parsed<NestedLine> {
-        let indent_end = self.run1(position, super::chars::is_space)?;
+        let indent_end = self.run1(position, is_space)?;
         let width = indent_width(&self.source[position..indent_end]);
         let (end, marker, item) = self.nested_list_line_item(indent_end)?;
         Some((
@@ -687,32 +626,58 @@ impl Parser<'_> {
         ))
     }
 
-    fn nested_list_line_item(&mut self, position: usize) -> Option<(usize, NestedMarker, Node)> {
-        if let Some((text_start, status)) = self.task_head(position) {
-            if let Some((end, text)) = self.inline(text_start) {
-                return Some((end, NestedMarker::Task, task(text, status, None)));
+    fn nested_list_line_item(&mut self, position: usize) -> Option<(usize, ListMarker, Node)> {
+        LIST_MARKERS.into_iter().find_map(|marker| {
+            self.list_line_item(position, marker)
+                .map(|(end, item)| (end, marker, item))
+        })
+    }
+
+    fn list(&mut self, position: usize) -> Parsed<Node> {
+        LIST_MARKERS
+            .into_iter()
+            .find_map(|marker| self.list_of_marker(position, marker))
+    }
+
+    fn list_of_marker(&mut self, position: usize, marker: ListMarker) -> Parsed<Node> {
+        let mut items = Vec::new();
+        let mut cursor = position;
+        while let Some((end, mut item)) = self.list_line_item(cursor, marker) {
+            cursor = end;
+            if let Some((end, nested)) = self.nested_lists(cursor) {
+                attach_nested(&mut item, nested);
+                cursor = end;
+            }
+            items.push(item);
+        }
+        (!items.is_empty()).then(|| (cursor, list_of(marker, items)))
+    }
+
+    fn list_line_item(&mut self, position: usize, marker: ListMarker) -> Parsed<Node> {
+        match marker {
+            ListMarker::Task => {
+                let (text_start, status) = self.task_head(position)?;
+                let (end, text) = self.inline(text_start)?;
+                Some((end, task(text, status, None)))
+            }
+            ListMarker::Ordered => {
+                let (text_start, number) = self.ordered_head(position)?;
+                let (end, text) = self.inline(text_start)?;
+                Some((end, list_item(text, Some(number), None)))
+            }
+            ListMarker::Hyphen => {
+                let after_marker = self.char(position, b'-')?;
+                let text_start = self.run1(after_marker, is_space)?;
+                let (end, text) = self.inline(text_start)?;
+                Some((end, list_item(text, None, None)))
+            }
+            ListMarker::Asterisk => {
+                let after_marker = self.char(position, b'*')?;
+                let text_start = self.run1(after_marker, is_space)?;
+                let (end, text) = self.unordered_list_item_content(text_start)?;
+                Some((end, list_item(text, None, None)))
             }
         }
-        if let Some((text_start, number)) = self.ordered_head(position) {
-            if let Some((end, text)) = self.inline(text_start) {
-                return Some((
-                    end,
-                    NestedMarker::Ordered,
-                    list_item(text, Some(number), None),
-                ));
-            }
-        }
-        if let Some(after_marker) = self.char(position, b'-') {
-            if let Some(text_start) = self.run1(after_marker, super::chars::is_space) {
-                if let Some((end, text)) = self.inline(text_start) {
-                    return Some((end, NestedMarker::Hyphen, list_item(text, None, None)));
-                }
-            }
-        }
-        let after_marker = self.char(position, b'*')?;
-        let text_start = self.run1(after_marker, super::chars::is_space)?;
-        let (end, text) = self.unordered_list_item_content(text_start)?;
-        Some((end, NestedMarker::Asterisk, list_item(text, None, None)))
     }
 
     fn katex(&mut self, position: usize) -> Parsed<Node> {
@@ -738,5 +703,47 @@ impl Parser<'_> {
         let after_spaces = self.spaces(position);
         let end = self.end_of_line(after_spaces)?;
         Some((end, line_break()))
+    }
+}
+
+fn run_length(units: &[u16], predicate: impl Fn(u16) -> bool) -> usize {
+    units.iter().take_while(|&&unit| predicate(unit)).count()
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct FenceClose {
+    line_start: u32,
+    end: u32,
+}
+
+fn fence_close(source: &[u16], line_start: usize) -> Option<(usize, FenceClose)> {
+    let fence_length = run_length(&source[line_start..], |unit| is(unit, b'`'));
+    if fence_length == 0 {
+        return None;
+    }
+    let fence_end = line_start + fence_length;
+    let end = fence_end + run_length(&source[fence_end..], is_space);
+    let at_line_end = end == source.len() || line_break_length(&source[end..]).is_some();
+    at_line_end.then_some((
+        fence_length,
+        FenceClose {
+            line_start: line_start as u32,
+            end: end as u32,
+        },
+    ))
+}
+
+pub(super) fn long_code_closes(source: &[u16]) -> FxHashMap<usize, Vec<FenceClose>> {
+    let mut closes: FxHashMap<usize, Vec<FenceClose>> = FxHashMap::default();
+    let mut line_start = 0;
+    loop {
+        if let Some((fence_length, close)) = fence_close(source, line_start) {
+            closes.entry(fence_length).or_default().push(close);
+        }
+        let text_end = line_start + run_length(&source[line_start..], |unit| !is_line_break(unit));
+        let Some(line_break) = line_break_length(&source[text_end..]) else {
+            return closes;
+        };
+        line_start = text_end + line_break;
     }
 }

@@ -1,33 +1,8 @@
 mod suffix_data;
+#[cfg(test)]
+mod tests;
 
-use suffix_data::{EDGES, EXCEPTIONS_ROOT, LABELS, NODES, RULES_ROOT};
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TldOptions {
-    pub detect_ip: bool,
-    pub allow_private_domains: bool,
-    pub valid_hosts: Option<Vec<String>>,
-}
-
-impl Default for TldOptions {
-    fn default() -> Self {
-        Self {
-            detect_ip: true,
-            allow_private_domains: false,
-            valid_hosts: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct TldResult {
-    pub hostname: Option<String>,
-    pub domain: Option<String>,
-    pub public_suffix: Option<String>,
-    pub is_icann: Option<bool>,
-    pub is_private: Option<bool>,
-    pub is_ip: Option<bool>,
-}
+use suffix_data::{EDGES, LABELS, NODES, RULES_ROOT};
 
 const SPACE: u16 = b' ' as u16;
 const DOT: u16 = b'.' as u16;
@@ -42,37 +17,20 @@ const DASH: u16 = b'-' as u16;
 const UNDERSCORE: u16 = b'_' as u16;
 const PLUS: u16 = b'+' as u16;
 
-const ICANN_RULE: u8 = 1;
-const PRIVATE_RULE: u8 = 2;
-
-pub fn parse(url: &str, options: &TldOptions) -> TldResult {
-    let mut result = TldResult::default();
+pub(crate) fn is_linkable(url: &str, detect_ip: bool, valid_hosts: &[String]) -> bool {
     let url: Vec<u16> = url.encode_utf16().collect();
-
     let Some(hostname) = extract_hostname(&url, is_valid_hostname(&url)) else {
-        return result;
+        return false;
     };
-    result.hostname = Some(String::from_utf16_lossy(&hostname));
-
-    if options.detect_ip {
-        let hostname_is_ip = is_ip(&hostname);
-        result.is_ip = Some(hostname_is_ip);
-        if hostname_is_ip {
-            return result;
-        }
+    if detect_ip && is_ip(&hostname) {
+        return true;
     }
-
-    if !is_valid_hostname(&hostname) {
-        result.hostname = None;
-        return result;
-    }
-
-    let suffix = lookup_public_suffix(&hostname, options);
-    result.is_icann = Some(suffix.is_icann);
-    result.is_private = Some(suffix.is_private);
-    result.domain = get_domain(&suffix.public_suffix, &hostname, options);
-    result.public_suffix = Some(suffix.public_suffix);
-    result
+    is_valid_hostname(&hostname)
+        && (has_public_suffix_rule(&hostname)
+            || valid_hosts
+                .iter()
+                .find(|valid_host| share_same_domain_suffix(&hostname, valid_host))
+                .is_some_and(|valid_host| !valid_host.is_empty()))
 }
 
 fn is_ascii_byte_in(code: u16, first: u8, last: u8) -> bool {
@@ -285,35 +243,6 @@ fn is_ip(hostname: &[u16]) -> bool {
     is_probably_ipv6(hostname) || is_probably_ipv4(hostname)
 }
 
-struct PublicSuffix {
-    public_suffix: String,
-    is_icann: bool,
-    is_private: bool,
-}
-
-fn fast_path_lookup(hostname: &[u16], options: &TldOptions) -> Option<PublicSuffix> {
-    if options.allow_private_domains || hostname.len() <= 3 {
-        return None;
-    }
-
-    let ends_with = |suffix: &str| hostname.ends_with(&suffix.encode_utf16().collect::<Vec<u16>>());
-    let public_suffix = [".com", ".org", ".edu", ".gov", ".net", ".de"]
-        .into_iter()
-        .find(|suffix| ends_with(suffix))?;
-
-    Some(PublicSuffix {
-        public_suffix: public_suffix[1..].to_string(),
-        is_icann: true,
-        is_private: false,
-    })
-}
-
-struct TrieMatch {
-    index: usize,
-    is_icann: bool,
-    is_private: bool,
-}
-
 fn edge_label(reference: u32) -> &'static str {
     let start = (reference >> 8) as usize;
     let length = (reference & 0xff) as usize;
@@ -329,104 +258,31 @@ fn find_child(node: u16, label: &str) -> Option<u16> {
         .map(|position| edges[position].1)
 }
 
-fn lookup_in_trie(parts: &[&str], root: u16, allowed_mask: u8) -> Option<TrieMatch> {
-    let mut found = None;
+fn trie_has_rule(labels: &[&str], root: u16) -> bool {
     let mut node = Some(root);
-    let mut remaining = parts.len();
+    let mut remaining = labels.len();
     while let Some(current) = node {
-        let rule_type = NODES[usize::from(current)].0;
-        if rule_type & allowed_mask != 0 {
-            found = Some(TrieMatch {
-                index: remaining,
-                is_icann: rule_type == ICANN_RULE,
-                is_private: rule_type == PRIVATE_RULE,
-            });
+        if NODES[usize::from(current)].0 != 0 {
+            return true;
         }
-
         if remaining == 0 {
-            break;
+            return false;
         }
-
         remaining -= 1;
-        node = find_child(current, parts[remaining]).or_else(|| find_child(current, "*"));
+        node = find_child(current, labels[remaining]).or_else(|| find_child(current, "*"));
     }
-    found
+    false
 }
 
-fn lookup_public_suffix(hostname: &[u16], options: &TldOptions) -> PublicSuffix {
-    if let Some(suffix) = fast_path_lookup(hostname, options) {
-        return suffix;
-    }
-
+fn has_public_suffix_rule(hostname: &[u16]) -> bool {
     let hostname = String::from_utf16_lossy(hostname);
-    let parts: Vec<&str> = hostname.split('.').collect();
-    let allowed_mask = if options.allow_private_domains {
-        PRIVATE_RULE | ICANN_RULE
-    } else {
-        ICANN_RULE
-    };
-
-    if let Some(exception) = lookup_in_trie(&parts, EXCEPTIONS_ROOT, allowed_mask) {
-        return PublicSuffix {
-            public_suffix: parts.get(exception.index + 1..).unwrap_or(&[]).join("."),
-            is_icann: exception.is_icann,
-            is_private: exception.is_private,
-        };
-    }
-
-    if let Some(rule) = lookup_in_trie(&parts, RULES_ROOT, allowed_mask) {
-        return PublicSuffix {
-            public_suffix: parts[rule.index..].join("."),
-            is_icann: rule.is_icann,
-            is_private: rule.is_private,
-        };
-    }
-
-    PublicSuffix {
-        public_suffix: parts
-            .last()
-            .map_or_else(String::new, |last| last.to_string()),
-        is_icann: false,
-        is_private: false,
-    }
+    let labels: Vec<&str> = hostname.split('.').collect();
+    trie_has_rule(&labels, RULES_ROOT)
 }
 
-fn share_same_domain_suffix(hostname: &[u16], valid_host: &[u16]) -> bool {
-    hostname.ends_with(valid_host)
+fn share_same_domain_suffix(hostname: &[u16], valid_host: &str) -> bool {
+    let valid_host: Vec<u16> = valid_host.encode_utf16().collect();
+    hostname.ends_with(&valid_host)
         && (hostname.len() == valid_host.len()
             || hostname[hostname.len() - valid_host.len() - 1] == DOT)
-}
-
-fn last_index_of_dot(hostname: &[u16], from_index: isize) -> Option<usize> {
-    if hostname.is_empty() {
-        return None;
-    }
-    let from_index = from_index.clamp(0, hostname.len() as isize - 1) as usize;
-    hostname[..=from_index]
-        .iter()
-        .rposition(|&code| code == DOT)
-}
-
-fn get_domain(public_suffix: &str, hostname: &[u16], options: &TldOptions) -> Option<String> {
-    if let Some(valid_hosts) = &options.valid_hosts {
-        for valid_host in valid_hosts {
-            let valid_host_units: Vec<u16> = valid_host.encode_utf16().collect();
-            if share_same_domain_suffix(hostname, &valid_host_units) {
-                return Some(valid_host.clone());
-            }
-        }
-    }
-
-    let number_of_leading_dots = hostname.iter().take_while(|&&code| code == DOT).count();
-    let public_suffix_length = public_suffix.encode_utf16().count();
-    if public_suffix_length == hostname.len() - number_of_leading_dots {
-        return None;
-    }
-
-    let public_suffix_index = hostname.len() as isize - public_suffix_length as isize - 2;
-    let domain = match last_index_of_dot(hostname, public_suffix_index) {
-        Some(last_dot) => &hostname[last_dot + 1..],
-        None => hostname,
-    };
-    Some(String::from_utf16_lossy(domain))
 }

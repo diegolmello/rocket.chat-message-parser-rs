@@ -1,11 +1,89 @@
 use std::panic::{self, AssertUnwindSafe};
 use std::time::SystemTime;
 
-mod support;
-
 use message_parser::{parse_at, Node};
 use serde_json::Value;
-use support::{clock_at, js_equal, pretty, Case, Fixture, Matcher};
+
+mod common;
+
+use common::{clock_at, fixed_clock, js_equal, panic_message, pretty, Case, Fixture, Matcher};
+
+const UPSTREAM_VERSION: &str = "0.33.0";
+
+const NOT_OBSERVABLE_THROUGH_PARSE: &str = "calls src/utils.autoLink directly";
+
+const UNCAPTURED_UPSTREAM_TESTS: &[(&str, &str, &str)] = &[
+    (
+        "emoji.test.ts",
+        "every emoji parses as one token, except documented components (emojibase@17.0.0)",
+        "tests/emoji.rs::every_emoji_parses_as_one_token_except_documented_components",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"***\" as a horizontal rule",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"___\" as a horizontal rule",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"*******\" as a horizontal rule",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
+    ),
+    (
+        "horizontalRule.test.ts",
+        "does not treat \"_______\" as a horizontal rule",
+        "tests/horizontal_rule.rs::asterisk_and_underscore_runs_are_not_horizontal_rules",
+    ),
+    (
+        "table.test.ts",
+        "normalizes ragged body rows to the header column count",
+        "tests/table.rs::normalizes_ragged_body_rows_to_the_header_column_count",
+    ),
+    (
+        "table.test.ts",
+        "exposes the source offsets as fallback for renderers without table support",
+        "tests/table.rs::exposes_the_source_offsets_as_fallback_for_renderers_without_table_support",
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should preserve the original protocol if the protocol is http or https",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should preserve the original protocol for invalid absolute URLs",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should preserve the original protocol even if for custom protocols",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return // as the protocol if // is the protocol specified",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return an url concatenated '//' if the url has no protocol",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return an url concatenated '//' if the url has no protocol and has sub-domain",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+    (
+        "url.test.ts",
+        "autoLink helper function > should return an plain text url due to invalid TLD that's validate with the external library TLDTS",
+        NOT_OBSERVABLE_THROUGH_PARSE,
+    ),
+];
 
 fn matches_object(actual: &Value, expected: &Value) -> bool {
     match (actual, expected) {
@@ -27,18 +105,10 @@ fn matches_object(actual: &Value, expected: &Value) -> bool {
     }
 }
 
-fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
-    payload
-        .downcast_ref::<&str>()
-        .map(|message| (*message).to_owned())
-        .or_else(|| payload.downcast_ref::<String>().cloned())
-        .unwrap_or_else(|| "non-string panic payload".to_owned())
-}
-
 fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
-    let options = case.options.to_options();
+    let options = &case.options.to_options();
     let nodes: Vec<Node> =
-        panic::catch_unwind(AssertUnwindSafe(|| parse_at(&case.input, &options, now)))
+        panic::catch_unwind(AssertUnwindSafe(|| parse_at(&case.input, options, now)))
             .map_err(|payload| format!("parse panicked: {}", panic_message(payload.as_ref())))?;
     let expected = match (case.matcher, &case.expected) {
         (Matcher::NotToThrow, _) => return Ok(()),
@@ -66,18 +136,14 @@ fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
     ))
 }
 
-fn run_fixture(source: &str) {
-    let fixture: Fixture =
-        serde_json::from_str(source).expect("fixture JSON matches the extractor's schema");
+fn fixture_failures(fixture: &Fixture) -> Vec<String> {
     let mut failures = Vec::new();
-    let mut checked = 0;
     for group in &fixture.groups {
         let now = match &group.needs_clock {
             Some(clock) => clock_at(clock),
-            None => SystemTime::now(),
+            None => fixed_clock(),
         };
         for case in &group.cases {
-            checked += 1;
             if let Err(reason) = check_case(case, now) {
                 failures.push(format!(
                     "[{}] {}\n  input:   {:?}\n  options: {:?}\n  {reason}",
@@ -86,91 +152,94 @@ fn run_fixture(source: &str) {
             }
         }
     }
-    if !failures.is_empty() {
-        panic!(
-            "{} of {checked} case(s) from {} failed:\n\n{}",
-            failures.len(),
-            fixture.file,
-            failures.join("\n\n")
-        );
-    }
+    failures
 }
 
-macro_rules! upstream_fixtures {
-    ($($test_name:ident => $fixture_stem:literal),* $(,)?) => {
-        $(
-            #[test]
-            fn $test_name() {
-                run_fixture(include_str!(concat!("fixtures/upstream/", $fixture_stem, ".json")));
-            }
-        )*
+const FIXTURE_DIRECTORY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/upstream");
 
-        const FIXTURE_STEMS: &[&str] = &[$($fixture_stem),*];
-    };
-}
-
-upstream_fixtures! {
-    abuse => "abuse",
-    any => "any",
-    blockquotes => "blockquotes",
-    code_fence => "codeFence",
-    color => "color",
-    email => "email",
-    emoji => "emoji",
-    emoticons => "emoticons",
-    emphasis => "emphasis",
-    emphasis_with_emoticons => "emphasisWithEmoticons",
-    escaped => "escaped",
-    heading => "heading",
-    horizontal_rule => "horizontalRule",
-    image => "image",
-    inline_code => "inlineCode",
-    inline_code_strike => "inlineCodeStrike",
-    katex => "katex",
-    line_break => "lineBreak",
-    link => "link",
-    long_code_fence => "longCodeFence",
-    mention => "mention",
-    nested_list => "nestedList",
-    ordered_list => "orderedList",
-    phone_number => "phoneNumber",
-    skip_flags_regression => "skip-flags-regression",
-    spoiler => "spoiler",
-    spoiler_block => "spoilerBlock",
-    strikethrough => "strikethrough",
-    strong_emphasis => "strongEmphasis",
-    table => "table",
-    tasks => "tasks",
-    timestamp => "timestamp",
-    unordered_list => "unorderedList",
-    url => "url",
-}
-
-#[test]
-fn every_fixture_file_has_a_test() {
-    let directory = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/upstream");
-    let mut on_disk: Vec<String> = std::fs::read_dir(directory)
+fn fixture_paths() -> Vec<std::path::PathBuf> {
+    let mut paths: Vec<std::path::PathBuf> = std::fs::read_dir(FIXTURE_DIRECTORY)
         .expect("fixture directory exists")
         .map(|entry| entry.expect("fixture directory entry is readable").path())
         .filter(|path| {
             path.extension()
                 .is_some_and(|extension| extension == "json")
         })
+        .collect();
+    paths.sort();
+    paths
+}
+
+fn load_fixtures() -> Vec<Fixture> {
+    let fixtures: Vec<Fixture> = fixture_paths()
+        .iter()
         .map(|path| {
-            path.file_stem()
-                .expect("fixture has a name")
-                .to_string_lossy()
-                .into_owned()
+            let source = std::fs::read_to_string(path).expect("fixture is readable");
+            serde_json::from_str(&source).expect("fixture JSON matches the extractor's schema")
         })
         .collect();
-    on_disk.sort();
-    let mut covered: Vec<String> = FIXTURE_STEMS
-        .iter()
-        .map(|stem| (*stem).to_owned())
+    assert!(!fixtures.is_empty(), "no fixtures in {FIXTURE_DIRECTORY}");
+    for fixture in &fixtures {
+        assert_eq!(
+            fixture.upstream_version, UPSTREAM_VERSION,
+            "{} was extracted from a different upstream version",
+            fixture.file
+        );
+    }
+    fixtures
+}
+
+#[test]
+fn every_uncaptured_upstream_test_has_a_hand_port_or_a_reason() {
+    let mut uncaptured: Vec<(String, String)> = load_fixtures()
+        .into_iter()
+        .flat_map(|fixture| {
+            let file = fixture.file;
+            fixture
+                .uncaptured
+                .into_iter()
+                .map(move |test| (file.clone(), test.name))
+        })
         .collect();
-    covered.sort();
+    uncaptured.sort();
+    let mut accounted: Vec<(String, String)> = UNCAPTURED_UPSTREAM_TESTS
+        .iter()
+        .map(|(file, name, _)| ((*file).to_owned(), (*name).to_owned()))
+        .collect();
+    accounted.sort();
     assert_eq!(
-        on_disk, covered,
-        "tests/upstream.rs must list every fixture in {directory}"
+        uncaptured, accounted,
+        "an upstream test the fixtures cannot capture needs a hand port or a reason in UNCAPTURED_UPSTREAM_TESTS"
+    );
+    for (_, name, covered_by) in UNCAPTURED_UPSTREAM_TESTS {
+        if *covered_by != NOT_OBSERVABLE_THROUGH_PARSE {
+            let (file, test_function) = covered_by
+                .split_once("::")
+                .expect("a hand port is named as <file>::<test function>");
+            let hand_port = concat!(env!("CARGO_MANIFEST_DIR"), "/").to_owned() + file;
+            let source = std::fs::read_to_string(&hand_port)
+                .unwrap_or_else(|_| panic!("{name}: hand port {file} is missing"));
+            assert!(
+                source.contains(&format!("fn {test_function}()")),
+                "{name}: hand port {covered_by} is missing"
+            );
+        }
+    }
+}
+
+#[test]
+fn every_upstream_fixture_case_matches() {
+    let fixtures = load_fixtures();
+    let checked: usize = fixtures
+        .iter()
+        .flat_map(|fixture| &fixture.groups)
+        .map(|group| group.cases.len())
+        .sum();
+    let failures: Vec<String> = fixtures.iter().flat_map(fixture_failures).collect();
+    assert!(
+        failures.is_empty(),
+        "{} of {checked} case(s) failed:\n\n{}",
+        failures.len(),
+        failures.join("\n\n")
     );
 }

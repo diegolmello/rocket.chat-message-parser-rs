@@ -10,6 +10,7 @@ pub(super) enum Repetition {
     Emphasis(EmphasisContent),
     Strike,
     LinkTitle,
+    Spoiler,
 }
 
 pub(super) enum Piece {
@@ -28,6 +29,7 @@ pub(super) enum Run {
     MarkdownLinkUrlBody,
     MarkdownLinkExtras,
     MarkdownLinkParenthesized,
+    SpoilerParagraphs,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -42,6 +44,7 @@ impl Repetition {
             Repetition::Emphasis(content) => parser.emphasis_content_item(position, flags, content),
             Repetition::Strike => parser.strike_content_item(position, flags),
             Repetition::LinkTitle => parser.link_title(position, flags),
+            Repetition::Spoiler => parser.spoiler_content_item(position, flags),
         }
     }
 }
@@ -58,6 +61,7 @@ impl Run {
             Run::MarkdownLinkUrlBody => parser.markdown_link_url_body_step(position),
             Run::MarkdownLinkExtras => parser.class(position, is_markdown_link_extra),
             Run::MarkdownLinkParenthesized => parser.markdown_link_parenthesized_step(position),
+            Run::SpoilerParagraphs => parser.spoiler_paragraph_step(position),
         }
     }
 }

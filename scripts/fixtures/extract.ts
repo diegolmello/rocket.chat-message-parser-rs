@@ -276,7 +276,10 @@ mkdirSync(emojiFixturesDirectory, { recursive: true });
 
 const packageVersion = (): string => {
 	const packageJsonPath = resolve(testsDirectory, '../package.json');
-	return existsSync(packageJsonPath) ? JSON.parse(readFileSync(packageJsonPath, 'utf8')).version : 'unknown';
+	if (!existsSync(packageJsonPath)) {
+		throw new Error(`no package.json at ${packageJsonPath}; pass the upstream package's tests directory`);
+	}
+	return JSON.parse(readFileSync(packageJsonPath, 'utf8')).version;
 };
 
 const writeJson = (path: string, value: unknown) => writeFileSync(path, `${JSON.stringify(value, null, '\t')}\n`);

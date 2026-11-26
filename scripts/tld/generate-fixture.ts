@@ -15,15 +15,14 @@ if (version !== "6.1.86") {
 }
 const { parse } = await import(tldtsPackage);
 
-const optionSets: Record<string, Record<string, unknown>> = {
+const optionSets: Record<string, { detectIp: boolean; allowPrivateDomains: boolean; validHosts: string[] }> = {
   autolink: { detectIp: true, allowPrivateDomains: true, validHosts: ["localhost"] },
   autolinkCustomDomains: {
     detectIp: true,
     allowPrivateDomains: true,
     validHosts: ["localhost", "intranet", "rocket.internal"],
   },
-  email: { detectIp: false, allowPrivateDomains: true },
-  defaults: {},
+  email: { detectIp: false, allowPrivateDomains: true, validHosts: [] },
 };
 
 const hosts = [
@@ -429,8 +428,9 @@ for (const [optionsName, options] of Object.entries(optionSets)) {
       ? [...new Set([...inputs, ...inputs.map((input) => `mailto:${input}`)])]
       : inputs;
   for (const input of optionInputs) {
-    const { hostname, domain, publicSuffix, isIcann, isPrivate, isIp } = parse(input, options);
-    cases.push({ options: optionsName, input, hostname, domain, publicSuffix, isIcann, isPrivate, isIp });
+    const { domain, isIcann, isPrivate, isIp } = parse(input, options);
+    const linkable = Boolean(isIcann || isIp || isPrivate || (domain && options.validHosts.includes(domain)));
+    cases.push({ options: optionsName, input, linkable });
   }
 }
 
