@@ -1,11 +1,19 @@
 ---
 name: verify-upstream-equivalence
 description: Check that the Rust message parser produces the same AST as @rocket.chat/message-parser 0.33.0, by running both on every short markup string and on generated token sequences, under every option. Use before committing any change under src/parser/, src/tld.rs, src/tld/ or src/ast.rs, and when an AST looks different from what Rocket.Chat renders.
+metadata:
+  covers:
+    - src/ast.rs
+    - src/lib.rs
+    - src/parser/
+    - src/tld.rs
+    - src/tld/
+  check: 'upstream=$(mktemp -d) && cp benchmarks/upstream/package.json benchmarks/upstream/bun.lock "$upstream" && (cd "$upstream" && bun install --frozen-lockfile) && UPSTREAM_PARSER_DIR="$upstream" TZ=UTC cargo test --release --test differential -- --ignored'
 ---
 
 # Verify upstream equivalence
 
-**Property.** For every input the check generates and each of eight option sets, `parse_at(input, options, clock)` serialized to JSON equals what `parse(input, options)` from `@rocket.chat/message-parser` 0.33.0 returns on Node at the same clock and timezone. Key order does not matter; numbers compare as JavaScript numbers. If upstream throws, or Rust panics, that counts as a mismatch.
+**Property.** For every input the check generates and each of nine option sets, `parse_at(input, options, clock)` serialized to JSON equals what `parse(input, options)` from `@rocket.chat/message-parser` 0.33.0 returns on Node at the same clock and timezone. Key order does not matter; numbers compare as JavaScript numbers. If upstream throws, or Rust panics, that counts as a mismatch.
 
 **Harm if broken.** A message renders differently in clients that use this crate than in Rocket.Chat: bold becomes literal asterisks, a link is lost or points somewhere else, a mention or emoji is missing.
 
@@ -18,15 +26,15 @@ Install the pinned upstream package once. Its `node_modules` is gitignored:
 TZ=UTC cargo test --release --test differential -- --ignored --nocapture
 ```
 
-This takes about a minute and a half and needs `node` on `PATH`. To keep `node_modules` out of the checkout, copy `benchmarks/upstream/package.json` and `bun.lock` into a `mktemp -d` directory, run `bun install --frozen-lockfile` there, and set `UPSTREAM_PARSER_DIR` to that directory. The oracle refuses to run on any version other than 0.33.0.
+This takes about three minutes and needs `node` on `PATH`. To keep `node_modules` out of the checkout, copy `benchmarks/upstream/package.json` and `bun.lock` into a `mktemp -d` directory, run `bun install --frozen-lockfile` there, and set `UPSTREAM_PARSER_DIR` to that directory. The oracle refuses to run on any version other than 0.33.0.
 
-The three tests in `tests/differential.rs` are `#[ignore]`d, so plain `cargo test` skips them. Each one prints `N inputs x 8 option sets: every AST matches upstream` when it passes:
+The three tests in `tests/differential.rs` are `#[ignore]`d, so plain `cargo test` skips them. Each one prints `N inputs x 9 option sets: every AST matches upstream` when it passes:
 
 - `every_short_character_string_matches_upstream`: every string of 1 to 3 characters over `WIDE_ALPHABET` (19 markup characters, a letter, a digit, space and newline), plus every 4-character string over `CORE_ALPHABET` (13). 41,280 inputs.
-- `every_short_token_sequence_matches_upstream`: every sequence of 1 to 3 entries of `TOKENS` (64 markup pieces: `<t:…:R>`, `- [ ] `, `http://a.b`, `a@b.co`, `color:#f00`, `:smile:`, `\(`, `😀`, block spoiler and long code fence lines, timestamps outside the int32 seconds range, URL schemes, a lone `\r` and so on). 263,088 distinct inputs.
+- `every_short_token_sequence_matches_upstream`: every sequence of 1 to 3 entries of `TOKENS` (76 markup pieces: `<t:…:R>`, `- [ ] `, `http://a.b`, `a@b.co`, `color:#f00`, `:smile:`, `\(`, `😀`, block spoiler and long code fence lines, timestamps outside the int32 seconds range, invalid dates and time-of-day timestamps, spoiler starts `||:)`, `||-___-` and `||*a*`, custom-domain hosts `x.local`, `X.LOCAL` and `http://x.Local/a`, `http://localhost`, URL schemes, a lone `\r` and so on). 440,708 distinct inputs.
 - `random_token_sequences_match_upstream`: `DIFFERENTIAL_CASES` (default 20,000) sequences of 1 to 12 pieces, each a `TOKENS` entry or a `WIDE_ALPHABET` character, from the seed `DIFFERENTIAL_SEED` (default `0x5eed0033`). Raise the count and change the seed for a deeper run.
 
-The option sets are in `option_sets()`: default (`{}`), explicit defaults (every key present and off: `false`, `katex` with both flags `false`, `customDomains: []`), `emoticons`, `colors`, `katex.dollarSyntax`, `katex.parenthesisSyntax`, `customDomains: ["a", "local"]`, and all of them together. Each set is written once, as upstream's options object: the oracle passes it to upstream as is, and Rust gets `Options` by deserializing the same JSON, so the check also covers the `Deserialize` mapping from upstream's names. The clock is `CLOCK_SECONDS` (2025-07-22T00:00:00Z) on both sides: Rust gets it through `parse_at`, and `tests/differential/oracle.mjs` replaces Node's `Date` so `new Date()` and `Date.now()` return it. Both processes share the `TZ` you set. Run once more with `TZ=America/New_York` when a change touches `src/parser/timestamp.rs`, because times without an offset resolve in the local zone.
+The option sets are in `option_sets()`: default (`{}`), explicit defaults (every key present and off: `false`, `katex` with both flags `false`, `customDomains: []`), `emoticons`, `colors`, `katex.dollarSyntax`, `katex.parenthesisSyntax`, `customDomains: ["a", "local"]`, `customDomains: ["LOCAL", "ocal", "chat", ""]` (near misses: wrong case, a suffix without a dot boundary, a real TLD, the empty string), and all of the first seven together. Each set is written once, as upstream's options object: the oracle passes it to upstream as is, and Rust gets `Options` by deserializing the same JSON, so the check also covers the `Deserialize` mapping from upstream's names. The clock is `CLOCK_SECONDS` (2025-07-22T00:00:00Z) on both sides: Rust gets it through `parse_at`, and `tests/differential/oracle.mjs` replaces Node's `Date` so `new Date()` and `Date.now()` return it. Both processes share the `TZ` you set. Run once more with `TZ=America/New_York` when a change touches `src/parser/timestamp.rs`, because times without an offset resolve in the local zone.
 
 ## Reading a failure
 
@@ -46,17 +54,18 @@ Do not weaken the comparison, drop an option set, or shrink an alphabet to make 
 | AST shape and serialization | `Node` and its serde attributes in `src/ast.rs` |
 | Every rule reachable from the alphabets and tokens | `src/parser/{mod,blocks,inline,links,emoji,timestamp,reduce,repetition,memo,chars,char_tables}.rs` |
 | Option handling | `Options`, `KatexOptions` and their `Deserialize` attributes (camelCase names, `default`) in `src/lib.rs`; every `self.options` read in `src/parser/` |
-| Autolinks and TLDs | `auto_link`, `resolve_href` in `src/parser/links.rs`; `is_linkable` in `src/tld.rs` for the hosts in `TOKENS` (`b.com`, `a.b`, `rocket.chat`, `b.co`, `c.co`) and `customDomains` |
+| Autolinks and TLDs | `auto_link`, `resolve_href` in `src/parser/links.rs`; `is_linkable` in `src/tld.rs` for the hosts in `TOKENS` (`b.com`, `a.b`, `rocket.chat`, `b.co`, `c.co`, `x.local`, `X.LOCAL`, `x.Local`, `localhost`) and both `customDomains` sets; `link_hosts` in `src/parser/links.rs`. The random run reaches an empty custom domain matching a hostname that ends in `.` only rarely, so `tests/custom_domains.rs` pins `b.m@.:]` |
 | Scheme prefix when `url::Url::parse` fails | `has_absolute_scheme_prefix` in `src/parser/links.rs`, through `http://a.b:99999`, `:99999` and the 32- and 33-character schemes in `TOKENS` |
 | Block closers | `block_spoiler`, `spoiler_paragraph_step`, `long_code`, `next_long_code_close`, `fence_close`, `long_code_closes` in `src/parser/blocks.rs`, through `"\|\|\n"`, `"\n\|\|"`, `"a\nb"`, `` "````\n" ``, `` "\n````" `` and `` "`````" `` in `TOKENS` |
 | Emoticons and shortcodes | `src/parser/emoji.rs`, `join_emoji` in `src/parser/reduce.rs` |
-| Relative and absolute timestamps | `src/parser/timestamp.rs`, at one clock and the zone in `TZ`; `epoch_seconds` wrapping through the 2038, year 9999 and year 1800 timestamps in `TOKENS` |
+| Inline spoilers | `spoiler`, `spoiler_content_item` and `inline_emoticon` lookahead in `src/parser/inline.rs`, `Repetition::Spoiler` in `src/parser/repetition.rs`, through `"\|\|:)"`, `"\|\|-___-"` and `"\|\|*a*"` in `TOKENS` (spoilers holding an emoticon or emphasis, followed by a later `\|\|`) |
+| Relative and absolute timestamps | `src/parser/timestamp.rs`, at one clock and the zone in `TZ`; `epoch_seconds` wrapping through the 2038, year 9999 and year 1800 timestamps in `TOKENS`, and its `"0"` fallback through `<t:2025-13-45T25:61:61>`, `+24:00` offsets and `<t:12:00>` |
 
 `.claude/skills/verify-linear-parse` covers work and stack depth; this skill covers only output.
 
-**Sync commit:** `cb8b5c8`
+**Sync commit:** `4ed7ed5`
 
-When covered code changes, compare it against the sync commit (`git diff cb8b5c8 -- src tests/common`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 4ed7ed5 -- src tests/common`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
@@ -66,4 +75,4 @@ When covered code changes, compare it against the sync commit (`git diff cb8b5c8
 - Lists nested past 64 levels and inputs over a few hundred characters are never generated.
 - Local times without an offset before 1883 are not generated: chrono reads the OS zone data and Node reads ICU, and their local mean time offsets may differ.
 - Memo warm-up that does not change output is not checked here: `evaluate_later_spoilers_backwards` (and its `is_emoticon_end` filter) only fills the `spoiler` memo early, and the `Run::SpoilerParagraphs` memo is only hit again on a run whose spoiler already failed at the same close. Breaking either leaves every AST the same; `.claude/skills/verify-linear-parse` covers them.
-- Options objects outside upstream's TypeScript type are never sent: `null` values, unknown keys (Rust rejects them, as the README says; upstream ignores them), and non-boolean flags. `localhost`, which both sides always accept as a host, is not in `TOKENS`.
+- Options objects outside upstream's TypeScript type are never sent: `null` values, unknown keys (Rust rejects them, as the README says; upstream ignores them), and non-boolean flags.

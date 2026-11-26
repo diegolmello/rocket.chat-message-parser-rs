@@ -1,6 +1,12 @@
 ---
 name: verify-linear-parse
 description: Check that the message parser does linear work and bounded recursion. Use before committing any change under src/parser/, to the memo tables, or to a loop or lookahead in the grammar port, and when a parse looks slow or overflows the stack.
+metadata:
+  covers:
+    - 'src/parser/**'
+    - src/lib.rs
+    - tests/common/mod.rs
+  check: cargo test --release --features work-report --test linear_work && cargo test --release --test stack_depth
 ---
 
 # Verify linear parse work
@@ -16,17 +22,17 @@ cargo test --release --features work-report --test linear_work -- --nocapture
 cargo test --release --test stack_depth
 ```
 
-They take about 10 seconds. `tests/linear_work.rs` reads `ParseReport` through `parse_with_report`, which exists only with the `work-report` feature, so plain `cargo test` skips that file. A debug build also skips the seed test; always run the release commands above. Both files take `fixed_clock` from `tests/common/mod.rs`, and `tests/linear_work.rs` builds its alphabets' strings with `strings_over` from the same file.
+They take about 15 seconds. `tests/linear_work.rs` reads `ParseReport` through `parse_with_report`, which exists only with the `work-report` feature, so plain `cargo test` skips that file. A debug build also skips the seed test; always run the release commands above. Both files take `fixed_clock` from `tests/common/mod.rs`, and `tests/linear_work.rs` builds its alphabets' strings with `strings_over` from the same file.
 
 The tests in `tests/linear_work.rs`:
 
 - `every_short_input_evaluates_each_rule_position_once_within_the_work_limit`: every string up to 4 characters over ``* _ ~ [ ] ( $ : ` < \n a``, with default options and with every option on. Fails on `repeated_evaluations > 0` or work above `WORK_PER_UNIT_LIMIT × (length + 1)`.
-- `repeated_seeds_grow_linearly`: every seed in `seeds()` (all 1–2 character strings over `SEED_ALPHABET`, all 3 character strings over `CORE_SEED_ALPHABET`, `KNOWN_SEEDS`, and `PREFIXED_SEEDS`, whose prefix is written once before the repetitions, so one list item can own an unbounded run of nested lines) repeated a whole number of times, to at least 400 and then 8 times that length. Fails when work per unit grows by more than `DENSITY_GROWTH_LIMIT` (2.0) or exceeds `WORK_PER_UNIT_LIMIT` (400). On a pass it prints the worst growth and density; on the sync commit these were 1.84x (``"* `"``) and 240 per unit (`"*_~[$:"`).
+- `repeated_seeds_grow_linearly`: every seed in `seeds()` (all 1–2 character strings over `SEED_ALPHABET`, all 3 character strings over `CORE_SEED_ALPHABET`, `KNOWN_SEEDS`, and `PREFIXED_SEEDS`, whose prefix is written once before the repetitions, so one list item can own an unbounded run of nested lines) repeated a whole number of times, to at least a minimum length and then 8 times that length. The minimum is `MINIMUM_LENGTH` (400) for the generated seeds and `KNOWN_SEED_MINIMUM_LENGTH` (4,000) for `KNOWN_SEEDS` and `PREFIXED_SEEDS`: a small quadratic term slips under the growth limit from 400 units and shows from 4,000 (`"||-___-"` with the spoiler content memo broken grows 1.6x from 400 units and 4.5x from 4,000). Fails when work per unit grows by more than `DENSITY_GROWTH_LIMIT` (2.0) or exceeds `WORK_PER_UNIT_LIMIT` (400). On a pass it prints the worst growth and density; on the sync commit these were 1.84x (``"* `"``) and 251 per unit (`"*_~[$:"`, which levels off near 252 from 8,000 units up).
 
 The tests in `tests/stack_depth.rs`, which need no feature:
 
 - `long_emoticon_chains_parse_within_a_main_thread_stack`: 50,000 chained `:)` emoticons, bare and inside bold and italic, on an 8 MiB thread.
-- `spoilers_ending_in_emoticons_parse_within_a_spawned_thread_stack`: `||:)` repeated 25,000 times, bare and after `*`, `_` and `![`, `||x<3` and `||>:-)` repeated 20,000 times, and `||-___-` repeated 20,000 times, with emoticons on, on a 2 MiB thread. Each emoticon looks ahead into the next spoiler, so without `evaluate_later_spoilers_backwards` the recursion grows by one spoiler per repetition. The 4 and 5 unit emoticons check that `is_emoticon_end` looks back as far as the longest emoticon; `||-___-` checks the spoiler content memo (`Repetition::Spoiler` through `repetition_end`), because italic matches `_-||-_` across every `||` and each spoiler's content would otherwise walk to the end of the input. The test asserts how many emoji each input yields, so a parse that gives up early fails.
+- `spoilers_ending_in_emoticons_parse_within_a_spawned_thread_stack`: `||:)` repeated 25,000 times, bare and after `*`, `_` and `![`, `||x<3` and `||>:-)` repeated 20,000 times, and `||-___-` repeated 20,000 times, with emoticons on, on a 2 MiB thread. Each emoticon looks ahead into the next spoiler, so without `evaluate_later_spoilers_backwards` the recursion grows by one spoiler per repetition. The 4 and 5 unit emoticons check that `is_emoticon_end` looks back as far as the longest emoticon; `||-___-` checks that shape's stack depth. Its work is checked by the `KNOWN_SEEDS` entry `"||-___-"` in `tests/linear_work.rs`, which reaches the spoiler content memo (`Repetition::Spoiler` through `repetition_end`): italic matches `_-||-_` across every `||`, so each spoiler's content would otherwise walk to the end of the input. With that memo broken, this stack test still passes, only slower. The test asserts how many emoji each input yields, so a parse that gives up early fails.
 - `deeply_nested_lists_stop_nesting_at_the_depth_limit_and_keep_every_item`: 2,000 lines, each indented one space more than the last, on a 2 MiB thread (Rust's default for spawned threads). It parses, serializes, clones and drops the result. It checks the tree stops at 64 levels (`MAXIMUM_NESTED_LEVELS` in `src/parser/blocks.rs` plus the top list), the deepest list holds the remaining 1,937 items, and all 2,000 items are kept.
 
 ## Reading a failure
@@ -40,7 +46,7 @@ Each violation names the option set, the seed, the work at both lengths and the 
   - A loop over lines that rescans earlier lines. `PREFIXED_SEEDS` catch this in `nested_list_lines`.
   - An unmemoized recursive lookahead. Memoize it, and evaluate the chain backwards like `evaluate_emoticon_chain_backwards` in `src/parser/inline.rs`.
   - A lookahead into a sibling container whose content holds the same lookahead. Evaluate later containers first, as `evaluate_later_spoilers_backwards` does for `||`, once per skip-flag set, and only where the lookahead can start (`is_emoticon_end`): evaluating a container the forward parse never reaches costs its whole content (`KNOWN_SEEDS` `"||a.b"`).
-  - A block that scans every following line for its closer, restarted on every line. Memoize the end of the scan per start (`Run::SpoilerParagraphs` through `run_end` for `block_spoiler`) or index the closers once per parse (`long_code_closes` in `Scans` for `long_code`); `KNOWN_SEEDS` `"||\n\r"`, `"||\n||a.b\n"`, `"````x\n"`, `"````\n```\n"` and `"`````\n````x\n"`, and `PREFIXED_SEEDS` `("||", "\na")` and `("````", "\n```")` (one unclosed block before an unbounded run of lines) reach them.
+  - A block that scans every following line for its closer, restarted on every line. Memoize the end of the scan per start (`Run::SpoilerParagraphs` through `run_end` for `block_spoiler`) or index the closers once per parse (`long_code_closes` in `Scans` for `long_code`); `KNOWN_SEEDS` `"||\n\r"`, `"||\n||a.b\n"`, `"````x\n"`, `"````\n```\n"` and `"`````\n````x\n"`, and `PREFIXED_SEEDS` `("||", "\na")` and `("````", "\n```")` (one unclosed block before an unbounded run of lines) reach them. A `block_spoiler` that loops `spoiler_paragraph_step` itself fails on `"||\n\r"` (6.3x); a `next_long_code_close` that scans forward line by line fails on `"````x\n"` (7.4x) and `"`````\n````x\n"`.
 - **Measurement artefact.** Some seeds switch between two linear regimes depending on the repetition count; `"* _"` costs 164 or 102 per repetition. Confirm by printing work per repetition across several counts: a flat series is linear. Never raise a limit without that series in hand.
 - **Repeated evaluations.** A memo key misses part of the rule's real input. For example, a rule reads options or flags that are not in its `(position, flags)` key, or a body was called outside `memoized!`.
 
@@ -59,13 +65,14 @@ Each violation names the option set, the seed, the work at both lengths and the 
 
 Skip flags are passed by value as `Flags`, never stored on `Parser`, so they are restored after every rule by construction; no test covers this.
 
-**Sync commit:** `cb8b5c8`
+**Sync commit:** `4ed7ed5`
 
-When covered code changes, compare it against the sync commit (`git diff cb8b5c8 -- src/parser tests/common`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 4ed7ed5 -- src/parser src/lib.rs tests/common`). Check that the alphabets and `KNOWN_SEEDS` still reach each new loop, lookahead or rule, and add seeds that do. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
-- With emoticons on, `":)||a.b"` repeated is quadratic: every `||` after an emoticon is an emoticon end, so `evaluate_later_spoilers_backwards` evaluates spoilers the forward parse never reaches. Any emoticon before a `||` whose spoiler fails late does the same: `":D||a.b"`, `"x<3||a.b"`. Backtick content (`":)||``"`) is linear since the spoiler content memo. They turn linear when the backward pass is disabled, and are left out of `KNOWN_SEEDS` until it is replaced.
+- With emoticons on, `":)||a.b"` repeated is quadratic: every `||` after an emoticon is an emoticon end, so `evaluate_later_spoilers_backwards` evaluates spoilers the forward parse never reaches. Any emoticon before a `||` whose spoiler fails late does the same: `":D||a.b"`, `"x<3||a.b"`, `":)||http://a.b"`, and every other emoticon in place of `:)`. Backtick content (`":)||``"`) is linear since the spoiler content memo. They turn linear when the backward pass is disabled, and are left out of `KNOWN_SEEDS` until it is replaced.
+- The same backward pass is quadratic when the emoticon is `-___-` and the spoilers close. Each spoiler it evaluates holds a strike, bold or italic match that runs to the end of the input, and `repetition_items` builds that match's nodes again for every spoiler: `"||~-___-"`, `"||~~-___-"`, `"-___-||~"`, `"-___-||a"` (any plain character in place of `a`), `"-___-||<t:1"`, `"||*-___-"`, `"-___-||*"`. At 100,000 units, in a release build, `"||~-___-"` takes 53 seconds, `"||*-___-"` 41 and `"-___-||a"` 33. `"||*-___-"` and `"-___-||*"` grow only 1.5x from 1,000 to 8,000 units, and their wall time grows far faster than counted work, because memo hits clone those long matches. All of them are linear before `fcf6431` and with the backward pass disabled, and are left out of `KNOWN_SEEDS` with the rest of this family. `"||-___-"` itself is linear.
 - Work is checked on generated inputs, not proven for all inputs. A superlinear path reachable only through strings longer than the seeds, or through characters outside the alphabets, can pass.
 - The density check catches a superlinear term once it is about half the work at 8x length. A small quadratic term can pass.
 - Clones of memoized results on a memo hit are not counted as work, and neither is `group_nested_lines`, which reruns on every `nested_lists` call, memo hits included. Both cost the size of the memoized value.

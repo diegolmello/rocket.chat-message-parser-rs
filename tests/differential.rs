@@ -92,6 +92,18 @@ const TOKENS: &[&str] = &[
     "abcdefghijklmnopqrstuvwxyz0123456://b.com",
     ":99999",
     "\r",
+    "||:)",
+    "||-___-",
+    "||*a*",
+    "<t:12:00>",
+    "<t:12:34:56+01:00>",
+    "<t:2025-13-45T25:61:61>",
+    "<t:2025-07-22T10:00:00+24:00>",
+    "<t:2025-07-22T24:00:00.000-03:00>",
+    "x.local",
+    "X.LOCAL",
+    "http://x.Local/a",
+    "http://localhost",
 ];
 const TOKEN_LENGTH: usize = 3;
 const RANDOM_TOKEN_MAX: usize = 12;
@@ -123,6 +135,10 @@ fn option_sets() -> Vec<OptionSet> {
             json!({ "katex": { "parenthesisSyntax": true } }),
         ),
         ("customDomains", json!({ "customDomains": custom_domains })),
+        (
+            "customDomains near misses",
+            json!({ "customDomains": ["LOCAL", "ocal", "chat", ""] }),
+        ),
         (
             "all",
             json!({

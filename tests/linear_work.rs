@@ -7,6 +7,7 @@ use common::{fixed_clock, strings_over};
 const WORK_PER_UNIT_LIMIT: f64 = 400.0;
 const DENSITY_GROWTH_LIMIT: f64 = 2.0;
 const MINIMUM_LENGTH: usize = 400;
+const KNOWN_SEED_MINIMUM_LENGTH: usize = 4_000;
 const SCALES: [usize; 2] = [1, 8];
 const EXHAUSTIVE_LENGTH: usize = 4;
 
@@ -33,6 +34,7 @@ const KNOWN_SEEDS: &[&str] = &[
     "||`",
     "`||",
     "||`:)",
+    "||-___-",
     "||[",
     "||a.b",
     "||\n\r",
@@ -93,25 +95,34 @@ fn work_per_unit(report: &ParseReport) -> f64 {
     report.work() as f64 / (report.input_length + 1) as f64
 }
 
-fn repeated_whole((prefix, seed): &(String, String), scale: usize) -> String {
-    let repetitions = MINIMUM_LENGTH.div_ceil(seed.chars().count()) * scale;
-    format!("{prefix}{}", seed.repeat(repetitions))
+struct Seed {
+    prefix: String,
+    repeated: String,
+    minimum_length: usize,
 }
 
-fn seeds() -> Vec<(String, String)> {
-    let mut seeds = strings_over(SEED_ALPHABET, 1..=2);
-    seeds.extend(strings_over(CORE_SEED_ALPHABET, 3..=3));
-    seeds.extend(KNOWN_SEEDS.iter().map(|seed| (*seed).to_owned()));
-    let mut prefixed: Vec<(String, String)> = seeds
-        .into_iter()
-        .map(|seed| (String::new(), seed))
-        .collect();
-    prefixed.extend(
-        PREFIXED_SEEDS
-            .iter()
-            .map(|(prefix, seed)| ((*prefix).to_owned(), (*seed).to_owned())),
-    );
-    prefixed
+fn repeated_whole(seed: &Seed, scale: usize) -> String {
+    let repetitions = seed.minimum_length.div_ceil(seed.repeated.chars().count()) * scale;
+    format!("{}{}", seed.prefix, seed.repeated.repeat(repetitions))
+}
+
+fn seeds() -> Vec<Seed> {
+    let mut generated = strings_over(SEED_ALPHABET, 1..=2);
+    generated.extend(strings_over(CORE_SEED_ALPHABET, 3..=3));
+    let generated = generated.into_iter().map(|repeated| Seed {
+        prefix: String::new(),
+        repeated,
+        minimum_length: MINIMUM_LENGTH,
+    });
+    let known = KNOWN_SEEDS.iter().map(|repeated| ("", *repeated));
+    let hand_picked = known
+        .chain(PREFIXED_SEEDS.iter().copied())
+        .map(|(prefix, repeated)| Seed {
+            prefix: prefix.to_owned(),
+            repeated: repeated.to_owned(),
+            minimum_length: KNOWN_SEED_MINIMUM_LENGTH,
+        });
+    generated.chain(hand_picked).collect()
 }
 
 #[test]
@@ -149,7 +160,7 @@ fn repeated_seeds_grow_linearly() {
             let density = work_per_unit(&large);
             let density_growth = density / work_per_unit(&small);
             let repeated = small.repeated_evaluations + large.repeated_evaluations;
-            let case = format!("{label} {:?}+{:?}", seed.0, seed.1);
+            let case = format!("{label} {:?}+{:?}", seed.prefix, seed.repeated);
             if density_growth > worst_growth.0 {
                 worst_growth = (density_growth, case.clone());
             }
