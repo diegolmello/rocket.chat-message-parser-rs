@@ -480,7 +480,10 @@ fn generated_cases() -> u32 {
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(generated_cases()))]
+    #![proptest_config(ProptestConfig {
+        failure_persistence: None,
+        ..ProptestConfig::with_cases(generated_cases())
+    })]
 
     #[test]
     fn generated_messages_produce_the_same_ast(case in parse_case()) {
