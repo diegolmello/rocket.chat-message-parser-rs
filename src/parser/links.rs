@@ -49,6 +49,12 @@ fn has_absolute_scheme_prefix(source: &str) -> bool {
     bytes[1 + scheme_length..].starts_with(b"://")
 }
 
+pub(super) fn link_hosts(custom_domains: Option<&[String]>) -> Vec<String> {
+    std::iter::once("localhost".to_owned())
+        .chain(custom_domains.unwrap_or_default().iter().cloned())
+        .collect()
+}
+
 fn auto_link(source: String, valid_hosts: &[String]) -> Node {
     if !tld::is_linkable(&source, true, valid_hosts) {
         return plain(source);

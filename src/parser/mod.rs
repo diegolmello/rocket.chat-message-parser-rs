@@ -75,7 +75,7 @@ struct Scans {
     block_katex_end: Vec<u32>,
     inline_katex_end: Vec<u32>,
     extra_run_end: Vec<u32>,
-    long_code_closes: FxHashMap<usize, Vec<[u32; 2]>>,
+    long_code_closes: FxHashMap<usize, Vec<blocks::FenceClose>>,
 }
 
 fn next_index_where(length: usize, matches: impl Fn(usize) -> bool) -> Vec<u32> {
@@ -128,9 +128,7 @@ impl<'source> Parser<'source> {
             "input must be shorter than u32::MAX UTF-16 code units"
         );
         let scans = Scans::new(&source, options);
-        let link_hosts = std::iter::once("localhost".to_owned())
-            .chain(options.custom_domains.iter().flatten().cloned())
-            .collect();
+        let link_hosts = links::link_hosts(options.custom_domains.as_deref());
         let report = ParseReport {
             input_length: source.len(),
             ..ParseReport::default()
@@ -223,11 +221,9 @@ impl<'source> Parser<'source> {
     }
 
     pub(crate) fn end_of_line(&mut self, position: usize) -> Option<usize> {
-        match self.at(position)? {
-            0x0D if self.at(position + 1) == Some(0x0A) => Some(position + 2),
-            0x0D | 0x0A => Some(position + 1),
-            _ => None,
-        }
+        self.report.input_reads += 1;
+        let length = chars::line_break_length(self.source.get(position..)?)?;
+        Some(position + length)
     }
 
     pub(crate) fn space(&mut self, position: usize) -> Option<usize> {

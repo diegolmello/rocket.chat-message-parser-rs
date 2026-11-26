@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use super::chars::{is, is_code_language_char, is_js_whitespace, is_space};
+use super::chars::{is, is_code_language_char, is_js_whitespace, is_space, line_break_length};
 use super::memo::memoized;
 use super::reduce::{reduce_plain_texts, Item};
 use super::repetition::Run;
@@ -326,27 +326,26 @@ impl Parser<'_> {
         let fence_length = fence_end - position;
         let (after_language, language) = self.code_language(fence_end);
         let first_line = self.end_of_line(after_language)?;
-        let [close, end] = self.next_long_code_close(first_line, fence_length)?;
-        if close == first_line {
+        let close = self.next_long_code_close(first_line, fence_length)?;
+        let close_line = close.line_start as usize;
+        if close_line == first_line {
             return None;
         }
         let mut lines = Vec::new();
         let mut cursor = first_line;
-        while cursor < close {
+        while cursor < close_line {
             let text_end = self.run(cursor, |unit| unit != 0x0A && unit != 0x0D);
             lines.push(code_line(plain(self.text(cursor, text_end))));
             cursor = self.end_of_line(text_end)?;
         }
-        Some((end, code(lines, language)))
+        Some((close.end as usize, code(lines, language)))
     }
 
-    fn next_long_code_close(&mut self, position: usize, fence_length: usize) -> Option<[usize; 2]> {
+    fn next_long_code_close(&mut self, position: usize, fence_length: usize) -> Option<FenceClose> {
         self.report.input_reads += 1;
         let closes = self.scans.long_code_closes.get(&fence_length)?;
-        let next = closes.partition_point(|&[line_start, _]| (line_start as usize) < position);
-        closes
-            .get(next)
-            .map(|&[line_start, end]| [line_start as usize, end as usize])
+        let next = closes.partition_point(|close| (close.line_start as usize) < position);
+        closes.get(next).copied()
     }
 
     fn code(&mut self, position: usize) -> Parsed<Node> {
@@ -709,32 +708,41 @@ fn run_length(units: &[u16], predicate: impl Fn(u16) -> bool) -> usize {
     units.iter().take_while(|&&unit| predicate(unit)).count()
 }
 
-fn fence_close(source: &[u16], line_start: usize) -> Option<(usize, usize)> {
+#[derive(Clone, Copy)]
+pub(super) struct FenceClose {
+    line_start: u32,
+    end: u32,
+}
+
+fn fence_close(source: &[u16], line_start: usize) -> Option<(usize, FenceClose)> {
     let fence_length = run_length(&source[line_start..], |unit| is(unit, b'`'));
     if fence_length == 0 {
         return None;
     }
     let fence_end = line_start + fence_length;
     let end = fence_end + run_length(&source[fence_end..], is_space);
-    matches!(source.get(end), None | Some(0x0A | 0x0D)).then_some((fence_length, end))
+    let at_line_end = end == source.len() || line_break_length(&source[end..]).is_some();
+    at_line_end.then_some((
+        fence_length,
+        FenceClose {
+            line_start: line_start as u32,
+            end: end as u32,
+        },
+    ))
 }
 
-pub(super) fn long_code_closes(source: &[u16]) -> FxHashMap<usize, Vec<[u32; 2]>> {
-    let mut closes: FxHashMap<usize, Vec<[u32; 2]>> = FxHashMap::default();
+pub(super) fn long_code_closes(source: &[u16]) -> FxHashMap<usize, Vec<FenceClose>> {
+    let mut closes: FxHashMap<usize, Vec<FenceClose>> = FxHashMap::default();
     let mut line_start = 0;
     loop {
-        if let Some((fence_length, end)) = fence_close(source, line_start) {
-            closes
-                .entry(fence_length)
-                .or_default()
-                .push([line_start as u32, end as u32]);
+        if let Some((fence_length, close)) = fence_close(source, line_start) {
+            closes.entry(fence_length).or_default().push(close);
         }
         let text_end =
             line_start + run_length(&source[line_start..], |unit| unit != 0x0A && unit != 0x0D);
-        line_start = match source[text_end..] {
-            [0x0D, 0x0A, ..] => text_end + 2,
-            [0x0D | 0x0A, ..] => text_end + 1,
-            _ => return closes,
+        let Some(line_break) = line_break_length(&source[text_end..]) else {
+            return closes;
         };
+        line_start = text_end + line_break;
     }
 }

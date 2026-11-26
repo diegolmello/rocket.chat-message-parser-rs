@@ -25,6 +25,7 @@ fn emoji_count(nodes: Vec<Node>) -> usize {
             Node::Paragraph { value }
             | Node::Bold { value }
             | Node::Italic { value }
+            | Node::Strike { value }
             | Node::Spoiler { value } => pending.extend(value),
             _ => {}
         }
