@@ -91,6 +91,8 @@ const TOKENS: &[&str] = &[
     "http://a.b:99999",
     "abcdefghijklmnopqrstuvwxyz012345://b.com",
     "abcdefghijklmnopqrstuvwxyz0123456://b.com",
+    "abcdefghijklmnopqrstuvwxyz01.com://b.com:99999",
+    "abcdefghijklmnopqrstuvwxyz012.com://b.com:99999",
     ":99999",
     "\r",
     "||:)",
