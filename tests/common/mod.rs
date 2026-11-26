@@ -5,6 +5,8 @@ use std::collections::HashSet;
 use std::ops::RangeInclusive;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use message_parser::Options;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 pub const CLOCK_SECONDS: u64 = 1_753_142_400;
@@ -59,4 +61,100 @@ pub fn strings_over(pieces: &[&str], lengths: RangeInclusive<usize>) -> Vec<Stri
         }
     }
     strings
+}
+
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct JsOptions {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub colors: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub emoticons: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub katex: Option<JsKatexOptions>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_domains: Option<Vec<String>>,
+}
+
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct JsKatexOptions {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dollar_syntax: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parenthesis_syntax: Option<bool>,
+}
+
+impl JsOptions {
+    pub fn to_options(&self) -> Options {
+        let upstream = serde_json::to_value(self).expect("options serialize");
+        serde_json::from_value(upstream).expect("upstream options deserialize")
+    }
+}
+
+pub fn js_equal(actual: &Value, expected: &Value) -> bool {
+    canonical(actual) == canonical(expected)
+}
+
+pub fn pretty(value: &Value) -> String {
+    serde_json::to_string_pretty(value).expect("JSON values always serialize")
+}
+
+pub fn clock_at(instant: &str) -> SystemTime {
+    chrono::DateTime::parse_from_rfc3339(instant)
+        .expect("fixture clock is an RFC 3339 instant")
+        .into()
+}
+
+pub fn clock_milliseconds(instant: &str) -> u64 {
+    let milliseconds = chrono::DateTime::parse_from_rfc3339(instant)
+        .expect("fixture clock is an RFC 3339 instant")
+        .timestamp_millis();
+    u64::try_from(milliseconds).expect("fixture clocks are after the epoch")
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Fixture {
+    pub file: String,
+    #[serde(rename = "upstreamVersion")]
+    pub upstream_version: String,
+    pub groups: Vec<Group>,
+    #[serde(default)]
+    pub uncaptured: Vec<Uncaptured>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Uncaptured {
+    pub name: String,
+    #[serde(rename = "reason")]
+    _reason: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Group {
+    pub needs_clock: Option<String>,
+    pub cases: Vec<Case>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Case {
+    pub name: String,
+    pub input: String,
+    #[serde(default)]
+    pub options: JsOptions,
+    pub matcher: Matcher,
+    pub expected: Option<Value>,
+}
+
+#[derive(Deserialize, Clone, Copy, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum Matcher {
+    ToEqual,
+    ToStrictEqual,
+    ToMatchObject,
+    NotToThrow,
 }

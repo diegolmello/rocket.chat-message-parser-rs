@@ -1,34 +1,14 @@
 use std::panic::{self, AssertUnwindSafe};
 use std::time::SystemTime;
 
-use message_parser::{parse_at, Node, Options};
-use serde::Deserialize;
+use message_parser::{parse_at, Node};
 use serde_json::Value;
 
 mod common;
 
-use common::{canonical, fixed_clock, panic_message};
+use common::{clock_at, fixed_clock, js_equal, panic_message, pretty, Case, Fixture, Matcher};
 
 const UPSTREAM_VERSION: &str = "0.33.0";
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Fixture {
-    file: String,
-    #[serde(rename = "upstreamVersion")]
-    upstream_version: String,
-    groups: Vec<Group>,
-    #[serde(default)]
-    uncaptured: Vec<Uncaptured>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Uncaptured {
-    name: String,
-    #[serde(rename = "reason")]
-    _reason: String,
-}
 
 const NOT_OBSERVABLE_THROUGH_PARSE: &str = "calls src/utils.autoLink directly";
 
@@ -105,37 +85,6 @@ const UNCAPTURED_UPSTREAM_TESTS: &[(&str, &str, &str)] = &[
     ),
 ];
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Group {
-    needs_clock: Option<String>,
-    cases: Vec<Case>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Case {
-    name: String,
-    input: String,
-    #[serde(default)]
-    options: Options,
-    matcher: Matcher,
-    expected: Option<Value>,
-}
-
-#[derive(Deserialize, Clone, Copy, Debug)]
-#[serde(rename_all = "camelCase")]
-enum Matcher {
-    ToEqual,
-    ToStrictEqual,
-    ToMatchObject,
-    NotToThrow,
-}
-
-fn js_equal(actual: &Value, expected: &Value) -> bool {
-    canonical(actual) == canonical(expected)
-}
-
 fn matches_object(actual: &Value, expected: &Value) -> bool {
     match (actual, expected) {
         (Value::Array(actual), Value::Array(expected)) => {
@@ -156,12 +105,8 @@ fn matches_object(actual: &Value, expected: &Value) -> bool {
     }
 }
 
-fn pretty(value: &Value) -> String {
-    serde_json::to_string_pretty(value).expect("JSON values always serialize")
-}
-
 fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
-    let options = &case.options;
+    let options = &case.options.to_options();
     let nodes: Vec<Node> =
         panic::catch_unwind(AssertUnwindSafe(|| parse_at(&case.input, options, now)))
             .map_err(|payload| format!("parse panicked: {}", panic_message(payload.as_ref())))?;
@@ -189,12 +134,6 @@ fn check_case(case: &Case, now: SystemTime) -> Result<(), String> {
         pretty(expected),
         pretty(&actual)
     ))
-}
-
-fn clock_at(instant: &str) -> SystemTime {
-    chrono::DateTime::parse_from_rfc3339(instant)
-        .expect("fixture clock is an RFC 3339 instant")
-        .into()
 }
 
 fn fixture_failures(fixture: &Fixture) -> Vec<String> {

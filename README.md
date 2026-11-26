@@ -35,10 +35,32 @@ cargo run --release --features work-report --example benchmark
 
 ## Comparing with upstream
 
-`benchmarks/upstream/compare.mjs` parses the inputs in `benchmarks/scenarios.json` with this crate and with `@rocket.chat/message-parser` 0.33.0 on Node, and prints the median of each side by side:
+`upstream/` installs `@rocket.chat/message-parser` 0.33.0. Install it once before either comparison:
 
 ```sh
-cd benchmarks/upstream
-bun install
-node compare.mjs
+(cd upstream && bun install)
+```
+
+### Same AST
+
+The `differential` test starts `upstream/oracle.mjs` on Node and parses the same input with both parsers, pinning upstream's clock to the one Rust gets. It fails on any difference in the AST. It compares:
+
+- every input of the upstream test suite (`tests/fixtures/upstream`), with the options and clock each test uses,
+- every emoji in `tests/fixtures/emoji/all-emoji.json`, alone and between words,
+- 20,000 generated messages: random mixes of markup characters, links, mentions, emoji, emoticons, KaTeX, colors and timestamps, with parse options and a clock drawn at random for each message.
+
+```sh
+TZ=America/New_York cargo test --release --features upstream-oracle --test differential
+```
+
+`PROPTEST_CASES` changes the number of generated messages. A failing message is shrunk to a minimal input. Each failing case is printed as one line of ASCII-only JSON: its input, options and clock. Add the line to `tests/fixtures/differential/regressions.json` with the fix, so every later run checks that case whatever the generator produces. Copy that JSON line, not proptest's `minimal failing input` block. CI runs the test on every pull request and every push to `main`.
+
+The same file also checks every short markup string and token sequence under nine fixed option sets. Those tests are `#[ignore]`d because they take minutes; `.claude/skills/verify-upstream-equivalence` says how to run them.
+
+### Speed
+
+`upstream/compare.mjs` parses the inputs in `benchmarks/scenarios.json` with this crate and with upstream, and prints the median of each side by side:
+
+```sh
+node upstream/compare.mjs
 ```

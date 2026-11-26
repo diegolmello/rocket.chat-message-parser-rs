@@ -1,18 +1,503 @@
 use std::collections::BTreeSet;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::panic::{self, AssertUnwindSafe};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::sync::{Mutex, MutexGuard, OnceLock};
+use std::time::{Duration, UNIX_EPOCH};
 
-use message_parser::{parse_at, Options};
+use message_parser::parse_at;
+use proptest::prelude::*;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 mod common;
 
-use common::{canonical, fixed_clock, panic_message, strings_over, CLOCK_SECONDS};
+use common::{
+    canonical, clock_milliseconds, panic_message, strings_over, Fixture, JsKatexOptions, JsOptions,
+    CLOCK_SECONDS,
+};
 
-const DEFAULT_RANDOM_CASES: usize = 20_000;
-const DEFAULT_SEED: u64 = 0x5eed_0033;
+const UPSTREAM_DIRECTORY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/upstream");
+const FIXTURE_DIRECTORY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/upstream");
+const DEFAULT_GENERATED_CASES: u32 = 20_000;
+const CLOCK_MILLISECONDS: u64 = CLOCK_SECONDS * 1000;
+
+struct Oracle {
+    process: Child,
+    requests: BufWriter<ChildStdin>,
+    responses: BufReader<ChildStdout>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum OracleResponse {
+    Nodes(Value),
+    Error(String),
+}
+
+impl OracleResponse {
+    fn into_result(self) -> Result<Value, String> {
+        match self {
+            OracleResponse::Nodes(nodes) => Ok(nodes),
+            OracleResponse::Error(error) => Err(format!("upstream threw: {error}")),
+        }
+    }
+}
+
+fn read_response(line: &str) -> Result<Value, String> {
+    serde_json::from_str::<OracleResponse>(line)
+        .expect("oracle responds with one JSON object per line")
+        .into_result()
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+struct ParseCase {
+    input: String,
+    options: JsOptions,
+    now: u64,
+}
+
+fn installed_upstream_directory() -> PathBuf {
+    let directory = std::env::var_os("UPSTREAM_PARSER_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(UPSTREAM_DIRECTORY));
+    std::path::absolute(directory).expect("upstream parser directory resolves")
+}
+
+impl Oracle {
+    fn start() -> Oracle {
+        let installed = installed_upstream_directory();
+        assert!(
+            installed
+                .join("node_modules/@rocket.chat/message-parser")
+                .is_dir(),
+            "install the pinned upstream parser first: `bun install --frozen-lockfile` in {} \
+             (or set UPSTREAM_PARSER_DIR to a copy of {UPSTREAM_DIRECTORY} where it is installed)",
+            installed.display()
+        );
+        let mut process = Command::new("node")
+            .arg(Path::new(UPSTREAM_DIRECTORY).join("oracle.mjs"))
+            .arg(&installed)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("node is on PATH");
+        let requests = BufWriter::new(process.stdin.take().expect("oracle stdin is piped"));
+        let responses = BufReader::new(process.stdout.take().expect("oracle stdout is piped"));
+        Oracle {
+            process,
+            requests,
+            responses,
+        }
+    }
+
+    fn parse(&mut self, request: &str) -> Result<Value, String> {
+        let mut line = String::new();
+        let exchanged = writeln!(self.requests, "{request}")
+            .and_then(|()| self.requests.flush())
+            .and_then(|()| self.responses.read_line(&mut line));
+        if !matches!(exchanged, Ok(length) if length > 0) {
+            let _ = self.process.kill();
+            let status = self.process.wait().expect("oracle process can be awaited");
+            *self = Oracle::start();
+            return Err(format!("upstream oracle exited ({status})"));
+        }
+        read_response(&line)
+    }
+
+    fn parse_all(&mut self, requests: &[String]) -> Vec<Result<Value, String>> {
+        let mut answers = Vec::with_capacity(requests.len());
+        let Oracle {
+            requests: writer,
+            responses,
+            ..
+        } = self;
+        std::thread::scope(|scope| {
+            scope.spawn(|| {
+                for request in requests {
+                    writeln!(writer, "{request}").expect("oracle accepts input");
+                }
+                writer.flush().expect("oracle accepts input");
+            });
+            for _ in requests {
+                let mut line = String::new();
+                responses.read_line(&mut line).expect("oracle answers");
+                assert!(!line.is_empty(), "oracle exited early");
+                answers.push(read_response(&line));
+            }
+        });
+        answers
+    }
+}
+
+impl Drop for Oracle {
+    fn drop(&mut self) {
+        let _ = self.process.kill();
+        let _ = self.process.wait();
+    }
+}
+
+fn oracle() -> MutexGuard<'static, Oracle> {
+    static ORACLE: OnceLock<Mutex<Oracle>> = OnceLock::new();
+    ORACLE
+        .get_or_init(|| Mutex::new(Oracle::start()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+impl ParseCase {
+    fn request(&self) -> String {
+        let json = serde_json::to_string(self).expect("parse case serializes");
+        let mut printable = String::with_capacity(json.len());
+        for character in json.chars() {
+            if (' '..='~').contains(&character) {
+                printable.push(character);
+                continue;
+            }
+            for unit in character.encode_utf16(&mut [0; 2]) {
+                printable.push_str(&format!("\\u{unit:04x}"));
+            }
+        }
+        printable
+    }
+
+    fn rust(&self) -> Outcome {
+        let now = UNIX_EPOCH + Duration::from_millis(self.now);
+        let options = self.options.to_options();
+        match panic::catch_unwind(AssertUnwindSafe(|| parse_at(&self.input, &options, now))) {
+            Ok(nodes) => Outcome::ast(&serde_json::to_value(&nodes).expect("AST serializes")),
+            Err(payload) => Outcome::Failed(format!("panic: {}", panic_message(payload.as_ref()))),
+        }
+    }
+}
+
+fn outcomes(oracle: &mut Oracle, case: &ParseCase) -> Option<(Outcome, Outcome)> {
+    let upstream = Outcome::from(oracle.parse(&case.request()));
+    let rust = case.rust();
+    (upstream != rust).then_some((upstream, rust))
+}
+
+fn compare(case: &ParseCase) -> Result<(), String> {
+    let Some((upstream, rust)) = outcomes(&mut oracle(), case) else {
+        return Ok(());
+    };
+    Err(format!(
+        "{}\n  upstream: {}\n  rust:     {}",
+        case.request(),
+        show(&upstream),
+        show(&rust)
+    ))
+}
+
+fn assert_no_mismatches(mismatches: Vec<String>, checked: usize) {
+    assert!(
+        mismatches.is_empty(),
+        "{} of {checked} input(s) differ from upstream:\n\n{}",
+        mismatches.len(),
+        mismatches.join("\n\n")
+    );
+}
+
+#[test]
+fn upstream_test_suite_inputs_produce_the_same_ast() {
+    let mut mismatches = Vec::new();
+    let mut checked = 0;
+    let mut fixture_paths: Vec<_> = std::fs::read_dir(FIXTURE_DIRECTORY)
+        .expect("fixture directory exists")
+        .map(|entry| entry.expect("fixture directory entry is readable").path())
+        .collect();
+    fixture_paths.sort();
+    for path in fixture_paths {
+        let source = std::fs::read_to_string(&path).expect("fixture is readable");
+        let fixture: Fixture =
+            serde_json::from_str(&source).expect("fixture JSON matches the extractor's schema");
+        for group in &fixture.groups {
+            let now = group
+                .needs_clock
+                .as_deref()
+                .map_or(CLOCK_MILLISECONDS, clock_milliseconds);
+            for case in group.cases.iter().filter(|case| !case.input.is_empty()) {
+                checked += 1;
+                let parse_case = ParseCase {
+                    input: case.input.clone(),
+                    options: case.options.clone(),
+                    now,
+                };
+                if let Err(reason) = compare(&parse_case) {
+                    mismatches.push(format!("[{}] {}\n  {reason}", fixture.file, case.name));
+                }
+            }
+        }
+    }
+    assert_no_mismatches(mismatches, checked);
+}
+
+#[test]
+fn regression_inputs_produce_the_same_ast() {
+    let regressions: Vec<ParseCase> =
+        serde_json::from_str(include_str!("fixtures/differential/regressions.json"))
+            .expect("regressions.json lists input, options and now for each case");
+    let mismatches: Vec<String> = regressions
+        .iter()
+        .filter_map(|regression| compare(regression).err())
+        .collect();
+    assert_no_mismatches(mismatches, regressions.len());
+}
+
+#[derive(Deserialize)]
+struct EmojiFixture {
+    emoji: Vec<String>,
+}
+
+#[test]
+fn every_emoji_produces_the_same_ast() {
+    let fixture: EmojiFixture = serde_json::from_str(include_str!("fixtures/emoji/all-emoji.json"))
+        .expect("all-emoji.json lists emoji");
+    let mismatches: Vec<String> = fixture
+        .emoji
+        .iter()
+        .flat_map(|emoji| [emoji.clone(), format!("a {emoji} b")])
+        .map(|input| ParseCase {
+            input,
+            options: JsOptions::default(),
+            now: CLOCK_MILLISECONDS,
+        })
+        .filter_map(|case| compare(&case).err())
+        .collect();
+    assert_no_mismatches(mismatches, fixture.emoji.len() * 2);
+}
+
+const FRAGMENTS: &[&str] = &[
+    "*",
+    "**",
+    "_",
+    "__",
+    "~",
+    "~~",
+    "`",
+    "```",
+    "|",
+    "||",
+    ">",
+    "#",
+    "##",
+    "-",
+    "+",
+    ".",
+    ":",
+    "$",
+    "$$",
+    "\\",
+    "[",
+    "]",
+    "(",
+    ")",
+    "<",
+    "!",
+    "=",
+    "%",
+    "&",
+    "'",
+    "\"",
+    ",",
+    ";",
+    "?",
+    "/",
+    " ",
+    "  ",
+    "\t",
+    "\n",
+    "\n\n",
+    "\r\n",
+    "\r",
+    "\u{85}",
+    "\u{2028}",
+    "\u{2029}",
+    "\u{a0}",
+    "word",
+    "a",
+    "B9",
+    "x_y",
+    "über",
+    "日本",
+    "0",
+    "12",
+    "3.",
+    "https://rocket.chat",
+    "https://example.com/path?query=1#hash",
+    "http://a.b/c_d",
+    "www.rocket.chat",
+    "rocket.chat",
+    "go.dev",
+    "host.local",
+    "a.b.c",
+    "ftp://files.example.org",
+    "user@example.com",
+    "mailto:user@example.com",
+    "[label](https://rocket.chat)",
+    "![image](https://a.co/x.png)",
+    "<https://rocket.chat|label>",
+    "<https://rocket.chat>",
+    "+5511999990000",
+    "+1 (555) 123-4567",
+    "@user",
+    "@user.name",
+    "@all",
+    "@here",
+    "#channel",
+    "#general-chat",
+    ":smile:",
+    ":+1:",
+    ":flag_br:",
+    ":not_an_emoji:",
+    "😀",
+    "👍🏽",
+    "🇧🇷",
+    "❤️",
+    "👨‍👩‍👧",
+    ":)",
+    ":-)",
+    ":D",
+    ";)",
+    ":P",
+    ":(",
+    "<3",
+    "D:",
+    ":'(",
+    "B)",
+    "O:)",
+    ":smile:)",
+    "$x^2$",
+    "$$\\frac{a}{b}$$",
+    "\\(a+b\\)",
+    "\\[c\\]",
+    "\\(",
+    "\\)",
+    "\\[",
+    "\\]",
+    "color:#fff",
+    "color:#ff0000",
+    "color:#12345678",
+    "color:#zzz",
+    "color:red",
+    "<t:1700000000>",
+    "<t:1700000000:R>",
+    "<t:10:00>",
+    "<t:10:00:00+01:00>",
+    "<t:2025-03-09T02:30:00>",
+    "<t:2025-11-02T01:30:00Z:F>",
+    "<t:abc>",
+    "- ",
+    "* ",
+    "1. ",
+    "2) ",
+    "- [ ] ",
+    "- [x] ",
+    "> ",
+    "# ",
+    "### ",
+    "---",
+    "***",
+    "| a | b |",
+    "|---|---|",
+    "```js\ncode\n```",
+    "`code`",
+    "||spoiler||",
+    "~~strike~~",
+    "*bold*",
+    "_italic_",
+    "**strong**",
+    "__under__",
+];
+
+fn fragment() -> impl Strategy<Value = String> {
+    prop_oneof![
+        8 => proptest::sample::select(FRAGMENTS).prop_map(str::to_owned),
+        4 => proptest::sample::select(TOKENS).prop_map(str::to_owned),
+        1 => proptest::sample::select(WIDE_ALPHABET).prop_map(str::to_owned),
+        1 => proptest::string::string_regex("[a-z0-9 ]{1,6}").expect("word pattern is a valid regex"),
+        1 => any::<char>().prop_map(String::from),
+    ]
+}
+
+fn message() -> impl Strategy<Value = String> {
+    proptest::collection::vec(fragment(), 1..=16).prop_map(|fragments| fragments.concat())
+}
+
+fn katex_options() -> impl Strategy<Value = Option<JsKatexOptions>> {
+    proptest::option::of(
+        (
+            proptest::option::of(any::<bool>()),
+            proptest::option::of(any::<bool>()),
+        )
+            .prop_map(|(dollar_syntax, parenthesis_syntax)| JsKatexOptions {
+                dollar_syntax,
+                parenthesis_syntax,
+            }),
+    )
+}
+
+fn custom_domains() -> impl Strategy<Value = Option<Vec<String>>> {
+    let hosts = [
+        "local",
+        "chat",
+        "rocket.local",
+        "a",
+        ".",
+        "",
+        "LOCAL",
+        "ocal",
+    ];
+    let pool: Vec<String> = hosts.map(str::to_owned).into();
+    let size = pool.len();
+    proptest::option::of(proptest::sample::subsequence(pool, 0..=size).prop_shuffle())
+}
+
+fn options() -> impl Strategy<Value = JsOptions> {
+    (
+        proptest::option::of(any::<bool>()),
+        proptest::option::of(any::<bool>()),
+        katex_options(),
+        custom_domains(),
+    )
+        .prop_map(|(colors, emoticons, katex, custom_domains)| JsOptions {
+            colors,
+            emoticons,
+            katex,
+            custom_domains,
+        })
+}
+
+fn parse_case() -> impl Strategy<Value = ParseCase> {
+    (message(), options(), 0u64..4_102_444_800_000).prop_map(|(input, options, now)| ParseCase {
+        input,
+        options,
+        now,
+    })
+}
+
+fn generated_cases() -> u32 {
+    u32::try_from(environment_number(
+        "PROPTEST_CASES",
+        DEFAULT_GENERATED_CASES.into(),
+    ))
+    .expect("PROPTEST_CASES fits in u32")
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig {
+        failure_persistence: None,
+        ..ProptestConfig::with_cases(generated_cases())
+    })]
+
+    #[test]
+    fn generated_messages_produce_the_same_ast(case in parse_case()) {
+        compare(&case).map_err(TestCaseError::fail)?;
+    }
+}
+
 const MINIMIZED_FAILURE_LIMIT: usize = 400;
 const PRINTED_FAILURE_LIMIT: usize = 60;
 
@@ -110,12 +595,20 @@ const TOKENS: &[&str] = &[
     "@.:]",
 ];
 const FAST_TOKEN_LENGTH: u64 = 2;
-const RANDOM_TOKEN_MAX: usize = 12;
 
 struct OptionSet {
     name: &'static str,
-    upstream: Value,
-    rust: Options,
+    options: JsOptions,
+}
+
+impl OptionSet {
+    fn case(&self, input: &str) -> ParseCase {
+        ParseCase {
+            input: input.to_owned(),
+            options: self.options.clone(),
+            now: CLOCK_MILLISECONDS,
+        }
+    }
 }
 
 fn option_sets() -> Vec<OptionSet> {
@@ -154,10 +647,9 @@ fn option_sets() -> Vec<OptionSet> {
         ),
     ]
     .into_iter()
-    .map(|(name, upstream)| OptionSet {
+    .map(|(name, options)| OptionSet {
         name,
-        rust: serde_json::from_value(upstream.clone()).expect("upstream options deserialize"),
-        upstream,
+        options: serde_json::from_value(options).expect("option set is an upstream options object"),
     })
     .collect()
 }
@@ -174,83 +666,12 @@ impl Outcome {
     }
 }
 
-fn rust_outcome(input: &str, options: &Options) -> Outcome {
-    match panic::catch_unwind(AssertUnwindSafe(|| parse_at(input, options, fixed_clock()))) {
-        Ok(nodes) => Outcome::ast(&serde_json::to_value(&nodes).expect("AST serializes")),
-        Err(payload) => Outcome::Failed(format!("panic: {}", panic_message(payload.as_ref()))),
-    }
-}
-
-struct Oracle {
-    child: Child,
-    requests: BufWriter<ChildStdin>,
-    answers: BufReader<ChildStdout>,
-}
-
-impl Oracle {
-    fn start() -> Self {
-        let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let upstream_directory = std::env::var_os("UPSTREAM_PARSER_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| manifest.join("benchmarks/upstream"));
-        assert!(
-            upstream_directory
-                .join("node_modules/@rocket.chat/message-parser")
-                .is_dir(),
-            "install the pinned upstream parser first: `bun install --frozen-lockfile` in {} \
-             (or set UPSTREAM_PARSER_DIR to a copy of benchmarks/upstream where it is installed)",
-            upstream_directory.display()
-        );
-        let mut child = Command::new("node")
-            .arg(manifest.join("tests/differential/oracle.mjs"))
-            .arg(&upstream_directory)
-            .arg((CLOCK_SECONDS * 1000).to_string())
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .expect("node is on PATH");
-        let requests = BufWriter::new(child.stdin.take().expect("piped stdin"));
-        let answers = BufReader::new(child.stdout.take().expect("piped stdout"));
-        Oracle {
-            child,
-            requests,
-            answers,
+impl From<Result<Value, String>> for Outcome {
+    fn from(answer: Result<Value, String>) -> Self {
+        match answer {
+            Ok(nodes) => Outcome::ast(&nodes),
+            Err(reason) => Outcome::Failed(reason),
         }
-    }
-
-    fn ask(&mut self, cases: &[(&str, &Value)]) -> Vec<Outcome> {
-        let mut outcomes = Vec::with_capacity(cases.len());
-        let Oracle {
-            requests, answers, ..
-        } = self;
-        std::thread::scope(|scope| {
-            scope.spawn(|| {
-                for (input, options) in cases {
-                    let request = json!({ "input": input, "options": options });
-                    writeln!(requests, "{request}").expect("oracle accepts input");
-                }
-                requests.flush().expect("oracle accepts input");
-            });
-            for _ in cases {
-                let mut line = String::new();
-                answers.read_line(&mut line).expect("oracle answers");
-                assert!(!line.is_empty(), "oracle exited early");
-                let answer: Value = serde_json::from_str(&line).expect("oracle answers JSON");
-                outcomes.push(match answer.get("ast") {
-                    Some(ast) => Outcome::ast(ast),
-                    None => Outcome::Failed(format!("throws: {}", answer["error"])),
-                });
-            }
-        });
-        outcomes
-    }
-}
-
-impl Drop for Oracle {
-    fn drop(&mut self) {
-        let _ = self.child.kill();
-        let _ = self.child.wait();
     }
 }
 
@@ -260,16 +681,6 @@ struct Mismatch {
     options: &'static str,
     upstream: Outcome,
     rust: Outcome,
-}
-
-fn mismatch(
-    oracle: &mut Oracle,
-    input: &str,
-    option_set: &OptionSet,
-) -> Option<(Outcome, Outcome)> {
-    let upstream = oracle.ask(&[(input, &option_set.upstream)]).remove(0);
-    let rust = rust_outcome(input, &option_set.rust);
-    (upstream != rust).then_some((upstream, rust))
 }
 
 fn character_boundaries(input: &str) -> Vec<usize> {
@@ -294,7 +705,7 @@ fn minimize(oracle: &mut Oracle, input: &str, option_set: &OptionSet) -> Mismatc
                 &smallest[..boundaries[start]],
                 &smallest[boundaries[start + chunk]..]
             );
-            if !candidate.is_empty() && mismatch(oracle, &candidate, option_set).is_some() {
+            if !candidate.is_empty() && outcomes(oracle, &option_set.case(&candidate)).is_some() {
                 smallest = candidate;
                 shrunk = true;
                 break;
@@ -310,47 +721,13 @@ fn minimize(oracle: &mut Oracle, input: &str, option_set: &OptionSet) -> Mismatc
         chunk /= 2;
     }
     let (upstream, rust) =
-        mismatch(oracle, &smallest, option_set).expect("minimized input still mismatches");
+        outcomes(oracle, &option_set.case(&smallest)).expect("minimized input still mismatches");
     Mismatch {
         input: smallest,
         options: option_set.name,
         upstream,
         rust,
     }
-}
-
-struct SplitMix(u64);
-
-impl SplitMix {
-    fn next(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9e37_79b9_7f4a_7c15);
-        let mut mixed = self.0;
-        mixed = (mixed ^ (mixed >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
-        mixed = (mixed ^ (mixed >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
-        mixed ^ (mixed >> 31)
-    }
-
-    fn below(&mut self, bound: usize) -> usize {
-        (self.next() % bound as u64) as usize
-    }
-}
-
-fn random_inputs(count: usize, seed: u64) -> Vec<String> {
-    let mut random = SplitMix(seed);
-    (0..count)
-        .map(|_| {
-            let length = 1 + random.below(RANDOM_TOKEN_MAX);
-            (0..length)
-                .map(|_| {
-                    if random.below(4) == 0 {
-                        WIDE_ALPHABET[random.below(WIDE_ALPHABET.len())].to_owned()
-                    } else {
-                        TOKENS[random.below(TOKENS.len())].to_owned()
-                    }
-                })
-                .collect()
-        })
-        .collect()
 }
 
 fn environment_number(name: &str, default: u64) -> u64 {
@@ -389,16 +766,17 @@ fn failing_cases<'sets>(
             .chunks(share)
             .map(|share| {
                 scope.spawn(move || {
-                    let cases: Vec<(&str, &Value)> = share
+                    let cases: Vec<ParseCase> = share
                         .iter()
-                        .map(|(input, option_set)| (*input, &option_set.upstream))
+                        .map(|(input, option_set)| option_set.case(input))
                         .collect();
-                    let upstream = Oracle::start().ask(&cases);
+                    let requests: Vec<String> = cases.iter().map(ParseCase::request).collect();
+                    let upstream = Oracle::start().parse_all(&requests);
                     share
                         .iter()
-                        .zip(upstream)
-                        .filter(|((input, option_set), upstream)| {
-                            *upstream != rust_outcome(input, &option_set.rust)
+                        .zip(cases.iter().zip(upstream))
+                        .filter(|(_, (case, upstream))| {
+                            Outcome::from(upstream.clone()) != case.rust()
                         })
                         .map(|((input, option_set), _)| ((*input).to_owned(), *option_set))
                         .collect::<Vec<_>>()
@@ -472,12 +850,4 @@ fn every_short_character_string_matches_upstream() {
 fn every_short_token_sequence_matches_upstream() {
     let length = environment_number("DIFFERENTIAL_TOKEN_LENGTH", FAST_TOKEN_LENGTH) as usize;
     check_equivalence(&strings_over(TOKENS, 1..=length));
-}
-
-#[test]
-#[ignore = "needs node and the pinned upstream parser; see .claude/skills/verify-upstream-equivalence"]
-fn random_token_sequences_match_upstream() {
-    let count = environment_number("DIFFERENTIAL_CASES", DEFAULT_RANDOM_CASES as u64) as usize;
-    let seed = environment_number("DIFFERENTIAL_SEED", DEFAULT_SEED);
-    check_equivalence(&random_inputs(count, seed));
 }

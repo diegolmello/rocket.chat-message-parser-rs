@@ -4,9 +4,9 @@ import { fileURLToPath } from 'node:url';
 
 import { parse } from '@rocket.chat/message-parser';
 
-const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
+const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
 const { pattern, samples, scenarios } = JSON.parse(
-	readFileSync(new URL('../scenarios.json', import.meta.url), 'utf8'),
+	readFileSync(new URL('../benchmarks/scenarios.json', import.meta.url), 'utf8'),
 );
 
 const markupSoup = (length) => pattern.repeat(Math.ceil(length / pattern.length)).slice(0, length);
