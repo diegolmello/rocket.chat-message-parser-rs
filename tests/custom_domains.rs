@@ -1,5 +1,4 @@
-use message_parser::ast::{paragraph, plain};
-use message_parser::{parse, Options};
+use message_parser::{parse, Node, Options};
 
 #[test]
 fn an_empty_custom_domain_links_nothing() {
@@ -11,7 +10,11 @@ fn an_empty_custom_domain_links_nothing() {
 
         assert_eq!(
             parse("b.m@.:]", &options),
-            [paragraph(vec![plain("b.m@.:]")])]
+            [Node::Paragraph {
+                value: vec![Node::PlainText {
+                    value: "b.m@.:]".to_owned()
+                }]
+            }]
         );
     }
 }

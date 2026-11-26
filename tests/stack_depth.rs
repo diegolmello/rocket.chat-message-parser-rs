@@ -21,7 +21,7 @@ fn emoji_count(nodes: Vec<Node>) -> usize {
     let mut count = 0;
     while let Some(node) = pending.pop() {
         match node {
-            Node::Emoji { .. } => count += 1,
+            Node::Emoji(_) => count += 1,
             Node::Paragraph { value }
             | Node::Bold { value }
             | Node::Italic { value }

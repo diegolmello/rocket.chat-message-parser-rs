@@ -1,6 +1,6 @@
 use super::chars::is_js_whitespace;
 use super::Parsed;
-use crate::ast::{plain, Node};
+use crate::ast::{plain, Emoji, Node};
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum Item {
@@ -21,15 +21,14 @@ fn is_non_blank_plain(node: Option<&Node>) -> bool {
 }
 
 fn is_emoji(node: Option<&Node>) -> bool {
-    matches!(node, Some(Node::Emoji { .. }))
+    matches!(node, Some(Node::Emoji(_)))
 }
 
 fn join_emoji(current: &Node, previous: Option<&Node>, next: Option<&Node>) -> Node {
-    let Node::Emoji {
-        value: Some(text_node),
+    let Node::Emoji(Emoji::ShortCode {
+        value: text_node,
         short_code,
-        ..
-    } = current
+    }) = current
     else {
         return current.clone();
     };
@@ -41,7 +40,7 @@ fn join_emoji(current: &Node, previous: Option<&Node>, next: Option<&Node>) -> N
     let Node::PlainText { value: text } = text_node.as_ref() else {
         return current.clone();
     };
-    let is_emoticon = short_code.as_deref() != Some(text.as_str());
+    let is_emoticon = short_code != text;
     if is_emoticon {
         plain(text.clone())
     } else {

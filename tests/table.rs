@@ -1,10 +1,16 @@
-use message_parser::ast::{plain, TableValue};
+use message_parser::ast::TableValue;
 use message_parser::{parse, Node, Options};
 
 fn first_table(input: &str) -> (TableValue, [usize; 2]) {
     match parse(input, &Options::default()).into_iter().next() {
         Some(Node::Table { value, fallback }) => (value, fallback),
         other => panic!("expected {input:?} to parse to a table first, got {other:?}"),
+    }
+}
+
+fn plain(value: &str) -> Node {
+    Node::PlainText {
+        value: value.to_owned(),
     }
 }
 
