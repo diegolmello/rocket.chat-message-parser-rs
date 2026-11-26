@@ -106,6 +106,13 @@ pub fn clock_at(instant: &str) -> SystemTime {
         .into()
 }
 
+pub fn clock_milliseconds(instant: &str) -> u64 {
+    let milliseconds = chrono::DateTime::parse_from_rfc3339(instant)
+        .expect("fixture clock is an RFC 3339 instant")
+        .timestamp_millis();
+    u64::try_from(milliseconds).expect("fixture clocks are after the epoch")
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Fixture {

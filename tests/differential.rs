@@ -4,9 +4,9 @@ use std::panic::{self, AssertUnwindSafe};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::{Mutex, MutexGuard, OnceLock};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, UNIX_EPOCH};
 
-use message_parser::{parse_at, Options};
+use message_parser::parse_at;
 use proptest::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -14,8 +14,8 @@ use serde_json::{json, Value};
 mod common;
 
 use common::{
-    canonical, clock_at, fixed_clock, js_equal, panic_message, pretty, strings_over, Fixture,
-    JsKatexOptions, JsOptions, CLOCK_SECONDS,
+    canonical, clock_milliseconds, panic_message, strings_over, Fixture, JsKatexOptions, JsOptions,
+    CLOCK_SECONDS,
 };
 
 const UPSTREAM_DIRECTORY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/upstream");
@@ -60,9 +60,10 @@ struct ParseCase {
 }
 
 fn installed_upstream_directory() -> PathBuf {
-    std::env::var_os("UPSTREAM_PARSER_DIR")
+    let directory = std::env::var_os("UPSTREAM_PARSER_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(UPSTREAM_DIRECTORY))
+        .unwrap_or_else(|| PathBuf::from(UPSTREAM_DIRECTORY));
+    std::path::absolute(directory).expect("upstream parser directory resolves")
 }
 
 impl Oracle {
@@ -146,48 +147,48 @@ fn oracle() -> MutexGuard<'static, Oracle> {
         .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
-fn rust_nodes(case: &ParseCase) -> Value {
-    let now = UNIX_EPOCH + Duration::from_millis(case.now);
-    serde_json::to_value(parse_at(&case.input, &case.options.to_options(), now))
-        .expect("AST serializes")
-}
-
-fn printable_json(case: &ParseCase) -> String {
-    let json = serde_json::to_string(case).expect("parse case serializes");
-    let mut printable = String::with_capacity(json.len());
-    for character in json.chars() {
-        if (' '..='~').contains(&character) {
-            printable.push(character);
-            continue;
+impl ParseCase {
+    fn request(&self) -> String {
+        let json = serde_json::to_string(self).expect("parse case serializes");
+        let mut printable = String::with_capacity(json.len());
+        for character in json.chars() {
+            if (' '..='~').contains(&character) {
+                printable.push(character);
+                continue;
+            }
+            for unit in character.encode_utf16(&mut [0; 2]) {
+                printable.push_str(&format!("\\u{unit:04x}"));
+            }
         }
-        for unit in character.encode_utf16(&mut [0; 2]) {
-            printable.push_str(&format!("\\u{unit:04x}"));
+        printable
+    }
+
+    fn rust(&self) -> Outcome {
+        let now = UNIX_EPOCH + Duration::from_millis(self.now);
+        let options = self.options.to_options();
+        match panic::catch_unwind(AssertUnwindSafe(|| parse_at(&self.input, &options, now))) {
+            Ok(nodes) => Outcome::ast(&serde_json::to_value(&nodes).expect("AST serializes")),
+            Err(payload) => Outcome::Failed(format!("panic: {}", panic_message(payload.as_ref()))),
         }
     }
-    printable
+}
+
+fn outcomes(oracle: &mut Oracle, case: &ParseCase) -> Option<(Outcome, Outcome)> {
+    let upstream = Outcome::from(oracle.parse(&case.request()));
+    let rust = case.rust();
+    (upstream != rust).then_some((upstream, rust))
 }
 
 fn compare(case: &ParseCase) -> Result<(), String> {
-    let request = printable_json(case);
-    let upstream = oracle()
-        .parse(&request)
-        .map_err(|reason| format!("{request}\n  {reason}"))?;
-    let rust = rust_nodes(case);
-    if js_equal(&rust, &upstream) {
+    let Some((upstream, rust)) = outcomes(&mut oracle(), case) else {
         return Ok(());
-    }
+    };
     Err(format!(
-        "{request}\n  AST mismatch\n  upstream: {}\n  rust:     {}",
-        pretty(&upstream),
-        pretty(&rust)
+        "{}\n  upstream: {}\n  rust:     {}",
+        case.request(),
+        show(&upstream),
+        show(&rust)
     ))
-}
-
-fn milliseconds_since_epoch(instant: SystemTime) -> u64 {
-    let elapsed = instant
-        .duration_since(UNIX_EPOCH)
-        .expect("fixture clocks are after the epoch");
-    u64::try_from(elapsed.as_millis()).expect("fixture clocks fit in u64 milliseconds")
 }
 
 fn assert_no_mismatches(mismatches: Vec<String>, checked: usize) {
@@ -216,9 +217,7 @@ fn upstream_test_suite_inputs_produce_the_same_ast() {
             let now = group
                 .needs_clock
                 .as_deref()
-                .map_or(CLOCK_MILLISECONDS, |clock| {
-                    milliseconds_since_epoch(clock_at(clock))
-                });
+                .map_or(CLOCK_MILLISECONDS, clock_milliseconds);
             for case in group.cases.iter().filter(|case| !case.input.is_empty()) {
                 checked += 1;
                 let parse_case = ParseCase {
@@ -473,10 +472,11 @@ fn parse_case() -> impl Strategy<Value = ParseCase> {
 }
 
 fn generated_cases() -> u32 {
-    std::env::var("PROPTEST_CASES")
-        .ok()
-        .map(|cases| cases.parse().expect("PROPTEST_CASES is a number"))
-        .unwrap_or(DEFAULT_GENERATED_CASES)
+    u32::try_from(environment_number(
+        "PROPTEST_CASES",
+        DEFAULT_GENERATED_CASES.into(),
+    ))
+    .expect("PROPTEST_CASES fits in u32")
 }
 
 proptest! {
@@ -591,8 +591,17 @@ const RANDOM_TOKEN_MAX: usize = 12;
 
 struct OptionSet {
     name: &'static str,
-    upstream: Value,
-    rust: Options,
+    options: JsOptions,
+}
+
+impl OptionSet {
+    fn case(&self, input: &str) -> ParseCase {
+        ParseCase {
+            input: input.to_owned(),
+            options: self.options.clone(),
+            now: CLOCK_MILLISECONDS,
+        }
+    }
 }
 
 fn option_sets() -> Vec<OptionSet> {
@@ -631,10 +640,9 @@ fn option_sets() -> Vec<OptionSet> {
         ),
     ]
     .into_iter()
-    .map(|(name, upstream)| OptionSet {
+    .map(|(name, options)| OptionSet {
         name,
-        rust: serde_json::from_value(upstream.clone()).expect("upstream options deserialize"),
-        upstream,
+        options: serde_json::from_value(options).expect("option set is an upstream options object"),
     })
     .collect()
 }
@@ -660,35 +668,12 @@ impl From<Result<Value, String>> for Outcome {
     }
 }
 
-fn upstream_request(input: &str, options: &Value) -> String {
-    json!({ "input": input, "options": options, "now": CLOCK_MILLISECONDS }).to_string()
-}
-
-fn rust_outcome(input: &str, options: &Options) -> Outcome {
-    match panic::catch_unwind(AssertUnwindSafe(|| parse_at(input, options, fixed_clock()))) {
-        Ok(nodes) => Outcome::ast(&serde_json::to_value(&nodes).expect("AST serializes")),
-        Err(payload) => Outcome::Failed(format!("panic: {}", panic_message(payload.as_ref()))),
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Mismatch {
     input: String,
     options: &'static str,
     upstream: Outcome,
     rust: Outcome,
-}
-
-fn mismatch(
-    oracle: &mut Oracle,
-    input: &str,
-    option_set: &OptionSet,
-) -> Option<(Outcome, Outcome)> {
-    let upstream = oracle
-        .parse(&upstream_request(input, &option_set.upstream))
-        .into();
-    let rust = rust_outcome(input, &option_set.rust);
-    (upstream != rust).then_some((upstream, rust))
 }
 
 fn character_boundaries(input: &str) -> Vec<usize> {
@@ -713,7 +698,7 @@ fn minimize(oracle: &mut Oracle, input: &str, option_set: &OptionSet) -> Mismatc
                 &smallest[..boundaries[start]],
                 &smallest[boundaries[start + chunk]..]
             );
-            if !candidate.is_empty() && mismatch(oracle, &candidate, option_set).is_some() {
+            if !candidate.is_empty() && outcomes(oracle, &option_set.case(&candidate)).is_some() {
                 smallest = candidate;
                 shrunk = true;
                 break;
@@ -729,7 +714,7 @@ fn minimize(oracle: &mut Oracle, input: &str, option_set: &OptionSet) -> Mismatc
         chunk /= 2;
     }
     let (upstream, rust) =
-        mismatch(oracle, &smallest, option_set).expect("minimized input still mismatches");
+        outcomes(oracle, &option_set.case(&smallest)).expect("minimized input still mismatches");
     Mismatch {
         input: smallest,
         options: option_set.name,
@@ -808,16 +793,17 @@ fn failing_cases<'sets>(
             .chunks(share)
             .map(|share| {
                 scope.spawn(move || {
-                    let requests: Vec<String> = share
+                    let cases: Vec<ParseCase> = share
                         .iter()
-                        .map(|(input, option_set)| upstream_request(input, &option_set.upstream))
+                        .map(|(input, option_set)| option_set.case(input))
                         .collect();
+                    let requests: Vec<String> = cases.iter().map(ParseCase::request).collect();
                     let upstream = Oracle::start().parse_all(&requests);
                     share
                         .iter()
-                        .zip(upstream)
-                        .filter(|((input, option_set), upstream)| {
-                            Outcome::from(upstream.clone()) != rust_outcome(input, &option_set.rust)
+                        .zip(cases.iter().zip(upstream))
+                        .filter(|(_, (case, upstream))| {
+                            Outcome::from(upstream.clone()) != case.rust()
                         })
                         .map(|((input, option_set), _)| ((*input).to_owned(), *option_set))
                         .collect::<Vec<_>>()
