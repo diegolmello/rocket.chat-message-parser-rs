@@ -415,6 +415,8 @@ const FRAGMENTS: &[&str] = &[
 fn fragment() -> impl Strategy<Value = String> {
     prop_oneof![
         8 => proptest::sample::select(FRAGMENTS).prop_map(str::to_owned),
+        4 => proptest::sample::select(TOKENS).prop_map(str::to_owned),
+        1 => proptest::sample::select(WIDE_ALPHABET).prop_map(str::to_owned),
         1 => proptest::string::string_regex("[a-z0-9 ]{1,6}").expect("word pattern is a valid regex"),
         1 => any::<char>().prop_map(String::from),
     ]
@@ -438,14 +440,19 @@ fn katex_options() -> impl Strategy<Value = Option<JsKatexOptions>> {
 }
 
 fn custom_domains() -> impl Strategy<Value = Option<Vec<String>>> {
-    proptest::option::of(proptest::sample::subsequence(
-        vec![
-            "local".to_owned(),
-            "chat".to_owned(),
-            "rocket.local".to_owned(),
-        ],
-        0..=3,
-    ))
+    let hosts = [
+        "local",
+        "chat",
+        "rocket.local",
+        "a",
+        ".",
+        "",
+        "LOCAL",
+        "ocal",
+    ];
+    let pool: Vec<String> = hosts.map(str::to_owned).into();
+    let size = pool.len();
+    proptest::option::of(proptest::sample::subsequence(pool, 0..=size).prop_shuffle())
 }
 
 fn options() -> impl Strategy<Value = JsOptions> {
@@ -491,8 +498,6 @@ proptest! {
     }
 }
 
-const DEFAULT_RANDOM_CASES: usize = 20_000;
-const DEFAULT_SEED: u64 = 0x5eed_0033;
 const MINIMIZED_FAILURE_LIMIT: usize = 400;
 const PRINTED_FAILURE_LIMIT: usize = 60;
 
@@ -590,7 +595,6 @@ const TOKENS: &[&str] = &[
     "@.:]",
 ];
 const FAST_TOKEN_LENGTH: u64 = 2;
-const RANDOM_TOKEN_MAX: usize = 12;
 
 struct OptionSet {
     name: &'static str,
@@ -726,40 +730,6 @@ fn minimize(oracle: &mut Oracle, input: &str, option_set: &OptionSet) -> Mismatc
     }
 }
 
-struct SplitMix(u64);
-
-impl SplitMix {
-    fn next(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9e37_79b9_7f4a_7c15);
-        let mut mixed = self.0;
-        mixed = (mixed ^ (mixed >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
-        mixed = (mixed ^ (mixed >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
-        mixed ^ (mixed >> 31)
-    }
-
-    fn below(&mut self, bound: usize) -> usize {
-        (self.next() % bound as u64) as usize
-    }
-}
-
-fn random_inputs(count: usize, seed: u64) -> Vec<String> {
-    let mut random = SplitMix(seed);
-    (0..count)
-        .map(|_| {
-            let length = 1 + random.below(RANDOM_TOKEN_MAX);
-            (0..length)
-                .map(|_| {
-                    if random.below(4) == 0 {
-                        WIDE_ALPHABET[random.below(WIDE_ALPHABET.len())].to_owned()
-                    } else {
-                        TOKENS[random.below(TOKENS.len())].to_owned()
-                    }
-                })
-                .collect()
-        })
-        .collect()
-}
-
 fn environment_number(name: &str, default: u64) -> u64 {
     std::env::var(name)
         .ok()
@@ -880,12 +850,4 @@ fn every_short_character_string_matches_upstream() {
 fn every_short_token_sequence_matches_upstream() {
     let length = environment_number("DIFFERENTIAL_TOKEN_LENGTH", FAST_TOKEN_LENGTH) as usize;
     check_equivalence(&strings_over(TOKENS, 1..=length));
-}
-
-#[test]
-#[ignore = "needs node and the pinned upstream parser; see .claude/skills/verify-upstream-equivalence"]
-fn random_token_sequences_match_upstream() {
-    let count = environment_number("DIFFERENTIAL_CASES", DEFAULT_RANDOM_CASES as u64) as usize;
-    let seed = environment_number("DIFFERENTIAL_SEED", DEFAULT_SEED);
-    check_equivalence(&random_inputs(count, seed));
 }

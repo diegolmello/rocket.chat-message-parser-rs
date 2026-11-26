@@ -47,13 +47,13 @@ The `differential` test starts `upstream/oracle.mjs` on Node and parses the same
 
 - every input of the upstream test suite (`tests/fixtures/upstream`), with the options and clock each test uses,
 - every emoji in `tests/fixtures/emoji/all-emoji.json`, alone and between words,
-- 20,000 generated messages: random mixes of markup characters, links, mentions, emoji, emoticons, KaTeX, colors and timestamps, with every combination of parse options.
+- 20,000 generated messages: random mixes of markup characters, links, mentions, emoji, emoticons, KaTeX, colors and timestamps, with parse options and a clock drawn at random for each message.
 
 ```sh
 TZ=America/New_York cargo test --release --features upstream-oracle --test differential
 ```
 
-`PROPTEST_CASES` changes the number of generated messages. A failing message is shrunk to a minimal input. Each failure starts with that case as one line of JSON: its input, options and clock. Add the line to `tests/fixtures/differential/regressions.json` with the fix, so every later run checks that case whatever the generator produces. Copy that JSON line, not proptest's `minimal failing input` block. CI runs the test on every pull request and every push to `main`.
+`PROPTEST_CASES` changes the number of generated messages. A failing message is shrunk to a minimal input. Each failing case is printed as one line of ASCII-only JSON: its input, options and clock. Add the line to `tests/fixtures/differential/regressions.json` with the fix, so every later run checks that case whatever the generator produces. Copy that JSON line, not proptest's `minimal failing input` block. CI runs the test on every pull request and every push to `main`.
 
 The same file also checks every short markup string and token sequence under nine fixed option sets. Those tests are `#[ignore]`d because they take minutes; `.claude/skills/verify-upstream-equivalence` says how to run them.
 
