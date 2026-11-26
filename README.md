@@ -21,6 +21,8 @@ let nodes = parse("**hello** :smile:", &Options::default());
 - Input cannot contain lone surrogates, because a Rust `&str` cannot hold them. A caller converting a JavaScript string must replace them, for example with U+FFFD, before parsing; upstream keeps them.
 - Input of `u32::MAX` UTF-16 code units or more panics. Positions are stored as `u32`.
 - With emoticons on, an emoticon looks ahead at most 500 levels deep into spoilers that each end in another emoticon, as in `||:)||:)||:)…`. Past that depth the lookahead counts as not followed, so one emoticon in every 500 parses as plain text. This keeps the stack under about 1.3 MiB in a release build, within a 2 MiB thread. Upstream recurses without limit and overflows Node's default stack at about 1,500 levels.
+- `Options` is strict. `null`, a number or a string where upstream expects a boolean, object or list is an error, as is an unknown key. Upstream reads `null` as off, any truthy value as on, and ignores unknown keys.
+- Times without an offset, such as `<t:2025-07-22T10:00:00>`, resolve in the local zone using the operating system's time zone database. Upstream on Node uses the ICU data bundled with Node. The two can differ for an invalid or POSIX-style `TZ` value, and for zones whose rules changed between the two databases' versions.
 
 ## Work report
 
