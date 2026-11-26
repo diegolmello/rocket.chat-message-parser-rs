@@ -29,6 +29,8 @@ DIFFERENTIAL_TOKEN_LENGTH=3 TZ=UTC cargo test --release --features upstream-orac
 
 The first line is the fast tier, which `metadata.check` runs before every commit: token sequences of up to 2 pieces, about 20 seconds. The second is the full tier, sequences of up to 3 pieces, about 2 minutes. Run the full tier, under `TZ=UTC` and `TZ=America/New_York`, before every push; nothing else runs it. Each test splits its (input, option set) pairs across one oracle process per core; set `DIFFERENTIAL_JOBS` to change the count. Both need `node` on `PATH`. To keep `node_modules` out of the checkout, copy `upstream/package.json` and `bun.lock` into a `mktemp -d` directory, run `bun install --frozen-lockfile` there, and set `UPSTREAM_PARSER_DIR` to that directory. The oracle refuses to run on any version other than 0.33.0.
 
+`tests/differential.rs` also holds four tests that are not ignored and that CI runs under `TZ=America/New_York`: `upstream_test_suite_inputs_produce_the_same_ast` (the inputs in `tests/fixtures/upstream/*.json`, with each case's options and clock), `regression_inputs_produce_the_same_ast` (`tests/fixtures/differential/regressions.json`), `every_emoji_produces_the_same_ast`, and the proptest `generated_messages_produce_the_same_ast` (random options and clock; `PROPTEST_CASES` sets the count). `-- --ignored` skips them; this skill's tiers are the three tests below.
+
 The three tests below in `tests/differential.rs` are `#[ignore]`d, so `cargo test` and the CI run of that file skip them. Each one prints `N inputs x 9 option sets: every AST matches upstream` when it passes:
 
 - `every_short_character_string_matches_upstream`: every string of 1 to 3 characters over `WIDE_ALPHABET` (19 markup characters, a letter, a digit, space and newline), plus every 4-character string over `CORE_ALPHABET` (13). 41,280 inputs.
@@ -41,7 +43,7 @@ The option sets are in `option_sets()`: default (`{}`), explicit defaults (every
 
 The panic message gives the number of failing (input, option set) pairs. It then minimizes up to 400 of them by deleting characters for as long as the input still mismatches, and prints each distinct result with its option set, upstream's JSON and Rust's JSON. Start from the shortest one.
 
-- **Real bug.** The Rust AST differs and the README's "Differences from upstream" section does not list the case. Find the upstream rule in the grammar (the oracle parses with the same `dist/messageParser.js` that `upstream/` installs), then the matching rule in `src/parser/`. Add the minimized input to the fitting `tests/fixtures/upstream/*.json` case list or a focused test in `tests/` when you fix it.
+- **Real bug.** The Rust AST differs and the README's "Differences from upstream" section does not list the case. Find the upstream rule in the grammar (the oracle parses with the same `dist/messageParser.js` that `upstream/` installs), then the matching rule in `src/parser/`. When you fix it, add the minimized input to `tests/fixtures/differential/regressions.json` as `{ "input": …, "options": …, "now": 1753142400000 }`, with `options` copied from the named set in `option_sets()`, or add a focused test in `tests/`. `tests/fixtures/upstream/*.json` holds only upstream's own test suite.
 - **Documented difference.** Empty input (upstream throws, Rust returns `[]`), lists deeper than 64 levels, lone surrogates (Rust `&str` cannot hold one, so the generator never makes them), and the `work-report` feature. The generators never produce the first three. If you deliberately add another difference, write it in the README first, then keep the generators from producing it instead of filtering results.
 - **Harness error.** `upstream: upstream threw: …` on a non-empty input is a real mismatch, not a harness error: upstream's grammar can fail where Rust returns an AST. A harness error looks like `oracle exited early`, a JSON parse panic, or the install message; fix the setup, not the property.
 - **Clock or zone.** A mismatch only in a `<t:…>` value that moves with `TZ` or with the clock means one side read the real clock or zone. Check that `ParseCase::rust` passes the case's `now` to `parse_at` and that the oracle still installs `PinnedDate` before it imports the parser.
@@ -64,9 +66,9 @@ Do not weaken the comparison, drop an option set, or shrink an alphabet to make 
 
 `.claude/skills/verify-linear-parse` covers work and stack depth; this skill covers only output.
 
-**Sync commit:** `db8f603`
+**Sync commit:** `42daa27`
 
-When covered code changes, compare it against the sync commit (`git diff db8f603 -- src tests/common`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
+When covered code changes, compare it against the sync commit (`git diff 42daa27 -- src tests/common`). For each new rule, option, marker character or token, check that `WIDE_ALPHABET`, `CORE_ALPHABET` or `TOKENS` can produce it, and add it if not. Run the check, then move the sync commit to the commit you confirmed.
 
 ## What this does not prove
 
