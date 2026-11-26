@@ -67,6 +67,7 @@ pub(crate) struct Parser<'source> {
     report: ParseReport,
     scans: Scans,
     link_hosts: Vec<String>,
+    emoticon_lookahead_depth: usize,
 }
 
 struct Scans {
@@ -141,6 +142,7 @@ impl<'source> Parser<'source> {
             report,
             scans,
             link_hosts,
+            emoticon_lookahead_depth: 0,
         }
     }
 

@@ -20,6 +20,7 @@ let nodes = parse("**hello** :smile:", &Options::default());
 - Lists nest at most 64 levels deep. Deeper lines become items of the 64th level, so no text is lost. Upstream nests without limit, and a tree that deep can overflow the stack when it is serialized or dropped.
 - Input cannot contain lone surrogates, because a Rust `&str` cannot hold them. A caller converting a JavaScript string must replace them, for example with U+FFFD, before parsing; upstream keeps them.
 - Input of `u32::MAX` UTF-16 code units or more panics. Positions are stored as `u32`.
+- With emoticons on, an emoticon looks ahead at most 500 levels deep into spoilers that each end in another emoticon, as in `||:)||:)||:)…`. Past that depth the lookahead counts as not followed, so one emoticon in every 500 parses as plain text. This keeps the stack under about 1.3 MiB in a release build, within a 2 MiB thread. Upstream recurses without limit and overflows Node's default stack at about 1,500 levels.
 
 ## Work report
 

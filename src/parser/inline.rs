@@ -4,6 +4,8 @@ use super::chars::{
 };
 use super::memo::{memoized, Key, Memo};
 
+const MAXIMUM_EMOTICON_LOOKAHEAD_DEPTH: usize = 500;
+
 type MemoTable = fn(&Memo) -> &rustc_hash::FxHashMap<Key, Parsed<Item>>;
 use super::reduce::{one, reduce_plain_texts, Item};
 use super::repetition::{Piece, Repetition, Run};
@@ -135,8 +137,21 @@ impl Parser<'_> {
                 parser.inline_item_pattern(cursor, flags);
             },
         );
-        (self.emoticon_neighbor(end) || self.inline_item_pattern(end, flags).is_some())
-            .then_some((end, node))
+        let followed = self.emoticon_neighbor(end)
+            || self.within_emoticon_lookahead(|parser| {
+                parser.inline_item_pattern(end, flags).is_some()
+            });
+        followed.then_some((end, node))
+    }
+
+    fn within_emoticon_lookahead(&mut self, lookahead: impl FnOnce(&mut Self) -> bool) -> bool {
+        if self.emoticon_lookahead_depth >= MAXIMUM_EMOTICON_LOOKAHEAD_DEPTH {
+            return false;
+        }
+        self.emoticon_lookahead_depth += 1;
+        let followed = lookahead(self);
+        self.emoticon_lookahead_depth -= 1;
+        followed
     }
 
     fn evaluate_emoticon_chain_backwards(
@@ -276,7 +291,6 @@ impl Parser<'_> {
     }
 
     pub(super) fn spoiler(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
-        self.evaluate_later_spoilers_backwards(position, flags);
         memoized!(self, spoiler, position, flags, {
             let (content_start, content_end, end) =
                 self.delimited_span(position, flags, "||", Repetition::Spoiler)?;
@@ -292,28 +306,6 @@ impl Parser<'_> {
         }
         self.inline_item_or_any(position, flags)
             .map(|(end, item)| (end, Piece::Item(item)))
-    }
-
-    fn evaluate_later_spoilers_backwards(&mut self, position: usize, flags: Flags) {
-        if !self.options.emoticons {
-            return;
-        }
-        let evaluated_from = self
-            .memo
-            .spoilers_evaluated_from
-            .get(&flags.bits())
-            .map_or(self.len() + 1, |&start| start as usize);
-        if position >= evaluated_from {
-            return;
-        }
-        self.memo
-            .spoilers_evaluated_from
-            .insert(flags.bits(), position as u32);
-        for start in (position + 1..evaluated_from).rev() {
-            if self.literal(start, "||").is_some() && self.is_emoticon_end(start) {
-                self.spoiler(start, flags);
-            }
-        }
     }
 
     fn names(&mut self, position: usize) -> Option<usize> {
@@ -515,7 +507,9 @@ impl Parser<'_> {
                     },
                 );
                 let followed = self.emoticon_neighbor(end)
-                    || self.preferential_item(end, flags, content).is_some()
+                    || self.within_emoticon_lookahead(|parser| {
+                        parser.preferential_item(end, flags, content).is_some()
+                    })
                     || matches!(content, EmphasisContent::Italic) && self.char(end, b'_').is_some();
                 followed.then_some((end, Item::One(node)))
             })

@@ -15,7 +15,6 @@ macro_rules! memo_tables {
         pub(crate) struct Memo {
             $(pub(crate) $table: HashMap<Key, Parsed<$value>>,)*
             pub(crate) repetition_end: HashMap<(u32, u8, Loop), u32>,
-            pub(crate) spoilers_evaluated_from: HashMap<u8, u32>,
         }
     };
 }

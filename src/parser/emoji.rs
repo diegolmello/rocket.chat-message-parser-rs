@@ -120,21 +120,6 @@ const EMOTICONS: &[(&str, &str)] = &[
     (r"\O\/", "person_gesturing_ok"),
 ];
 
-const LONGEST_EMOTICON: usize = longest_emoticon();
-
-const fn longest_emoticon() -> usize {
-    let mut longest = 0;
-    let mut index = 0;
-    while index < EMOTICONS.len() {
-        let length = EMOTICONS[index].0.len();
-        if length > longest {
-            longest = length;
-        }
-        index += 1;
-    }
-    longest
-}
-
 const TEXT_PRESENTATION: &[(u16, u16)] = &[
     (0x00A9, 0x00A9),
     (0x00AE, 0x00AE),
@@ -236,13 +221,6 @@ impl Parser<'_> {
                     let end = self.literal(position, text)?;
                     Some((end, emoticon(*text, *short_code)))
                 })
-        })
-    }
-
-    pub(super) fn is_emoticon_end(&mut self, position: usize) -> bool {
-        (1..=LONGEST_EMOTICON.min(position)).any(|length| {
-            self.emoticon(position - length)
-                .is_some_and(|(end, _)| end == position)
         })
     }
 
