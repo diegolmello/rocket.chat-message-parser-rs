@@ -278,24 +278,20 @@ impl Parser<'_> {
     pub(super) fn spoiler(&mut self, position: usize, flags: Flags) -> Parsed<Node> {
         self.evaluate_later_spoilers_backwards(position, flags);
         memoized!(self, spoiler, position, flags, {
-            let mut cursor = self.literal(position, "||")?;
-            let mut items = Vec::new();
-            loop {
-                if self.literal(cursor, "||").is_some() {
-                    break;
-                }
-                let Some((end, item)) = self.inline_item_or_any(cursor, flags) else {
-                    break;
-                };
-                items.push(item);
-                cursor = end;
-            }
-            if items.is_empty() {
-                return None;
-            }
-            let end = self.literal(cursor, "||")?;
+            let (content_start, content_end, end) =
+                self.delimited_span(position, flags, "||", Repetition::Spoiler)?;
+            let items =
+                self.repetition_items(Repetition::Spoiler, content_start, content_end, flags);
             Some((end, spoiler(reduce_plain_texts(items))))
         })
+    }
+
+    pub(super) fn spoiler_content_item(&mut self, position: usize, flags: Flags) -> Parsed<Piece> {
+        if self.literal(position, "||").is_some() {
+            return None;
+        }
+        self.inline_item_or_any(position, flags)
+            .map(|(end, item)| (end, Piece::Item(item)))
     }
 
     fn evaluate_later_spoilers_backwards(&mut self, position: usize, flags: Flags) {

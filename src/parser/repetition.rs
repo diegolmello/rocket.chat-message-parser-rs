@@ -10,6 +10,7 @@ pub(super) enum Repetition {
     Emphasis(EmphasisContent),
     Strike,
     LinkTitle,
+    Spoiler,
 }
 
 pub(super) enum Piece {
@@ -42,6 +43,7 @@ impl Repetition {
             Repetition::Emphasis(content) => parser.emphasis_content_item(position, flags, content),
             Repetition::Strike => parser.strike_content_item(position, flags),
             Repetition::LinkTitle => parser.link_title(position, flags),
+            Repetition::Spoiler => parser.spoiler_content_item(position, flags),
         }
     }
 }
