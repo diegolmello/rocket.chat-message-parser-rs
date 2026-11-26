@@ -1,5 +1,5 @@
 use super::chars::{
-    is, is_alpha_digit, is_alpha_numeric_or_mark_char, is_any_text, is_extra,
+    is, is_alpha_digit, is_alpha_numeric_or_mark_char, is_any_text, is_extra, is_line_break,
     is_markdown_url_symbol, is_one_of, is_safe, is_space, is_url_symbol,
 };
 use super::memo::memoized;
@@ -19,10 +19,6 @@ pub(super) fn is_link_title_bulk_char(unit: u16) -> bool {
 
 fn is_link_title2_char(unit: u16) -> bool {
     unit >= 0x20 && !is_one_of(unit, b"<>|")
-}
-
-fn is_line_end(unit: u16) -> bool {
-    unit == 0x0A || unit == 0x0D
 }
 
 fn is_domain_forbidden(unit: u16) -> bool {
@@ -387,7 +383,7 @@ impl Parser<'_> {
             position
         };
         let consumed = self.at(consumed_start)?;
-        if is_line_end(consumed) || is_space(consumed) || is_domain_forbidden(consumed) {
+        if is_line_break(consumed) || is_space(consumed) || is_domain_forbidden(consumed) {
             return None;
         }
         Some(consumed_start + 1)

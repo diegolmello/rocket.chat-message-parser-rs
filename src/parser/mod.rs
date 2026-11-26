@@ -245,7 +245,7 @@ impl<'source> Parser<'source> {
     }
 
     pub(crate) fn any(&mut self, position: usize) -> Option<usize> {
-        self.class(position, |unit| unit != 0x0A && unit != 0x0D)
+        self.class(position, |unit| !chars::is_line_break(unit))
     }
 
     pub(crate) fn any_unit(&mut self, position: usize) -> Option<usize> {

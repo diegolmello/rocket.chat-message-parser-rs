@@ -40,6 +40,10 @@ pub(crate) fn is_hex_digit(unit: u16) -> bool {
         || (b'A' as u16..=b'F' as u16).contains(&unit)
 }
 
+pub(crate) fn is_line_break(unit: u16) -> bool {
+    unit == 0x0A || unit == 0x0D
+}
+
 pub(crate) fn line_break_length(units: &[u16]) -> Option<usize> {
     match units {
         [0x0D, 0x0A, ..] => Some(2),

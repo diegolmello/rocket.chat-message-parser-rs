@@ -1,6 +1,8 @@
 use rustc_hash::FxHashMap;
 
-use super::chars::{is, is_code_language_char, is_js_whitespace, is_space, line_break_length};
+use super::chars::{
+    is, is_code_language_char, is_js_whitespace, is_line_break, is_space, line_break_length,
+};
 use super::memo::memoized;
 use super::reduce::{reduce_plain_texts, Item};
 use super::repetition::Run;
@@ -334,7 +336,7 @@ impl Parser<'_> {
         let mut lines = Vec::new();
         let mut cursor = first_line;
         while cursor < close_line {
-            let text_end = self.run(cursor, |unit| unit != 0x0A && unit != 0x0D);
+            let text_end = self.run(cursor, |unit| !is_line_break(unit));
             lines.push(code_line(plain(self.text(cursor, text_end))));
             cursor = self.end_of_line(text_end)?;
         }
@@ -380,8 +382,8 @@ impl Parser<'_> {
     }
 
     fn code_chunk_char(&mut self, position: usize) -> Option<usize> {
-        let is_line_end_or_fence = |unit: u16| is(unit, b'`') || unit == 0x0A || unit == 0x0D;
-        let is_line_end = |unit: Option<u16>| matches!(unit, None | Some(0x0A) | Some(0x0D));
+        let is_line_end_or_fence = |unit: u16| is(unit, b'`') || is_line_break(unit);
+        let is_line_end = |unit: Option<u16>| unit.is_none_or(is_line_break);
         let unit = self.at(position)?;
         if !is_line_end_or_fence(unit) {
             return Some(position + 1);
@@ -738,8 +740,7 @@ pub(super) fn long_code_closes(source: &[u16]) -> FxHashMap<usize, Vec<FenceClos
         if let Some((fence_length, close)) = fence_close(source, line_start) {
             closes.entry(fence_length).or_default().push(close);
         }
-        let text_end =
-            line_start + run_length(&source[line_start..], |unit| unit != 0x0A && unit != 0x0D);
+        let text_end = line_start + run_length(&source[line_start..], |unit| !is_line_break(unit));
         let Some(line_break) = line_break_length(&source[text_end..]) else {
             return closes;
         };
